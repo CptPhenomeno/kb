@@ -9,24 +9,72 @@ import (
 	"time"
 )
 
-func TestThemeCycle(t *testing.T) {
+func TestTOpensThemePicker(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
-	if m.th.p.Name != "tokyo-night" {
-		t.Fatalf("default theme = %s", m.th.p.Name)
-	}
 	press(t, m, "t")
-	if m.th.p.Name != Themes[1].Name || !strings.Contains(lastLines(screen(m), 3), "theme: "+Themes[1].Name) {
-		t.Fatalf("after t: theme %s, status:\n%s", m.th.p.Name, lastLines(screen(m), 3))
+	s := screen(m)
+	if m.picker == nil || !strings.Contains(s, "Theme") {
+		t.Fatalf("t did not open the picker:\n%s", s)
 	}
+	for _, name := range ThemeNames() {
+		if !strings.Contains(s, name) {
+			t.Errorf("picker does not list %s", name)
+		}
+	}
+	if bar := lastLines(s, 2); !strings.Contains(bar, "preview") || !strings.Contains(bar, "apply") {
+		t.Errorf("command bar does not explain the picker keys:\n%s", bar)
+	}
+}
+
+func TestPickerPreviewsWhileMoving(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t", "down")
+	if m.th.p.Name != Themes[1].Name {
+		t.Fatalf("moving down previews %s, want %s", m.th.p.Name, Themes[1].Name)
+	}
+	press(t, m, "up", "up")
+	if m.th.p.Name != Themes[len(Themes)-1].Name {
+		t.Fatalf("moving up from the first theme previews %s, want the last one", m.th.p.Name)
+	}
+}
+
+func TestPickerEscRestoresPreviousTheme(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t", "down", "down", "esc")
+	if m.picker != nil || m.th.p.Name != "tokyo-night" {
+		t.Fatalf("after esc: picker %v, theme %s", m.picker, m.th.p.Name)
+	}
+}
+
+func TestPickerEnterAppliesAndSavesTheme(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	var saved string
+	m.opts.SaveTheme = func(name string) error { saved = name; return nil }
+	press(t, m, "t", "down", "enter")
+	if m.picker != nil || m.th.p.Name != Themes[1].Name || saved != Themes[1].Name {
+		t.Fatalf("after enter: picker %v, theme %s, saved %q", m.picker, m.th.p.Name, saved)
+	}
+	if !strings.Contains(lastLines(screen(m), 3), "saved") {
+		t.Fatalf("status line does not confirm the saved theme:\n%s", lastLines(screen(m), 3))
+	}
+	// Board keys work again once the picker is closed.
 	press(t, m, "right")
-	if strings.Contains(screen(m), "theme: ") {
-		t.Fatal("the theme notice must go away at the next key")
+	if m.selectedID() != "KB-5" {
+		t.Fatalf("board navigation after the picker selected %s", m.selectedID())
 	}
-	for range len(Themes) - 1 {
-		press(t, m, "t")
+}
+
+func TestThemePrecedenceEnvUserProject(t *testing.T) {
+	cases := []struct{ env, user, project, want string }{
+		{"dracula", "nord", "gruvbox-dark", "dracula"},
+		{"", "nord", "gruvbox-dark", "nord"},
+		{"", "", "gruvbox-dark", "gruvbox-dark"},
+		{"", "", "", ""},
 	}
-	if m.th.p.Name != "tokyo-night" {
-		t.Fatalf("cycling through every theme must come back to the first, got %s", m.th.p.Name)
+	for _, c := range cases {
+		if got := ResolveTheme(c.env, c.user, c.project); got != c.want {
+			t.Errorf("ResolveTheme(%q, %q, %q) = %q, want %q", c.env, c.user, c.project, got, c.want)
+		}
 	}
 }
 

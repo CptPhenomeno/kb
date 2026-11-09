@@ -137,6 +137,25 @@ func TestConfigTheme(t *testing.T) {
 	}
 }
 
+func TestUserConfigThemeRoundTrip(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	if got := LoadUserTheme(); got != "" {
+		t.Fatalf("theme without a user config = %q", got)
+	}
+	if err := SaveUserTheme("catppuccin-mocha"); err != nil {
+		t.Fatal(err)
+	}
+	if got := LoadUserTheme(); got != "catppuccin-mocha" {
+		t.Fatalf("theme after save = %q", got)
+	}
+	if err := SaveUserTheme("nord"); err != nil {
+		t.Fatal(err)
+	}
+	if got := LoadUserTheme(); got != "nord" {
+		t.Fatalf("theme after a second save = %q", got)
+	}
+}
+
 func TestConfigInvalidTTL(t *testing.T) {
 	for _, body := range []string{`claim_ttl = "soon"`, `claim_ttl = "-5m"`, `claim_ttl = "0s"`} {
 		path := filepath.Join(t.TempDir(), "config.toml")

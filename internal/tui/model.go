@@ -27,6 +27,8 @@ type Options struct {
 	Now     func() time.Time // Clock used for claim expiry.
 	Theme   string           // Name of the color theme; "" means the default.
 	Loc     *time.Location   // Time zone of the times shown; nil means local.
+	// SaveTheme stores the theme chosen in the picker; nil disables saving.
+	SaveTheme func(name string) error
 }
 
 type viewKind int
@@ -95,7 +97,8 @@ type Model struct {
 
 	th       *theme
 	themeIdx int
-	notice   string // shown in the status line until the next key
+	picker   *pickerState // open theme picker, or nil
+	notice   string       // shown in the status line until the next key
 }
 
 // New returns the model; run it with Run or a tea.Program.
@@ -216,6 +219,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 	key := k.String()
 	m.notice = ""
+	if key == "ctrl+c" {
+		return tea.Quit
+	}
+	if m.picker != nil {
+		return m.pickerKey(key)
+	}
 	switch key {
 	case "ctrl+c", "q":
 		return tea.Quit
@@ -230,8 +239,7 @@ func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 		}
 		return nil
 	case "t":
-		m.setTheme((m.themeIdx + 1) % len(Themes))
-		m.notice = "theme: " + Themes[m.themeIdx].Name
+		m.openPicker()
 		return nil
 	case "tab":
 		m.view = (m.view + 1) % viewCount
@@ -368,7 +376,7 @@ type keyHint struct{ key, label, help string }
 var globalKeys = []keyHint{
 	{"tab", "next view", "switch to the next view (shift+tab: previous)"},
 	{"ctrl+shift+p", "commands", "open the command palette (ctrl+p also works)"},
-	{"t", "theme", "switch the color theme (the default comes from KB_THEME or theme in config.toml)"},
+	{"t", "theme", "choose the color theme, with a live preview (saved for your user)"},
 	{"?", "help", "show or hide this help"},
 	{"q", "quit", "quit kb"},
 }
@@ -408,6 +416,9 @@ var viewKeys = map[viewKind][]keyHint{
 // commandBar renders the key hints of the current view, wrapped to width.
 func (m *Model) commandBar() []string {
 	hints := append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)
+	if m.picker != nil {
+		hints = pickerKeys
+	}
 	var lines []string
 	line, lineW := "", 0
 	for _, h := range hints {
