@@ -4,10 +4,12 @@ go 1.26.10
 
 tool honnef.co/go/tools/cmd/staticcheck
 
-require modernc.org/sqlite v1.62.0
+require (
+	github.com/BurntSushi/toml v1.6.0
+	modernc.org/sqlite v1.62.0
+)
 
 require (
-	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
