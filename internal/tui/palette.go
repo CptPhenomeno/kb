@@ -28,6 +28,7 @@ var actions = []action{
 	{"Check acceptance criteria", "c", boardOnly},
 	{"Create item", "n", boardOnly},
 	{"Edit item", "e", boardOnly},
+	{"Edit description in $EDITOR", "ctrl+e", boardOnly},
 	{"Delete item", "d", boardOnly},
 	{"Claim or release item", "a", boardOnly},
 	{"Manage links", "l", boardOnly},

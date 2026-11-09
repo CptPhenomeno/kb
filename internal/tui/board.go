@@ -123,6 +123,12 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 	case "n":
 		m.form = newForm(nil)
 		return nil
+	case "ctrl+e":
+		if it := b.selected(m); it != nil {
+			m.editing = it.ID
+			return m.editDescription(it.Description, it.ID, it.Version)
+		}
+		return nil
 	case "e":
 		if it := b.selected(m); it != nil {
 			m.form = newForm(it)

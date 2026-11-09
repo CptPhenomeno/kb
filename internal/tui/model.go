@@ -80,7 +80,8 @@ type (
 	}
 	// writeMsg reports the outcome of a write; alert explains a failure.
 	writeMsg struct {
-		alert *alertState
+		alert  *alertState
+		notice string
 	}
 )
 
@@ -120,6 +121,7 @@ type Model struct {
 	links      *linksState   // open links popup, or nil
 	form       *formState    // open create/edit form, or nil
 	pendingSel string        // item to select after the next reload
+	editing    string        // item whose description is open in $EDITOR
 	notice     string        // shown in the status line until the next key
 }
 
@@ -226,6 +228,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.board.restore(m, prev)
 	case writeMsg:
 		m.alert = msg.alert
+		if msg.notice != "" {
+			m.notice = msg.notice
+		}
 		return m, m.load()
 	case formDoneMsg:
 		if m.form == nil {
@@ -242,10 +247,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.form, m.pendingSel = nil, msg.id
 		return m, m.load()
 	case editorDoneMsg:
-		if m.form != nil && msg.err == nil {
-			m.form.fields[fDescription].value = msg.text
-		}
-		return m, nil
+		return m, m.editorDone(msg)
 	case historyMsg:
 		if msg.err == nil && msg.id == m.selectedID() {
 			m.history = msg.events
@@ -506,6 +508,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
 		{"c", "check", "check the acceptance criteria of the selected item", false},
+		{"ctrl+e", "describe", "edit the description of the selected item in $EDITOR", false},
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
 		{"/", "search", "search by ID, title, label or assignee", false},

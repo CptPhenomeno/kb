@@ -30,6 +30,7 @@ type formState struct {
 	focus   int
 	errs    map[int]string // validation errors by field
 	general string         // an error not tied to a field
+	info    string         // a confirmation, e.g. after the editor
 	saving  bool
 }
 
@@ -85,10 +86,13 @@ type formDoneMsg struct {
 	general string
 }
 
-// editorDoneMsg returns the description edited in $EDITOR.
+// editorDoneMsg returns the description edited in $EDITOR. target is the
+// item edited from the board, or "" for the open form.
 type editorDoneMsg struct {
-	text string
-	err  error
+	target  string
+	version int
+	text    string
+	err     error
 }
 
 func (m *Model) formKey(key, text string) tea.Cmd {
@@ -121,7 +125,7 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 			}
 		}
 	case "ctrl+e":
-		return m.editDescription()
+		return m.editDescription(f.fields[fDescription].value, "", 0)
 	case "enter":
 		f.saving = true
 		return m.submitForm()
@@ -133,13 +137,14 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 	return nil
 }
 
-// editDescription opens the description in $VISUAL or $EDITOR.
-func (m *Model) editDescription() tea.Cmd {
+// editDescription opens a description in $VISUAL or $EDITOR; target and
+// version identify the item when editing from the board.
+func (m *Model) editDescription(initial, target string, version int) tea.Cmd {
 	tmp, err := os.CreateTemp("", "kb-description-*.md")
 	if err != nil {
 		return nil
 	}
-	_, _ = tmp.WriteString(m.form.fields[fDescription].value)
+	_, _ = tmp.WriteString(initial)
 	tmp.Close()
 	editor := os.Getenv("VISUAL")
 	if editor == "" {
@@ -155,7 +160,7 @@ func (m *Model) editDescription() tea.Cmd {
 		if err == nil {
 			err = rerr
 		}
-		return editorDoneMsg{text: strings.TrimRight(string(b), "\n"), err: err}
+		return editorDoneMsg{target: target, version: version, text: strings.TrimRight(string(b), "\n"), err: err}
 	})
 }
 
@@ -271,6 +276,9 @@ func (m *Model) renderForm() string {
 	if f.general != "" {
 		lines = append(lines, "", m.th.warn.Render("✗ ")+m.th.warn.Render(f.general))
 	}
+	if f.info != "" {
+		lines = append(lines, "", m.th.fg(m.th.p.Green).Render("✓ "+f.info))
+	}
 	status := "enter saves"
 	if f.saving {
 		status = "saving…"
@@ -285,4 +293,42 @@ var formKeys = []keyHint{
 	{"ctrl+e", "editor", "edit the description in $EDITOR", false},
 	{"enter", "save", "create or save the item", false},
 	{"esc", "cancel", "close without saving", false},
+}
+
+// editorDone takes back a description from the editor: into the form, or
+// saved at once for an item edited from the board.
+func (m *Model) editorDone(msg editorDoneMsg) tea.Cmd {
+	if msg.target == "" {
+		if m.form == nil {
+			return nil
+		}
+		if msg.err != nil {
+			m.form.general = "editor failed: " + msg.err.Error()
+			return nil
+		}
+		m.form.fields[fDescription].value = msg.text
+		m.form.info = fmt.Sprintf("description updated (%s) · enter saves", plural(len(strings.Split(msg.text, "\n")), "line", "lines"))
+		return nil
+	}
+	m.editing = ""
+	it := m.snap.Get(msg.target)
+	switch {
+	case it == nil:
+		return nil
+	case msg.err != nil:
+		m.alert = &alertState{title: "EDITOR FAILED", headline: it.ID + " " + it.Title, detail: msg.err.Error(),
+			footer: "The description was not changed."}
+		return nil
+	case msg.text == it.Description:
+		m.notice = it.ID + " description unchanged"
+		return nil
+	}
+	item, text, actor := *it, msg.text, m.opts.Actor
+	item.Version = msg.version
+	return func() tea.Msg {
+		if _, err := m.be.Edit(m.ctx, actor, item.ID, core.Patch{Description: &text}, item.Version); err != nil {
+			return writeMsg{alert: m.failure(item, "SAVE FAILED", err)}
+		}
+		return writeMsg{notice: item.ID + " description saved"}
+	}
 }
