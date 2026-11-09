@@ -5,13 +5,25 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	"github.com/CptPhenomeno/kb/internal/cli"
+	"github.com/CptPhenomeno/kb/internal/tui"
 )
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	code := cli.Run(ctx, os.Args[1:], cli.DefaultApp())
+	app := cli.DefaultApp()
+	app.LaunchTUI = func(ctx context.Context, s *cli.Session) error {
+		theme := s.Config.Theme
+		if t := os.Getenv("KB_THEME"); t != "" {
+			theme = t
+		}
+		return tui.Run(ctx, tui.NewBackend(s.Service, s.DB), tui.Options{
+			Project: filepath.Base(s.Root), Actor: s.Actor, Now: s.Service.Now, Theme: theme,
+		})
+	}
+	code := cli.Run(ctx, os.Args[1:], app)
 	stop()
 	os.Exit(code)
 }

@@ -14,6 +14,7 @@ import (
 type Config struct {
 	Prefix   string        // Item ID prefix, e.g. "KB" for KB-17.
 	ClaimTTL time.Duration // How long a claim lasts without writes.
+	Theme    string        // TUI color theme; "" means the default. KB_THEME overrides it.
 }
 
 // DefaultConfig returns the configuration used when config.toml is missing
@@ -35,6 +36,7 @@ func ValidatePrefix(p string) error {
 type fileConfig struct {
 	Prefix   *string `toml:"prefix"`
 	ClaimTTL *string `toml:"claim_ttl"`
+	Theme    *string `toml:"theme"`
 }
 
 // LoadConfig reads config.toml at path. A missing file yields the defaults.
@@ -59,6 +61,9 @@ func LoadConfig(path string) (Config, error) {
 			return cfg, fmt.Errorf("%s: invalid claim_ttl %q: use a positive duration such as \"15m\"", path, *fc.ClaimTTL)
 		}
 		cfg.ClaimTTL = ttl
+	}
+	if fc.Theme != nil {
+		cfg.Theme = *fc.Theme
 	}
 	return cfg, nil
 }

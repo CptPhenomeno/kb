@@ -125,6 +125,18 @@ func TestConfigDefaults(t *testing.T) {
 	}
 }
 
+func TestConfigTheme(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.toml")
+	writeFile(t, path, "theme = \"gruvbox-dark\"\n")
+	cfg, err := LoadConfig(path)
+	if err != nil || cfg.Theme != "gruvbox-dark" {
+		t.Fatalf("LoadConfig = %+v, %v", cfg, err)
+	}
+	if cfg, _ := LoadConfig(filepath.Join(t.TempDir(), "none.toml")); cfg.Theme != "" {
+		t.Fatalf("default theme = %q, want empty (the TUI default)", cfg.Theme)
+	}
+}
+
 func TestConfigInvalidTTL(t *testing.T) {
 	for _, body := range []string{`claim_ttl = "soon"`, `claim_ttl = "-5m"`, `claim_ttl = "0s"`} {
 		path := filepath.Join(t.TempDir(), "config.toml")
