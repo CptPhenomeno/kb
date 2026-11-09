@@ -74,7 +74,8 @@ func TestGuideMentionsAllAgentCommands(t *testing.T) {
 	e := newEnv(t)
 	out := e.ok("guide")
 	for _, want := range []string{"KB_ACTOR", "kb next --claim", "kb phase", "kb test", "kb accept",
-		"kb note", "kb move", "kb release", "kb touch", "kb import", "--json", "exit code"} {
+		"kb note", "kb move", "kb release", "kb touch", "kb import", "--json", "exit code",
+		"description", "Done when"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("guide does not mention %q", want)
 		}

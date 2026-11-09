@@ -27,6 +27,18 @@ Write the plan as YAML and import it in one shot, all or nothing:
     kb import plan.yaml                # create epics, stories, tasks, tests
     kb import plan.yaml --update       # re-import after the spec changes
 
+## Writing items
+
+Every item needs a description that a teammate can act on without reading
+the spec. Write it in three parts:
+
+    <why it exists: the context or the problem>
+    <what changes: the scope, in concrete terms>
+    Done when <how anyone can verify it is finished>.
+
+Titles name the outcome ("Token refresh"), not the activity ("Work on
+tokens"). Test names describe observable behavior ("rejects expired token").
+
 ## Working loop (one task at a time)
 
     kb next --claim --json             # take the best available task or bug
