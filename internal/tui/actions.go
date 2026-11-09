@@ -110,29 +110,24 @@ type linksState struct {
 	target string
 }
 
+// linkRow is a row of the links popup: a relation, or the parent or a
+// child of the item (hierarchy rows can be visited but not unlinked).
 type linkRow struct {
-	label, other string
-	rel          core.Relation
+	core.Link
+	hierarchy bool
 }
 
-// linkRows lists the relations of an item from its point of view.
+// linkRows lists the parent, the children and the relations of an item.
 func linkRows(s *core.Snapshot, id string) []linkRow {
 	var rows []linkRow
-	for _, r := range s.Relations {
-		switch {
-		case r.Kind == core.RelBlocks && r.From == id:
-			rows = append(rows, linkRow{"blocks", r.To, r})
-		case r.Kind == core.RelBlocks && r.To == id:
-			rows = append(rows, linkRow{"blocked by", r.From, r})
-		case r.Kind == core.RelRelates && r.From == id:
-			rows = append(rows, linkRow{"relates", r.To, r})
-		case r.Kind == core.RelRelates && r.To == id:
-			rows = append(rows, linkRow{"relates", r.From, r})
-		case r.Kind == core.RelDuplicates && r.From == id:
-			rows = append(rows, linkRow{"duplicates", r.To, r})
-		case r.Kind == core.RelDuplicates && r.To == id:
-			rows = append(rows, linkRow{"duplicated by", r.From, r})
-		}
+	if it := s.Get(id); it != nil && it.Parent != "" {
+		rows = append(rows, linkRow{core.Link{Label: "parent", Other: it.Parent}, true})
+	}
+	for _, c := range s.Children(id) {
+		rows = append(rows, linkRow{core.Link{Label: "child", Other: c.ID}, true})
+	}
+	for _, l := range core.Links(s, id) {
+		rows = append(rows, linkRow{Link: l})
 	}
 	return rows
 }
@@ -198,11 +193,15 @@ func (m *Model) linksKey(key, text string) tea.Cmd {
 	case "enter":
 		if l.cursor < len(rows) {
 			m.links = nil
-			return m.goTo(rows[l.cursor].other)
+			return m.goTo(rows[l.cursor].Other)
 		}
 	case "x", "delete", "backspace":
+		if l.cursor < len(rows) && rows[l.cursor].hierarchy {
+			m.notice = "the hierarchy is not a link: change the parent with e"
+			return nil
+		}
 		if l.cursor < len(rows) {
-			rel, item := rows[l.cursor].rel, *m.snap.Get(l.id)
+			rel, item := rows[l.cursor].Rel, *m.snap.Get(l.id)
 			l.cursor = max(0, l.cursor-1)
 			return func() tea.Msg {
 				if err := m.be.Unlink(m.ctx, actor, rel); err != nil {
@@ -227,16 +226,16 @@ func (m *Model) renderLinks() string {
 	}
 	rows := linkRows(m.snap, l.id)
 	if len(rows) == 0 {
-		lines = append(lines, m.th.muted.Render("no links yet"))
+		lines = append(lines, m.th.muted.Render("no parent, children or links yet"))
 	}
 	for i, r := range rows {
 		marker, style := "  ", m.th.text
 		if i == l.cursor && !l.adding {
 			marker, style = m.th.fg(m.th.p.Accent).Render("› "), m.th.fg(m.th.p.Accent).Bold(true)
 		}
-		left := marker + m.th.muted.Render(fmt.Sprintf("%-14s", r.label)) + style.Render(r.other)
+		left := marker + m.th.muted.Render(fmt.Sprintf("%-14s", r.Label)) + style.Render(r.Other)
 		right := ""
-		if o := m.snap.Get(r.other); o != nil {
+		if o := m.snap.Get(r.Other); o != nil {
 			left += " " + style.Render(o.Title)
 			right = m.th.fg(m.th.statusColor[o.Status]).Render(o.Status.Label())
 		}
@@ -248,7 +247,7 @@ func (m *Model) renderLinks() string {
 			m.th.bright.Render(l.target)+m.th.fg(m.th.p.Accent).Render("▌"),
 			m.th.muted.Render("← → kind · type an ID or ref · enter adds · esc cancels"))
 	} else {
-		lines = append(lines, m.th.muted.Render("enter goes to the item · a adds a link · x removes the selected one"))
+		lines = append(lines, hang("", 0, "enter goes to the item · a adds a link · x removes the selected link (the parent changes with e)", m.th.muted, iw, 0)...)
 	}
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }

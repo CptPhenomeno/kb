@@ -18,6 +18,9 @@ tests 0/2 passing
   1 ✗ rejects expired token (failing)
   2 ○ accepts valid token (pending)
 
+links
+  blocks  KB-4 Token refresh (todo)
+
 history
   2026-11-09 14:00  @dev        created task in todo
   2026-11-09 14:00  @dev        linked: KB-3 blocks KB-4

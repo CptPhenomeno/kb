@@ -274,6 +274,18 @@ func writeItem(w io.Writer, snap *core.Snapshot, it *core.Item, history []core.E
 			fmt.Fprintf(w, "  %d %s %s (%s)\n", i+1, testMark[t.State], t.Name, t.State)
 		}
 	}
+	if links := core.Links(snap, it.ID); len(links) > 0 {
+		fmt.Fprintln(w, "\nlinks")
+		t := newTable(w)
+		for _, l := range links {
+			other := l.Other
+			if o := snap.Get(l.Other); o != nil {
+				other = fmt.Sprintf("%s %s (%s)", o.ID, o.Title, o.Status)
+			}
+			fmt.Fprintf(t, "  %s\t%s\n", l.Label, other)
+		}
+		t.Flush()
+	}
 	if len(it.Acceptance) > 0 {
 		fmt.Fprintf(w, "\nacceptance %d/%d checked\n", it.CheckedCriteria(), len(it.Acceptance))
 		for i, c := range it.Acceptance {

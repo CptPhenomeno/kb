@@ -23,8 +23,8 @@
 │                 │ │ │ Key        │ │ │ ╭────────────╮ │ │                │ │                │ │ [ ] returns a new access + refresh pair                      │
 │                 │ │ │ rotation … │ │ │ │ KB-12    ▲ │ │ │                │ │                │ │ [ ] reused refresh token → 401                               │
 │                 │ │ │  BLOCKED … │ │ │ │ Status     │ │ │                │ │                │ │                                                              │
-│                 │ │ ╰────────────╯ │ │ │ code …     │ │ │                │ │                │ │ relations                                                    │
-│                 │ │                │ │ │ ● GREEN    │ │ │                │ │                │ │ relates   KB-5                                               │
+│                 │ │ ╰────────────╯ │ │ │ code …     │ │ │                │ │                │ │ links (l to manage, enter there to go)                       │
+│                 │ │                │ │ │ ● GREEN    │ │ │                │ │                │ │ relates       KB-5 Expired token returns 500 instead … To do │
 │                 │ │                │ │ │ 2/3        │ │ │                │ │                │ │                                                              │
 │                 │ │                │ │ │ agent-met… │ │ │                │ │                │ │ history                                                      │
 │                 │ │                │ │ │ STALE 22m  │ │ │                │ │                │ │ 14:02 agent-auth claimed                                     │

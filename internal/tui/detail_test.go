@@ -94,3 +94,19 @@ func TestItemWithoutChildrenHasNoChildrenSection(t *testing.T) {
 		t.Fatal("a leaf item shows a children section")
 	}
 }
+
+func TestDetailListsEveryLinkWithTheLinkedItemsStatus(t *testing.T) {
+	be := sampleBoard()
+	be.snap.Relations = append(be.snap.Relations, core.Relation{Kind: core.RelBlocks, From: "KB-17", To: "KB-15"})
+	m := newModel(t, be, 160, 60)
+	press(t, m, "enter") // KB-15, blocked by KB-17 which is done
+	var row string
+	for _, line := range strings.Split(screen(m), "\n") {
+		if strings.Contains(line, "blocked by") && strings.Contains(line, "KB-17") {
+			row = line
+		}
+	}
+	if !strings.Contains(row, "Health check endpoint") || !strings.Contains(row, "Done") {
+		t.Fatalf("link to a finished blocker missing or incomplete: %q\n%s", row, screen(m))
+	}
+}

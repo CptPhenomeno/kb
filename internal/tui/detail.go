@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"charm.land/glamour/v2"
@@ -91,9 +90,9 @@ func (m *Model) renderDetail(w, h int) string {
 				add(hang(m.th.text.Render(box+" "), 4, c.Text, m.th.text, iw, 4)...)
 			}
 		}
-		if rel := relationLines(m, it); len(rel) > 0 {
-			add("", m.th.muted.Render("relations"))
-			add(rel...)
+		if links := linkLines(m, it, iw); len(links) > 0 {
+			add("", m.th.muted.Render("links (l to manage, enter there to go)"))
+			add(links...)
 		}
 		add("", m.th.muted.Render("history"))
 		hist := m.history
@@ -128,35 +127,22 @@ func hang(prefix string, pw int, text string, style lipgloss.Style, width, inden
 	return out
 }
 
-// relationLines lists the relations of an item, blockers first.
-func relationLines(m *Model, it *core.Item) []string {
-	var blocks, relates, dups []string
-	for _, r := range m.snap.Relations {
-		switch {
-		case r.Kind == core.RelBlocks && r.From == it.ID:
-			blocks = append(blocks, r.To)
-		case r.Kind == core.RelRelates && (r.From == it.ID || r.To == it.ID):
-			other := r.To
-			if r.To == it.ID {
-				other = r.From
-			}
-			relates = append(relates, other)
-		case r.Kind == core.RelDuplicates && r.From == it.ID:
-			dups = append(dups, r.To)
-		}
-	}
+// linkLines lists every link of an item with the linked item's title and
+// status, after a warning when the item is still blocked.
+func linkLines(m *Model, it *core.Item, width int) []string {
 	var out []string
-	row := func(label string, ids []string, style lipgloss.Style) {
-		if len(ids) > 0 {
-			slices.SortFunc(ids, core.CompareIDs)
-			out = append(out, m.th.muted.Render(fmt.Sprintf("%-10s", label))+style.Render(strings.Join(ids, ", ")))
-		}
+	if blocked, by := core.Blockers(m.snap, it.ID); blocked {
+		out = append(out, m.th.warn.Render("still blocked by "+strings.Join(by, ", ")))
 	}
-	_, by := core.Blockers(m.snap, it.ID)
-	row("blocked by", by, m.th.warn)
-	row("blocks", blocks, m.th.text)
-	row("relates", relates, m.th.text)
-	row("duplicates", dups, m.th.text)
+	for _, l := range core.Links(m.snap, it.ID) {
+		left := m.th.muted.Render(fmt.Sprintf("%-14s", l.Label)) + m.th.text.Render(l.Other)
+		right := ""
+		if o := m.snap.Get(l.Other); o != nil {
+			left += " " + m.th.text.Render(o.Title)
+			right = m.th.fg(m.th.statusColor[o.Status]).Render(o.Status.Label())
+		}
+		out = append(out, spread(left, right, width))
+	}
 	return out
 }
 

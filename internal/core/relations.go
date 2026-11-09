@@ -96,3 +96,34 @@ func Blockers(s *Snapshot, id string) (bool, []string) {
 	slices.SortFunc(by, CompareIDs)
 	return len(by) > 0, by
 }
+
+// Link is a relation seen from one item: Label says how the other item is
+// related ("blocks", "blocked by", "relates", "duplicates", "duplicated by").
+type Link struct {
+	Label string
+	Other string
+	Rel   Relation
+}
+
+// Links lists every relation of an item from its point of view, whatever
+// the status of the other item.
+func Links(s *Snapshot, id string) []Link {
+	var out []Link
+	for _, r := range s.Relations {
+		switch {
+		case r.Kind == RelBlocks && r.From == id:
+			out = append(out, Link{"blocks", r.To, r})
+		case r.Kind == RelBlocks && r.To == id:
+			out = append(out, Link{"blocked by", r.From, r})
+		case r.Kind == RelRelates && r.From == id:
+			out = append(out, Link{"relates", r.To, r})
+		case r.Kind == RelRelates && r.To == id:
+			out = append(out, Link{"relates", r.From, r})
+		case r.Kind == RelDuplicates && r.From == id:
+			out = append(out, Link{"duplicates", r.To, r})
+		case r.Kind == RelDuplicates && r.To == id:
+			out = append(out, Link{"duplicated by", r.From, r})
+		}
+	}
+	return out
+}

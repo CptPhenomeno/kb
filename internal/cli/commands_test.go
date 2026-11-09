@@ -219,3 +219,15 @@ func TestE2EShowIncludesHistory(t *testing.T) {
 		}
 	}
 }
+
+func TestShowListsLinksToFinishedItems(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "blocker")
+	e.ok("add", "task", "blocked")
+	e.ok("link", "KB-1", "blocks", "KB-2")
+	e.ok("move", "KB-1", "done")
+	out := e.ok("show", "KB-2")
+	if !strings.Contains(out, "blocked by") || !strings.Contains(out, "KB-1 blocker (done)") {
+		t.Fatalf("show hides the link to a finished blocker:\n%s", out)
+	}
+}

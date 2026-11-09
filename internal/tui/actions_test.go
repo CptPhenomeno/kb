@@ -180,3 +180,31 @@ func TestALinkedItemHiddenByFiltersIsShown(t *testing.T) {
 		t.Fatalf("filters still hide the item: query %q, subtasks %v", m.board.query, m.board.types[core.TypeSubtask])
 	}
 }
+
+func TestLinksPopupListsParentAndChildren(t *testing.T) {
+	m, _ := newStoryModel(t) // KB-1 story with the child KB-2
+	selectID(t, m, "KB-1")
+	press(t, m, "l")
+	var row string
+	for _, line := range strings.Split(screen(m), "\n") {
+		if strings.Contains(line, "child") && strings.Contains(line, "KB-2") {
+			row = line
+		}
+	}
+	if !strings.Contains(row, "Done task") || !strings.Contains(row, "Done") {
+		t.Fatalf("children missing from the links popup: %q\n%s", row, screen(m))
+	}
+	press(t, m, "x") // the hierarchy is not a removable link
+	if m.alert != nil {
+		t.Fatal("x on a hierarchy row must not try to unlink")
+	}
+	press(t, m, "enter")
+	if m.selectedID() != "KB-2" {
+		t.Fatalf("enter on the child selected %s, want KB-2", m.selectedID())
+	}
+	selectID(t, m, "KB-2")
+	press(t, m, "l", "enter")
+	if m.selectedID() != "KB-1" {
+		t.Fatalf("enter on the parent row selected %s, want KB-1", m.selectedID())
+	}
+}
