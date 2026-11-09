@@ -52,3 +52,23 @@ func (b *serviceBackend) Reorder(ctx context.Context, actor, id string, index, i
 func (b *serviceBackend) SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error) {
 	return b.svc.SetCriterion(ctx, actor, id, n, done, ifVersion)
 }
+
+func (b *serviceBackend) Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error) {
+	return b.svc.Remove(ctx, actor, id, recursive)
+}
+
+func (b *serviceBackend) Claim(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error) {
+	return b.svc.Claim(ctx, actor, id, ifVersion)
+}
+
+func (b *serviceBackend) Release(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error) {
+	return b.svc.Release(ctx, actor, id, ifVersion)
+}
+
+func (b *serviceBackend) Link(ctx context.Context, actor string, r core.Relation) error {
+	return b.svc.Link(ctx, actor, r)
+}
+
+func (b *serviceBackend) Unlink(ctx context.Context, actor string, r core.Relation) error {
+	return b.svc.Unlink(ctx, actor, r)
+}

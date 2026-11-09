@@ -56,6 +56,26 @@ func (f *fakeBackend) SetCriterion(context.Context, string, string, int, bool, i
 	return nil, errors.New("read-only fake")
 }
 
+func (f *fakeBackend) Remove(context.Context, string, string, bool) ([]string, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) Claim(context.Context, string, string, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) Release(context.Context, string, string, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) Link(context.Context, string, core.Relation) error {
+	return errors.New("read-only fake")
+}
+
+func (f *fakeBackend) Unlink(context.Context, string, core.Relation) error {
+	return errors.New("read-only fake")
+}
+
 func (f *fakeBackend) Reorder(context.Context, string, string, int, int) (*core.Item, error) {
 	return nil, errors.New("read-only fake")
 }

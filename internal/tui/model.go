@@ -21,6 +21,11 @@ type Backend interface {
 	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
 	Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error)
 	SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error)
+	Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error)
+	Claim(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
+	Release(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
+	Link(ctx context.Context, actor string, r core.Relation) error
+	Unlink(ctx context.Context, actor string, r core.Relation) error
 }
 
 // Options configure the TUI.
@@ -109,6 +114,8 @@ type Model struct {
 	filterOpen bool          // filter popup open
 	palette    *paletteState // open command palette, or nil
 	accept     *acceptState  // open acceptance popup, or nil
+	confirm    *confirmState // open delete confirmation, or nil
+	links      *linksState   // open links popup, or nil
 	notice     string        // shown in the status line until the next key
 }
 
@@ -256,6 +263,12 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 	if m.accept != nil {
 		return m.acceptKey(key)
 	}
+	if m.confirm != nil {
+		return m.confirmKey(key)
+	}
+	if m.links != nil {
+		return m.linksKey(key, text)
+	}
 	if m.filterOpen {
 		return m.filterKey(key)
 	}
@@ -323,6 +336,10 @@ func (m *Model) View() tea.View {
 			popup = m.renderPalette()
 		case m.accept != nil && m.snap.Get(m.accept.id) != nil:
 			popup = m.renderAccept()
+		case m.confirm != nil:
+			popup = m.renderConfirm()
+		case m.links != nil && m.snap.Get(m.links.id) != nil:
+			popup = m.renderLinks()
 		}
 		if popup != "" {
 			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
@@ -456,10 +473,10 @@ var viewKeys = map[viewKind][]keyHint{
 		{"enter", "details", "open the detail panel (esc closes it)", false},
 		{"n", "new", "create an item", true},
 		{"e", "edit", "edit the selected item", true},
-		{"d", "delete", "delete the selected item", true},
+		{"d", "delete", "delete the selected item", false},
 		{"c", "check", "check the acceptance criteria of the selected item", false},
-		{"a", "assign", "claim or release the selected item", true},
-		{"l", "link", "manage relations", true},
+		{"a", "assign", "claim or release the selected item", false},
+		{"l", "link", "manage relations", false},
 		{"/", "search", "search by ID, title, label or assignee", false},
 		{"f", "filter", "choose the types shown, or only blocked or stale items", false},
 	},
@@ -496,6 +513,12 @@ func (m *Model) commandBar() []string {
 		hints = paletteKeys
 	case m.accept != nil:
 		hints = acceptKeys
+	case m.confirm != nil:
+		hints = confirmKeys
+	case m.links != nil && m.links.adding:
+		hints = linkAddKeys
+	case m.links != nil:
+		hints = linksKeys
 	case m.board.searching && m.view == viewBoard:
 		hints = searchKeys
 	}

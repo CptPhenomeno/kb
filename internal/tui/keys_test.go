@@ -33,7 +33,7 @@ func TestPaletteAdvertisedOnCtrlP(t *testing.T) {
 // missingFeatures are keys whose features have not landed yet. Remove a
 // key from here when its feature is implemented.
 var missingFeatures = map[viewKind][]string{
-	viewBoard:    {"n", "e", "d", "a", "l"},
+	viewBoard:    {"n", "e"},
 	viewTree:     {"↑ ↓", "← →", "enter", "n", "e", "/", "f"},
 	viewActivity: {"↑ ↓", "enter", "esc", "o", "a"},
 }
@@ -61,7 +61,7 @@ func TestHelpHidesKeysNotImplementedYet(t *testing.T) {
 			t.Errorf("help lacks the working key %q", want)
 		}
 	}
-	for _, missing := range []string{"create an item", "delete the selected item"} {
+	for _, missing := range []string{"create an item"} {
 		if strings.Contains(help, missing) {
 			t.Errorf("help advertises %q, which does nothing yet", missing)
 		}

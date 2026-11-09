@@ -117,6 +117,16 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 			m.accept = &acceptState{id: id}
 		}
 		return nil
+	case "d":
+		m.openDelete()
+		return nil
+	case "a":
+		return m.assign()
+	case "l":
+		if id := b.selectedID(m); id != "" {
+			m.links = &linksState{id: id}
+		}
+		return nil
 	case "/":
 		b.searching = true
 		return nil

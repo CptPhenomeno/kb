@@ -61,7 +61,7 @@ func TestPaletteListsContextActions(t *testing.T) {
 		}
 	}
 	for _, a := range board {
-		if strings.Contains(a, "Create") || strings.Contains(a, "Delete") {
+		if strings.Contains(a, "Create") {
 			t.Errorf("palette lists %q, which does not work yet", a)
 		}
 	}

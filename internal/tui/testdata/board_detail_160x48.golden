@@ -44,5 +44,5 @@
 │                 │ │                │ │                │ │                │ │                │ │                                                              │
 ╰─────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰──────────────────────────────────────────────────────────────╯
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
-← → ↑ ↓ navigate   shift ← → move   shift ↑ ↓ reorder   enter details   c check   / search   f filter   tab next view   ctrl+p commands   t theme   ? help      
-q quit                                                                                                                                                          
+← → ↑ ↓ navigate   shift ← → move   shift ↑ ↓ reorder   enter details   d delete   c check   a assign   l link   / search   f filter   tab next view            
+ctrl+p commands   t theme   ? help   q quit                                                                                                                     
