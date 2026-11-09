@@ -201,7 +201,7 @@ const colGap = 1
 func (b *boardState) geometry(m *Model) geometry {
 	g := geometry{top: 1, height: m.height - 2 - len(m.commandBar())}
 	boardW := m.width
-	if m.detailOpen || m.picker != nil {
+	if m.detailOpen {
 		// 40% of the width, leaving the board at least 75 columns.
 		g.detailW = max(36, min(m.width*40/100, m.width-75))
 		boardW = m.width - g.detailW - colGap
@@ -287,10 +287,7 @@ func (b *boardState) render(m *Model, height int) string {
 		}
 		parts = append(parts, b.renderColumn(m, st, cols[i], b.scroll[i], g.colW[i], height, sel))
 	}
-	switch {
-	case m.picker != nil:
-		parts = append(parts, strings.Repeat(" ", colGap), m.renderPicker(g.detailW, height))
-	case g.detailW > 0:
+	if g.detailW > 0 {
 		parts = append(parts, strings.Repeat(" ", colGap), m.renderDetail(g.detailW, height))
 	}
 	return lipgloss.JoinHorizontal(lipgloss.Top, parts...)

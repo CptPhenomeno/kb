@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"image/color"
 	"strings"
 
@@ -63,13 +62,14 @@ var pickerKeys = []keyHint{
 	{"esc", "cancel", "go back to the previous theme"},
 }
 
-// renderPicker renders the theme list in the side panel, with each
-// theme's colors as swatches.
-func (m *Model) renderPicker(w, h int) string {
-	iw := w - 4
+// renderPicker renders the theme list as a popup over the board, with
+// each theme's colors as swatches; the board behind shows the preview.
+func (m *Model) renderPicker() string {
+	width := min(64, m.width-4)
+	iw := width - 6
 	lines := []string{
 		spread(m.th.bright.Render("Theme"), m.th.muted.Render("esc cancel"), iw),
-		m.th.muted.Render("the board previews the selected theme"),
+		m.th.muted.Render("the board behind previews the selected theme"),
 		"",
 	}
 	for i, p := range Themes {
@@ -86,10 +86,8 @@ func (m *Model) renderPicker(w, h int) string {
 		}
 		lines = append(lines, spread(marker+name, m.th.muted.Render(kind)+" "+swatches(p), iw))
 	}
-	lines = append(lines, "", m.th.muted.Render(fmt.Sprintf("%d themes · enter saves the choice for your user", len(Themes))))
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.th.p.Accent).
-		BorderBackground(m.th.p.Base).Background(m.th.p.Surface).Width(w).Padding(0, 1)
-	return box.Render(paintBlock(fitLines(strings.Join(lines, "\n"), iw, h-2), m.th.p.Surface, iw))
+	lines = append(lines, "", m.th.muted.Render("enter saves the choice for your user"))
+	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
 // swatches shows a theme's main colors on its own background.

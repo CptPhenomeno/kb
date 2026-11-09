@@ -157,3 +157,32 @@ func TestChipsReadableOnDarkAndLightThemes(t *testing.T) {
 		}
 	}
 }
+
+func TestThemePickerPopupCentered(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t")
+	x, y := find(t, screen(m), "Theme")
+	if x < 40 || x > 100 || y < 5 || y > 30 {
+		t.Fatalf("picker title at (%d,%d), want it near the center of a 160×48 screen", x, y)
+	}
+}
+
+func TestBoardStaysVisibleAroundThePopup(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t")
+	if w := m.board.geometry(m).detailW; w != 0 {
+		t.Fatalf("the picker takes a side panel of %d columns; it must float over the full board", w)
+	}
+	s := screen(m)
+	for _, col := range []string{"Backlog", "Done"} {
+		if !strings.Contains(s, col) {
+			t.Errorf("column %s hidden by the picker", col)
+		}
+	}
+}
+
+func TestPickerSnapshot(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t", "down")
+	golden(t, "picker_160x48", screen(m))
+}

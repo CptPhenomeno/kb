@@ -286,8 +286,17 @@ func (m *Model) selectedID() string { return m.board.selectedID(m) }
 // View renders the whole screen.
 func (m *Model) View() tea.View {
 	content := paint(m.render(), m.th.p.Base, m.width, m.height)
-	if m.alert != nil && m.width >= minWidth && m.height >= minHeight {
-		content = paint(overlay(content, m.renderAlert(), m.width, m.height), m.th.p.Base, m.width, m.height)
+	if m.width >= minWidth && m.height >= minHeight {
+		popup := ""
+		switch {
+		case m.alert != nil:
+			popup = m.renderAlert()
+		case m.picker != nil:
+			popup = m.renderPicker()
+		}
+		if popup != "" {
+			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
+		}
 	}
 	v := tea.NewView(content)
 	v.BackgroundColor = m.th.p.Base
