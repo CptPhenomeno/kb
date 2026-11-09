@@ -26,6 +26,8 @@ var actions = []action{
 	{"Search", "/", boardOnly},
 	{"Filter", "f", boardOnly},
 	{"Check acceptance criteria", "c", boardOnly},
+	{"Create item", "n", boardOnly},
+	{"Edit item", "e", boardOnly},
 	{"Delete item", "d", boardOnly},
 	{"Claim or release item", "a", boardOnly},
 	{"Manage links", "l", boardOnly},

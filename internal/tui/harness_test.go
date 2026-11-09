@@ -76,6 +76,14 @@ func (f *fakeBackend) Unlink(context.Context, string, core.Relation) error {
 	return errors.New("read-only fake")
 }
 
+func (f *fakeBackend) Create(context.Context, string, core.Item) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) Edit(context.Context, string, string, core.Patch, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
 func (f *fakeBackend) Reorder(context.Context, string, string, int, int) (*core.Item, error) {
 	return nil, errors.New("read-only fake")
 }

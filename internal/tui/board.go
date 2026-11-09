@@ -120,6 +120,14 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 	case "d":
 		m.openDelete()
 		return nil
+	case "n":
+		m.form = newForm(nil)
+		return nil
+	case "e":
+		if it := b.selected(m); it != nil {
+			m.form = newForm(it)
+		}
+		return nil
 	case "a":
 		return m.assign()
 	case "l":

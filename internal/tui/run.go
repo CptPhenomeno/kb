@@ -72,3 +72,11 @@ func (b *serviceBackend) Link(ctx context.Context, actor string, r core.Relation
 func (b *serviceBackend) Unlink(ctx context.Context, actor string, r core.Relation) error {
 	return b.svc.Unlink(ctx, actor, r)
 }
+
+func (b *serviceBackend) Create(ctx context.Context, actor string, it core.Item) (*core.Item, error) {
+	return b.svc.Create(ctx, actor, it)
+}
+
+func (b *serviceBackend) Edit(ctx context.Context, actor, id string, p core.Patch, ifVersion int) (*core.Item, error) {
+	return b.svc.Edit(ctx, actor, id, p, ifVersion)
+}

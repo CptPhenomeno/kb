@@ -24,6 +24,8 @@ type Backend interface {
 	Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error)
 	Claim(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
 	Release(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
+	Create(ctx context.Context, actor string, it core.Item) (*core.Item, error)
+	Edit(ctx context.Context, actor, id string, p core.Patch, ifVersion int) (*core.Item, error)
 	Link(ctx context.Context, actor string, r core.Relation) error
 	Unlink(ctx context.Context, actor string, r core.Relation) error
 }
@@ -116,6 +118,8 @@ type Model struct {
 	accept     *acceptState  // open acceptance popup, or nil
 	confirm    *confirmState // open delete confirmation, or nil
 	links      *linksState   // open links popup, or nil
+	form       *formState    // open create/edit form, or nil
+	pendingSel string        // item to select after the next reload
 	notice     string        // shown in the status line until the next key
 }
 
@@ -212,6 +216,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		prev := m.selectedID()
+		if m.pendingSel != "" {
+			prev, m.pendingSel = m.pendingSel, ""
+		}
 		m.snap, m.recent, m.version, m.loaded, m.err = msg.snap, msg.recent, msg.version, true, nil
 		if m.detailOpen {
 			m.history = msg.history
@@ -220,6 +227,25 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case writeMsg:
 		m.alert = msg.alert
 		return m, m.load()
+	case formDoneMsg:
+		if m.form == nil {
+			return m, nil
+		}
+		m.form.saving = false
+		if msg.id == "" {
+			m.form.errs, m.form.general = msg.errs, msg.general
+			if m.form.errs == nil {
+				m.form.errs = map[int]string{}
+			}
+			return m, nil
+		}
+		m.form, m.pendingSel = nil, msg.id
+		return m, m.load()
+	case editorDoneMsg:
+		if m.form != nil && msg.err == nil {
+			m.form.fields[fDescription].value = msg.text
+		}
+		return m, nil
 	case historyMsg:
 		if msg.err == nil && msg.id == m.selectedID() {
 			m.history = msg.events
@@ -268,6 +294,9 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 	}
 	if m.links != nil {
 		return m.linksKey(key, text)
+	}
+	if m.form != nil {
+		return m.formKey(key, text)
 	}
 	if m.filterOpen {
 		return m.filterKey(key)
@@ -340,6 +369,8 @@ func (m *Model) View() tea.View {
 			popup = m.renderConfirm()
 		case m.links != nil && m.snap.Get(m.links.id) != nil:
 			popup = m.renderLinks()
+		case m.form != nil:
+			popup = m.renderForm()
 		}
 		if popup != "" {
 			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
@@ -471,8 +502,8 @@ var viewKeys = map[viewKind][]keyHint{
 		{"shift ← →", "move", "move to the previous or next column", false},
 		{"shift ↑ ↓", "reorder", "reorder the card in its column", false},
 		{"enter", "details", "open the detail panel (esc closes it)", false},
-		{"n", "new", "create an item", true},
-		{"e", "edit", "edit the selected item", true},
+		{"n", "new", "create an item", false},
+		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
 		{"c", "check", "check the acceptance criteria of the selected item", false},
 		{"a", "assign", "claim or release the selected item", false},
@@ -519,6 +550,8 @@ func (m *Model) commandBar() []string {
 		hints = linkAddKeys
 	case m.links != nil:
 		hints = linksKeys
+	case m.form != nil:
+		hints = formKeys
 	case m.board.searching && m.view == viewBoard:
 		hints = searchKeys
 	}
