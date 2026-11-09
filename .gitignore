@@ -1,0 +1,9 @@
+# Build artifacts
+/bin/
+*.test
+*.out
+
+# Local kb board of this repository (see SPEC.md §5)
+.kanban/kb.db
+.kanban/kb.db-wal
+.kanban/kb.db-shm
