@@ -48,3 +48,7 @@ func (b *serviceBackend) Move(ctx context.Context, actor, id string, to core.Sta
 func (b *serviceBackend) Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error) {
 	return b.svc.Reorder(ctx, actor, id, index, ifVersion)
 }
+
+func (b *serviceBackend) SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error) {
+	return b.svc.SetCriterion(ctx, actor, id, n, done, ifVersion)
+}

@@ -112,6 +112,11 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 	case "f":
 		m.filterOpen = true
 		return nil
+	case "c":
+		if id := b.selectedID(m); id != "" {
+			m.accept = &acceptState{id: id}
+		}
+		return nil
 	case "/":
 		b.searching = true
 		return nil

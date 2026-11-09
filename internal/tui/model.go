@@ -20,6 +20,7 @@ type Backend interface {
 	DataVersion(ctx context.Context) (int64, error)
 	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
 	Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error)
+	SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error)
 }
 
 // Options configure the TUI.
@@ -107,6 +108,7 @@ type Model struct {
 	alert      *alertState   // open alert, or nil
 	filterOpen bool          // filter popup open
 	palette    *paletteState // open command palette, or nil
+	accept     *acceptState  // open acceptance popup, or nil
 	notice     string        // shown in the status line until the next key
 }
 
@@ -251,6 +253,9 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 	if m.palette != nil {
 		return m.paletteKey(key, text)
 	}
+	if m.accept != nil {
+		return m.acceptKey(key)
+	}
 	if m.filterOpen {
 		return m.filterKey(key)
 	}
@@ -316,6 +321,8 @@ func (m *Model) View() tea.View {
 			popup = m.renderFilter()
 		case m.palette != nil:
 			popup = m.renderPalette()
+		case m.accept != nil && m.snap.Get(m.accept.id) != nil:
+			popup = m.renderAccept()
 		}
 		if popup != "" {
 			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
@@ -450,6 +457,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"n", "new", "create an item", true},
 		{"e", "edit", "edit the selected item", true},
 		{"d", "delete", "delete the selected item", true},
+		{"c", "check", "check the acceptance criteria of the selected item", false},
 		{"a", "assign", "claim or release the selected item", true},
 		{"l", "link", "manage relations", true},
 		{"/", "search", "search by ID, title, label or assignee", false},
@@ -486,6 +494,8 @@ func (m *Model) commandBar() []string {
 		hints = filterKeys
 	case m.palette != nil:
 		hints = paletteKeys
+	case m.accept != nil:
+		hints = acceptKeys
 	case m.board.searching && m.view == viewBoard:
 		hints = searchKeys
 	}

@@ -25,6 +25,7 @@ var actions = []action{
 	{"Open details", "enter", boardOnly},
 	{"Search", "/", boardOnly},
 	{"Filter", "f", boardOnly},
+	{"Check acceptance criteria", "c", boardOnly},
 	{"Choose theme", "t", nil},
 	{"Next view", "tab", nil},
 	{"Previous view", "shift+tab", nil},

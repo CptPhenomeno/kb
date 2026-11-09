@@ -52,6 +52,10 @@ func (f *fakeBackend) Move(context.Context, string, string, core.Status, int) (*
 	return nil, errors.New("read-only fake")
 }
 
+func (f *fakeBackend) SetCriterion(context.Context, string, string, int, bool, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
 func (f *fakeBackend) Reorder(context.Context, string, string, int, int) (*core.Item, error) {
 	return nil, errors.New("read-only fake")
 }
