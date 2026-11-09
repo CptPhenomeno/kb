@@ -24,7 +24,7 @@ func (b *boardState) matches(m *Model, it *core.Item) bool {
 			return false
 		}
 	}
-	if b.onlyStale && core.ClaimState(it, m.opts.Now()) != core.ClaimStale {
+	if b.onlyStale && !core.IsStale(it, m.opts.Now()) {
 		return false
 	}
 	if q := strings.ToLower(strings.TrimSpace(b.query)); q != "" {

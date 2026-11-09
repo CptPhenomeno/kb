@@ -450,13 +450,13 @@ func (m *Model) claimCounts() (agents, stale int) {
 	now := m.opts.Now()
 	seen := map[string]bool{}
 	for _, it := range m.snap.Items() {
-		switch core.ClaimState(it, now) {
-		case core.ClaimActive:
+		if core.ClaimState(it, now) == core.ClaimActive {
 			if a := it.Claim.Actor; !core.IsHumanActor(a) && !seen[a] {
 				seen[a] = true
 				agents++
 			}
-		case core.ClaimStale:
+		}
+		if core.IsStale(it, now) {
 			stale++
 		}
 	}

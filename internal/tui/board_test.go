@@ -162,7 +162,7 @@ func TestCardStaleBadge(t *testing.T) {
 	if !strings.Contains(s, "STALE 22m") {
 		t.Fatalf("stale badge missing:\n%s", s)
 	}
-	if !strings.Contains(s, "2 stale") {
+	if !strings.Contains(s, "1 stale") {
 		t.Fatalf("header stale count missing:\n%s", s)
 	}
 }
@@ -294,3 +294,16 @@ func find(t *testing.T, s, text string) (int, int) {
 }
 
 var _ = time.Second
+
+func TestBoardAndTreeShowNoStaleBadgeOnFinishedItems(t *testing.T) {
+	be := sampleBoard()
+	be.snap.Get("KB-17").Claim = &core.Claim{Actor: "agent-x", ExpiresAt: testNow.Add(-time.Hour)}
+	s := screen(newModel(t, be, 160, 48))
+	// KB-3 (review) and KB-17 (done) carry expired claims; only KB-12 (doing) is stale.
+	if n := strings.Count(s, "STALE"); n != 1 {
+		t.Fatalf("%d STALE badges, want only the one of KB-12 in progress:\n%s", n, s)
+	}
+	if !strings.Contains(strings.Split(s, "\n")[0], "1 stale") {
+		t.Fatalf("header must count one stale item: %s", strings.Split(s, "\n")[0])
+	}
+}

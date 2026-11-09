@@ -278,7 +278,7 @@ func filterItems(s *Session, c *cli, snap *core.Snapshot, f listFlags) ([]*core.
 			f.label != "" && !slices.Contains(it.Labels, f.label),
 			scope != nil && !scope[it.ID],
 			f.blocked && !blocked,
-			f.stale && core.ClaimState(it, now) != core.ClaimStale:
+			f.stale && !core.IsStale(it, now):
 			continue
 		}
 		out = append(out, it)

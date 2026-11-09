@@ -390,7 +390,7 @@ func cardLines(m *Model, it *core.Item, width int) []string {
 	if blocked, by := core.Blockers(m.snap, it.ID); blocked {
 		lines = append(lines, truncate(m.th.badge.Render(" BLOCKED by "+strings.Join(by, ",")+" "), width))
 	}
-	if core.ClaimState(it, now) == core.ClaimStale {
+	if core.IsStale(it, now) {
 		lines = append(lines, m.th.stale.Render("STALE "+shortDuration(now.Sub(it.Claim.ExpiresAt))))
 	}
 	return lines

@@ -1,4 +1,4 @@
- kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug                                                   12 items  1 agent active  2 stale
+ kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug                                                   12 items  1 agent active  1 stale
 ╭─────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭──────────────────────────────────────────────────────────────╮
 │ Backlog       1 │ │ To do        4 │ │ In progress  4 │ │ Review       1 │ │ Done         1 │ │ KB-4 · task                                        esc close │
 │ ╭─────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ Token refresh                                                │
@@ -8,8 +8,8 @@
 │ ╰─────────────╯ │ │ │ 0/1        │ │ │ │ 0/1 done   │ │ │ │ ● REFACTOR │ │ │ │ 2/2        │ │ │ points    2                                                  │
 │                 │ │ ╰────────────╯ │ │ ╰────────────╯ │ │ │ 3/3        │ │ │ ╰────────────╯ │ │ assignee  agent-auth claim 12m left                          │
 │                 │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ │ agent-auth │ │ │                │ │ parent    KB-2 Token login                                   │
-│                 │ │ │ KB-6     ▲ │ │ │ │ KB-2     ▲ │ │ │ │ STALE 1h   │ │ │                │ │ spec      SPEC.md#token-refresh                              │
-│                 │ │ │ API keys   │ │ │ │ Token      │ │ │ ╰────────────╯ │ │                │ │ tdd phase ● RED                                              │
+│                 │ │ │ KB-6     ▲ │ │ │ │ KB-2     ▲ │ │ │ ╰────────────╯ │ │                │ │ spec      SPEC.md#token-refresh                              │
+│                 │ │ │ API keys   │ │ │ │ Token      │ │ │                │ │                │ │ tdd phase ● RED                                              │
 │                 │ │ │ per tenant │ │ │ │ login      │ │ │                │ │                │ │                                                              │
 │                 │ │ │ 0/2 done   │ │ │ │ 0/3 done   │ │ │                │ │                │ │ Exchange a valid refresh token for a new token pair.         │
 │                 │ │ ╰────────────╯ │ │ ╰────────────╯ │ │                │ │                │ │                                                              │

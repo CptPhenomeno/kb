@@ -52,6 +52,7 @@ Printed by `show`, `add`, `edit`, `claim`, `release`, `touch`, `next`,
 | `tests[].state` | `pending`, `failing`, `passing` |
 | `ref`, `parent`, `assignee`, `claim` | `null` when unset |
 | `blocked_by` | open blockers of the item or of one of its ancestors |
+| `claim.stale` | `true` when the item is in `doing` and its claim expired (an agent went silent) |
 | `history` | only in `show`: the item's events, oldest first |
 
 Timestamps are RFC 3339 in UTC. Lists are never `null`.

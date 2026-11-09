@@ -167,3 +167,17 @@ func TestAvailableFilterTypeLabelParent(t *testing.T) {
 		t.Errorf("--parent E = %v, want [B1 T1]", got)
 	}
 }
+
+func TestOnlyItemsInProgressCanBeStale(t *testing.T) {
+	for _, st := range allStatuses() {
+		item := claimed(it("A", TypeTask, st, ""), "agent-1", now.Add(-time.Hour))
+		if got, want := IsStale(item, now), st == StatusDoing; got != want {
+			t.Errorf("IsStale(%s with an expired claim) = %v, want %v", st, got, want)
+		}
+	}
+	if IsStale(it("B", TypeTask, StatusDoing, ""), now) {
+		t.Error("an item without a claim is not stale")
+	}
+}
+
+func allStatuses() []Status { return Statuses() }

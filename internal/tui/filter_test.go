@@ -62,7 +62,8 @@ func TestFilterBlockedStale(t *testing.T) {
 	}
 	press(t, m, "f", "space", "down", "space", "esc") // the cursor is kept: blocked off, stale on
 	s = screen(m)
-	if !strings.Contains(s, "Status code counters") || !strings.Contains(s, "Validate token") || strings.Contains(s, "Token refresh") {
+	// KB-12 is stale; KB-3 has an expired claim too but is in review.
+	if !strings.Contains(s, "Status code counters") || strings.Contains(s, "Validate token") || strings.Contains(s, "Token refresh") {
 		t.Fatalf("only stale shows the wrong cards:\n%s", s)
 	}
 }

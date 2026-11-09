@@ -131,7 +131,7 @@ func newItemView(snap *core.Snapshot, it *core.Item, now time.Time) itemView {
 	}
 	if it.Claim != nil {
 		v.Claim = &claimView{Actor: it.Claim.Actor, ExpiresAt: ts(it.Claim.ExpiresAt),
-			Stale: core.ClaimState(it, now) == core.ClaimStale}
+			Stale: core.IsStale(it, now)}
 	}
 	if _, by := core.Blockers(snap, it.ID); by != nil {
 		v.BlockedBy = by
@@ -208,7 +208,7 @@ func flags(snap *core.Snapshot, it *core.Item, now time.Time) string {
 	if blocked, by := core.Blockers(snap, it.ID); blocked {
 		f = append(f, "BLOCKED by "+strings.Join(by, ","))
 	}
-	if core.ClaimState(it, now) == core.ClaimStale {
+	if core.IsStale(it, now) {
 		f = append(f, "STALE")
 	}
 	return strings.Join(f, " ")

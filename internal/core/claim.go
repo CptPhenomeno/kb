@@ -102,3 +102,10 @@ func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 	})
 	return out
 }
+
+// IsStale reports whether an item is stale: work in progress whose claim
+// has expired, i.e. an agent took it and went silent. Items in review or
+// done keep their last claim but are never stale.
+func IsStale(item *Item, now time.Time) bool {
+	return item.Status == StatusDoing && ClaimState(item, now) == ClaimStale
+}
