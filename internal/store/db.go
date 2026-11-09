@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/CptPhenomeno/kb/internal/core"
 	_ "modernc.org/sqlite" // Pure Go SQLite driver.
 )
 
@@ -93,3 +94,9 @@ type Tx struct {
 }
 
 func itoa(i int) string { return strconv.Itoa(i) }
+
+// Transact runs fn in a transaction, exposing the transaction through the
+// core.Tx interface the service works on.
+func (d *DB) Transact(ctx context.Context, fn func(core.Tx) error) error {
+	return d.Tx(ctx, func(tx *Tx) error { return fn(tx) })
+}
