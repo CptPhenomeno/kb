@@ -2,24 +2,16 @@
 package main
 
 import (
-	"fmt"
-	"io"
+	"context"
 	"os"
+	"os/signal"
 
-	"github.com/CptPhenomeno/kb/internal/buildinfo"
+	"github.com/CptPhenomeno/kb/internal/cli"
 )
 
 func main() {
-	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
-}
-
-// run dispatches the command line and returns the process exit code.
-// It is a temporary entry point until the cobra-based CLI lands in phase 4.
-func run(args []string, stdout, stderr io.Writer) int {
-	if len(args) == 1 && args[0] == "version" {
-		fmt.Fprintln(stdout, buildinfo.String())
-		return 0
-	}
-	fmt.Fprintln(stderr, "usage: kb version")
-	return 1
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	code := cli.Run(ctx, os.Args[1:], cli.DefaultApp())
+	stop()
+	os.Exit(code)
 }

@@ -1,0 +1,125 @@
+{
+  "id": "KB-3",
+  "ref": null,
+  "type": "task",
+  "title": "Validate token in middleware",
+  "description": "",
+  "parent": "KB-2",
+  "status": "doing",
+  "priority": "high",
+  "points": 3,
+  "spec": "",
+  "labels": [
+    "api"
+  ],
+  "links": [],
+  "acceptance": [],
+  "tests": [
+    {
+      "name": "rejects expired token",
+      "state": "failing"
+    },
+    {
+      "name": "accepts valid token",
+      "state": "pending"
+    }
+  ],
+  "tdd_phase": "red",
+  "assignee": "agent-auth",
+  "claim": {
+    "actor": "agent-auth",
+    "expires_at": "2026-11-09T14:17:00Z",
+    "stale": false
+  },
+  "blocked_by": [],
+  "blocks": [
+    "KB-4"
+  ],
+  "relates": [],
+  "duplicates": [],
+  "position": 0,
+  "version": 5,
+  "created_at": "2026-11-09T14:00:00Z",
+  "created_by": "@dev",
+  "updated_at": "2026-11-09T14:02:00Z",
+  "updated_by": "agent-auth",
+  "history": [
+    {
+      "id": 3,
+      "at": "2026-11-09T14:00:00Z",
+      "actor": "@dev",
+      "item": "KB-3",
+      "kind": "created",
+      "data": {
+        "status": "todo",
+        "title": "Validate token in middleware",
+        "type": "task"
+      }
+    },
+    {
+      "id": 7,
+      "at": "2026-11-09T14:00:00Z",
+      "actor": "@dev",
+      "item": "KB-3",
+      "kind": "linked",
+      "data": {
+        "from": "KB-3",
+        "kind": "blocks",
+        "to": "KB-4"
+      }
+    },
+    {
+      "id": 9,
+      "at": "2026-11-09T14:00:00Z",
+      "actor": "agent-auth",
+      "item": "KB-3",
+      "kind": "moved",
+      "data": {
+        "from": "todo",
+        "to": "doing"
+      }
+    },
+    {
+      "id": 10,
+      "at": "2026-11-09T14:00:00Z",
+      "actor": "agent-auth",
+      "item": "KB-3",
+      "kind": "claimed",
+      "data": {
+        "expires_at": "2026-11-09T14:15:00Z"
+      }
+    },
+    {
+      "id": 13,
+      "at": "2026-11-09T14:02:00Z",
+      "actor": "agent-auth",
+      "item": "KB-3",
+      "kind": "phase",
+      "data": {
+        "from": "",
+        "to": "red"
+      }
+    },
+    {
+      "id": 14,
+      "at": "2026-11-09T14:02:00Z",
+      "actor": "agent-auth",
+      "item": "KB-3",
+      "kind": "test",
+      "data": {
+        "name": "rejects expired token",
+        "state": "failing"
+      }
+    },
+    {
+      "id": 15,
+      "at": "2026-11-09T14:02:00Z",
+      "actor": "agent-auth",
+      "item": "KB-3",
+      "kind": "note",
+      "data": {
+        "text": "validation moved into the middleware"
+      }
+    }
+  ]
+}

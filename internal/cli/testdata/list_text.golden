@@ -1,0 +1,4 @@
+KB-1  epic   doing  ▲ medium  -    Authentication                -
+KB-2  story  doing  ▲ medium  5pt  Token login                   -
+KB-3  task   doing  ▲▲ high   3pt  Validate token in middleware  agent-auth
+KB-4  task   todo   ▲ medium  2pt  Token refresh                 -           BLOCKED by KB-3

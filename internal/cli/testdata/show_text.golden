@@ -1,0 +1,28 @@
+KB-3  task  Validate token in middleware
+
+status      doing (In progress)
+priority    ▲▲ high
+points      3pt
+parent      KB-2 Token login
+assignee    agent-auth (claim active, expires 2026-11-09 14:17 UTC)
+spec        -
+labels      api
+links       -
+tdd phase   red
+blocked by  -
+blocks      KB-4
+relates     -
+version     5
+
+tests 0/2 passing
+  1 ✗ rejects expired token (failing)
+  2 ○ accepts valid token (pending)
+
+history
+  2026-11-09 14:00  @dev        created task in todo
+  2026-11-09 14:00  @dev        linked: KB-3 blocks KB-4
+  2026-11-09 14:00  agent-auth  moved todo → doing
+  2026-11-09 14:00  agent-auth  claimed
+  2026-11-09 14:02  agent-auth  phase → red
+  2026-11-09 14:02  agent-auth  test "rejects expired token" → failing
+  2026-11-09 14:02  agent-auth  note: validation moved into the middleware
