@@ -184,11 +184,10 @@ func (b *boardState) reorder(m *Model, up bool) tea.Cmd {
 			index = i
 		}
 	}
-	id, version, actor := it.ID, it.Version, m.opts.Actor
+	item, actor := *it, m.opts.Actor
 	return func() tea.Msg {
-		if _, err := m.be.Reorder(m.ctx, actor, id, index, version); err != nil {
-			return writeMsg{alert: &alertState{title: "REORDER FAILED", headline: id + " was not moved", detail: err.Error(),
-				footer: "The board is reloaded."}}
+		if _, err := m.be.Reorder(m.ctx, actor, item.ID, index, item.Version); err != nil {
+			return writeMsg{alert: m.failure(item, "REORDER FAILED", err)}
 		}
 		return writeMsg{}
 	}

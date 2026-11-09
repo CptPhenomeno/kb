@@ -28,12 +28,10 @@ func (m *Model) acceptKey(key string) tea.Cmd {
 		if a.cursor >= len(it.Acceptance) {
 			return nil
 		}
-		n, done, version, actor := a.cursor+1, !it.Acceptance[a.cursor].Done, it.Version, m.opts.Actor
-		id := it.ID
+		n, done, item, actor := a.cursor+1, !it.Acceptance[a.cursor].Done, *it, m.opts.Actor
 		return func() tea.Msg {
-			if _, err := m.be.SetCriterion(m.ctx, actor, id, n, done, version); err != nil {
-				return writeMsg{alert: &alertState{title: "CHECK FAILED", headline: fmt.Sprintf("criterion %d of %s was not saved", n, id),
-					detail: err.Error(), footer: "The board is reloaded."}}
+			if _, err := m.be.SetCriterion(m.ctx, actor, item.ID, n, done, item.Version); err != nil {
+				return writeMsg{alert: m.failure(item, "CHECK FAILED", err)}
 			}
 			return writeMsg{}
 		}
