@@ -40,3 +40,11 @@ func Run(ctx context.Context, be Backend, opts Options) error {
 	}
 	return err
 }
+
+func (b *serviceBackend) Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error) {
+	return b.svc.Move(ctx, actor, id, to, ifVersion)
+}
+
+func (b *serviceBackend) Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error) {
+	return b.svc.Reorder(ctx, actor, id, index, ifVersion)
+}

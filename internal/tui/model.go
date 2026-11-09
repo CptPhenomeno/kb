@@ -18,6 +18,8 @@ type Backend interface {
 	Board(ctx context.Context) (*core.Snapshot, error)
 	Log(ctx context.Context, f core.LogFilter) ([]core.Event, error)
 	DataVersion(ctx context.Context) (int64, error)
+	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
+	Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error)
 }
 
 // Options configure the TUI.
@@ -68,6 +70,10 @@ type (
 		events []core.Event
 		err    error
 	}
+	// writeMsg reports the outcome of a write; alert explains a failure.
+	writeMsg struct {
+		alert *alertState
+	}
 )
 
 // Model is the Bubble Tea model of the kb TUI.
@@ -98,6 +104,7 @@ type Model struct {
 	th       *theme
 	themeIdx int
 	picker   *pickerState // open theme picker, or nil
+	alert    *alertState  // open alert, or nil
 	notice   string       // shown in the status line until the next key
 }
 
@@ -198,6 +205,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.history = msg.history
 		}
 		m.board.restore(m, prev)
+	case writeMsg:
+		m.alert = msg.alert
+		return m, m.load()
 	case historyMsg:
 		if msg.err == nil && msg.id == m.selectedID() {
 			m.history = msg.events
@@ -221,6 +231,12 @@ func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 	m.notice = ""
 	if key == "ctrl+c" {
 		return tea.Quit
+	}
+	if m.alert != nil {
+		if key == "enter" || key == "esc" {
+			m.alert = nil
+		}
+		return nil
 	}
 	if m.picker != nil {
 		return m.pickerKey(key)
@@ -269,7 +285,11 @@ func (m *Model) selectedID() string { return m.board.selectedID(m) }
 
 // View renders the whole screen.
 func (m *Model) View() tea.View {
-	v := tea.NewView(paint(m.render(), m.th.p.Base, m.width, m.height))
+	content := paint(m.render(), m.th.p.Base, m.width, m.height)
+	if m.alert != nil && m.width >= minWidth && m.height >= minHeight {
+		content = paint(overlay(content, m.renderAlert(), m.width, m.height), m.th.p.Base, m.width, m.height)
+	}
+	v := tea.NewView(content)
 	v.BackgroundColor = m.th.p.Base
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
@@ -418,6 +438,9 @@ func (m *Model) commandBar() []string {
 	hints := append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)
 	if m.picker != nil {
 		hints = pickerKeys
+	}
+	if m.alert != nil {
+		hints = alertKeys
 	}
 	var lines []string
 	line, lineW := "", 0

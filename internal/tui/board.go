@@ -106,6 +106,10 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 		b.row = max(0, b.row-1)
 	case "down":
 		b.row = max(0, min(b.row+1, len(cols[b.col])-1))
+	case "shift+right", "shift+left":
+		return b.move(m, key == "shift+right")
+	case "shift+up", "shift+down":
+		return b.reorder(m, key == "shift+up")
 	case "enter":
 		if id := b.selectedID(m); id != "" {
 			m.detailOpen = true
@@ -123,6 +127,61 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 		return m.loadHistory(b.selectedID(m))
 	}
 	return nil
+}
+
+// move asks the core to move the selected card one column right or left.
+// A refused move opens an alert listing the unmet requirements.
+func (b *boardState) move(m *Model, right bool) tea.Cmd {
+	it := b.selected(m)
+	if it == nil {
+		return nil
+	}
+	to := it.Status - 1
+	if right {
+		to = it.Status + 1
+	}
+	if to < core.StatusBacklog || to > core.StatusDone {
+		return nil
+	}
+	item, actor := *it, m.opts.Actor
+	return func() tea.Msg {
+		_, err := m.be.Move(m.ctx, actor, item.ID, to, item.Version)
+		if err != nil {
+			return writeMsg{alert: m.moveAlert(&item, to, err)}
+		}
+		return writeMsg{}
+	}
+}
+
+// reorder swaps the selected card with its neighbor above or below in the
+// column, as shown on the board.
+func (b *boardState) reorder(m *Model, up bool) tea.Cmd {
+	cols := b.columns(m)
+	shown := cols[b.col]
+	n := b.row + 1
+	if up {
+		n = b.row - 1
+	}
+	if n < 0 || n >= len(shown) {
+		return nil
+	}
+	it, neighbor := shown[b.row], shown[n]
+	// The core orders the whole column, hidden types included: aim at the
+	// neighbor's index in it.
+	index := 0
+	for i, x := range core.Column(m.snap, it.Status) {
+		if x.ID == neighbor.ID {
+			index = i
+		}
+	}
+	id, version, actor := it.ID, it.Version, m.opts.Actor
+	return func() tea.Msg {
+		if _, err := m.be.Reorder(m.ctx, actor, id, index, version); err != nil {
+			return writeMsg{alert: &alertState{title: "REORDER FAILED", headline: id + " was not moved", detail: err.Error(),
+				footer: "The board is reloaded."}}
+		}
+		return writeMsg{}
+	}
 }
 
 // ---- layout ----

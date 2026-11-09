@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"os"
 	"path/filepath"
@@ -46,6 +47,14 @@ func (f *fakeBackend) Log(_ context.Context, flt core.LogFilter) ([]core.Event, 
 }
 
 func (f *fakeBackend) DataVersion(context.Context) (int64, error) { return f.version, nil }
+
+func (f *fakeBackend) Move(context.Context, string, string, core.Status, int) (*core.MoveResult, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) Reorder(context.Context, string, string, int, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
 
 // item builds a board item for the fixtures.
 func item(id string, typ core.Type, status core.Status, parent, title string, opts ...func(*core.Item)) *core.Item {
