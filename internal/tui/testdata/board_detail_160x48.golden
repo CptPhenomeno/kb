@@ -1,34 +1,34 @@
- kb  api-gateway   Board  Tree  Activity   showing task · bug                                                                  12 items  1 agent active  2 stale
+ kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug                                                   12 items  1 agent active  2 stale
 ╭─────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭──────────────────────────────────────────────────────────────╮
-│ Backlog       1 │ │ To do        3 │ │ In progress  2 │ │ Review       1 │ │ Done         1 │ │ KB-4 · task                                        esc close │
+│ Backlog       1 │ │ To do        4 │ │ In progress  4 │ │ Review       1 │ │ Done         1 │ │ KB-4 · task                                        esc close │
 │ ╭─────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ Token refresh                                                │
-│ │ KB-15 ▲ 3pt │ │ │ │ KB-5    ▲▲ │ │ │ │ KB-4    ▲▲ │ │ │ │ KB-3    ▲▲ │ │ │ │ KB-17    · │ │ │                                                              │
-│ │ Load test   │ │ │ │ Expired    │ │ │ │ Token      │ │ │ │ Validate   │ │ │ │ Health     │ │ │ status    In progress                                        │
-│ │ the gatewa… │ │ │ │ token …    │ │ │ │ refresh    │ │ │ │ token in … │ │ │ │ check …    │ │ │ priority  ▲▲ high                                            │
-│ ╰─────────────╯ │ │ │ 0/1        │ │ │ │ ● RED 0/2  │ │ │ │ ● REFACTOR │ │ │ │ 2/2        │ │ │ points    2                                                  │
-│                 │ │ ╰────────────╯ │ │ │ agent-auth │ │ │ │ 3/3        │ │ │ ╰────────────╯ │ │ assignee  agent-auth claim 12m left                          │
-│                 │ │ ╭────────────╮ │ │ ╰────────────╯ │ │ │ agent-auth │ │ │                │ │ parent    KB-2 Token login                                   │
-│                 │ │ │ KB-7    ▲▲ │ │ │ ╭────────────╮ │ │ │ STALE 1h   │ │ │                │ │ spec      SPEC.md#token-refresh                              │
-│                 │ │ │ Key        │ │ │ │ KB-12    ▲ │ │ │ ╰────────────╯ │ │                │ │ tdd phase ● RED                                              │
-│                 │ │ │ storage …  │ │ │ │ Status     │ │ │                │ │                │ │                                                              │
-│                 │ │ ╰────────────╯ │ │ │ code …     │ │ │                │ │                │ │ Exchange a valid refresh token for a new token pair.         │
-│                 │ │ ╭────────────╮ │ │ │ ● GREEN    │ │ │                │ │                │ │                                                              │
-│                 │ │ │ KB-8 ▲ 3pt │ │ │ │ 2/3        │ │ │                │ │                │ │ The old refresh token is revoked on use.                     │
-│                 │ │ │ Key        │ │ │ │ agent-met… │ │ │                │ │                │ │                                                              │
-│                 │ │ │ rotation … │ │ │ │ STALE 22m  │ │ │                │ │                │ │ tests 0/2                                                    │
-│                 │ │ │  BLOCKED … │ │ │ ╰────────────╯ │ │                │ │                │ │ ✗ test a                                                     │
-│                 │ │ ╰────────────╯ │ │                │ │                │ │                │ │ ○ test b                                                     │
-│                 │ │                │ │                │ │                │ │                │ │                                                              │
-│                 │ │                │ │                │ │                │ │                │ │ acceptance 0/2                                               │
-│                 │ │                │ │                │ │                │ │                │ │ [ ] returns a new access + refresh pair                      │
-│                 │ │                │ │                │ │                │ │                │ │ [ ] reused refresh token → 401                               │
-│                 │ │                │ │                │ │                │ │                │ │                                                              │
-│                 │ │                │ │                │ │                │ │                │ │ relations                                                    │
-│                 │ │                │ │                │ │                │ │                │ │ relates   KB-5                                               │
-│                 │ │                │ │                │ │                │ │                │ │                                                              │
-│                 │ │                │ │                │ │                │ │                │ │ history                                                      │
-│                 │ │                │ │                │ │                │ │                │ │ 14:02 agent-auth claimed                                     │
-│                 │ │                │ │                │ │                │ │                │ │ 14:03 agent-auth phase → red                                 │
+│ │ KB-15 ▲ 3pt │ │ │ │ KB-5    ▲▲ │ │ │ │ KB-1     ▲ │ │ │ │ KB-3    ▲▲ │ │ │ │ KB-17    · │ │ │                                                              │
+│ │ Load test   │ │ │ │ Expired    │ │ │ │ Authentica │ │ │ │ Validate   │ │ │ │ Health     │ │ │ status    In progress                                        │
+│ │ the gatewa… │ │ │ │ token …    │ │ │ │ tion       │ │ │ │ token in … │ │ │ │ check …    │ │ │ priority  ▲▲ high                                            │
+│ ╰─────────────╯ │ │ │ 0/1        │ │ │ │ 0/1 done   │ │ │ │ ● REFACTOR │ │ │ │ 2/2        │ │ │ points    2                                                  │
+│                 │ │ ╰────────────╯ │ │ ╰────────────╯ │ │ │ 3/3        │ │ │ ╰────────────╯ │ │ assignee  agent-auth claim 12m left                          │
+│                 │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ │ agent-auth │ │ │                │ │ parent    KB-2 Token login                                   │
+│                 │ │ │ KB-6     ▲ │ │ │ │ KB-2     ▲ │ │ │ │ STALE 1h   │ │ │                │ │ spec      SPEC.md#token-refresh                              │
+│                 │ │ │ API keys   │ │ │ │ Token      │ │ │ ╰────────────╯ │ │                │ │ tdd phase ● RED                                              │
+│                 │ │ │ per tenant │ │ │ │ login      │ │ │                │ │                │ │                                                              │
+│                 │ │ │ 0/2 done   │ │ │ │ 0/3 done   │ │ │                │ │                │ │ Exchange a valid refresh token for a new token pair.         │
+│                 │ │ ╰────────────╯ │ │ ╰────────────╯ │ │                │ │                │ │                                                              │
+│                 │ │ ╭────────────╮ │ │ ╭────────────╮ │ │                │ │                │ │ The old refresh token is revoked on use.                     │
+│                 │ │ │ KB-7    ▲▲ │ │ │ │ KB-4    ▲▲ │ │ │                │ │                │ │                                                              │
+│                 │ │ │ Key        │ │ │ │ Token      │ │ │                │ │                │ │ tests 0/2                                                    │
+│                 │ │ │ storage …  │ │ │ │ refresh    │ │ │                │ │                │ │ ✗ test a                                                     │
+│                 │ │ ╰────────────╯ │ │ │ ● RED 0/2  │ │ │                │ │                │ │ ○ test b                                                     │
+│                 │ │ ╭────────────╮ │ │ │ agent-auth │ │ │                │ │                │ │                                                              │
+│                 │ │ │ KB-8 ▲ 3pt │ │ │ ╰────────────╯ │ │                │ │                │ │ acceptance 0/2                                               │
+│                 │ │ │ Key        │ │ │ ╭────────────╮ │ │                │ │                │ │ [ ] returns a new access + refresh pair                      │
+│                 │ │ │ rotation … │ │ │ │ KB-12    ▲ │ │ │                │ │                │ │ [ ] reused refresh token → 401                               │
+│                 │ │ │  BLOCKED … │ │ │ │ Status     │ │ │                │ │                │ │                                                              │
+│                 │ │ ╰────────────╯ │ │ │ code …     │ │ │                │ │                │ │ relations                                                    │
+│                 │ │                │ │ │ ● GREEN    │ │ │                │ │                │ │ relates   KB-5                                               │
+│                 │ │                │ │ │ 2/3        │ │ │                │ │                │ │                                                              │
+│                 │ │                │ │ │ agent-met… │ │ │                │ │                │ │ history                                                      │
+│                 │ │                │ │ │ STALE 22m  │ │ │                │ │                │ │ 14:02 agent-auth claimed                                     │
+│                 │ │                │ │ ╰────────────╯ │ │                │ │                │ │ 14:03 agent-auth phase → red                                 │
 │                 │ │                │ │                │ │                │ │                │ │ 14:04 agent-auth test "refresh rotates the token" → failing  │
 │                 │ │                │ │                │ │                │ │                │ │                                                              │
 │                 │ │                │ │                │ │                │ │                │ │                                                              │

@@ -29,7 +29,7 @@ func TestHistoryLinesWrapInsteadOfTruncating(t *testing.T) {
 	be.events = append(be.events, core.Event{ID: 9, At: testNow, Actor: "agent-auth", Item: "KB-4",
 		Kind: core.EventNote, Data: map[string]any{"text": longNote}})
 	m := newModel(t, be, 140, 60)
-	press(t, m, "right", "right", "enter")
+	press(t, m, "right", "right", "down", "down", "enter") // KB-4
 	s := screen(m)
 	if !strings.Contains(s, "ZEBRA") {
 		t.Fatalf("the end of a long history entry is cut:\n%s", s)
@@ -45,7 +45,7 @@ func TestTestsAndCriteriaWrap(t *testing.T) {
 	it.Tests = append(it.Tests, core.Test{Name: "refresh keeps working when the clock of the client is skewed by more than five minutes QUAIL"})
 	it.Acceptance = append(it.Acceptance, core.Criterion{Text: "a reused refresh token revokes the whole token family and logs a security event OTTER"})
 	m := newModel(t, be, 140, 60)
-	press(t, m, "right", "right", "enter")
+	press(t, m, "right", "right", "down", "down", "enter") // KB-4
 	s := screen(m)
 	for _, w := range []string{"QUAIL", "OTTER"} {
 		if !strings.Contains(s, w) {

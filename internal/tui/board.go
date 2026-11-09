@@ -15,14 +15,13 @@ import (
 type boardState struct {
 	col, row int
 	scroll   [5]int
-	allTypes bool // false: only tasks and bugs (SPEC.md §8.1)
-}
 
-func (b *boardState) filterLabel() string {
-	if b.allTypes {
-		return "showing all types"
-	}
-	return "showing task · bug"
+	types        map[core.Type]bool // types shown on the board
+	onlyBlocked  bool
+	onlyStale    bool
+	query        string // search text
+	searching    bool   // typing into the search
+	filterCursor int    // selected row of the filter popup
 }
 
 // columns returns the cards of every column in board order.
@@ -33,7 +32,7 @@ func (b *boardState) columns(m *Model) [5][]*core.Item {
 	}
 	for i, st := range core.Statuses() {
 		for _, it := range core.Column(m.snap, st) {
-			if b.allTypes || it.Type == core.TypeTask || it.Type == core.TypeBug {
+			if b.matches(m, it) {
 				cols[i] = append(cols[i], it)
 			}
 		}
@@ -110,6 +109,12 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 		return b.move(m, key == "shift+right")
 	case "shift+up", "shift+down":
 		return b.reorder(m, key == "shift+up")
+	case "f":
+		m.filterOpen = true
+		return nil
+	case "/":
+		b.searching = true
+		return nil
 	case "enter":
 		if id := b.selectedID(m); id != "" {
 			m.detailOpen = true
@@ -340,6 +345,11 @@ func cardLines(m *Model, it *core.Item, width int) []string {
 	var parts []string
 	if it.Phase != core.PhaseNone {
 		parts = append(parts, m.th.fg(m.th.phaseColor[it.Phase]).Render("● "+strings.ToUpper(it.Phase.String())))
+	}
+	if it.Type.IsParentType() {
+		if done, total := core.Progress(m.snap, it); total > 0 {
+			parts = append(parts, m.th.muted.Render(fmt.Sprintf("%d/%d done", done, total)))
+		}
 	}
 	if len(it.Tests) > 0 {
 		parts = append(parts, m.th.muted.Render(fmt.Sprintf("%d/%d", it.PassingTests(), len(it.Tests))))

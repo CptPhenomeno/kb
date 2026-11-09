@@ -202,6 +202,10 @@ func keyMsg(name string) tea.KeyPressMsg {
 		k.Code = tea.KeyEnter
 	case "esc":
 		k.Code = tea.KeyEscape
+	case "backspace":
+		k.Code = tea.KeyBackspace
+	case "space":
+		k.Code, k.Text = tea.KeySpace, " "
 	default:
 		k.Code = []rune(base)[0]
 		if k.Mod == 0 {

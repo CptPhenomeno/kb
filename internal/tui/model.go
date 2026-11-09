@@ -101,11 +101,12 @@ type Model struct {
 	history    []core.Event
 	md         *markdown
 
-	th       *theme
-	themeIdx int
-	picker   *pickerState // open theme picker, or nil
-	alert    *alertState  // open alert, or nil
-	notice   string       // shown in the status line until the next key
+	th         *theme
+	themeIdx   int
+	picker     *pickerState // open theme picker, or nil
+	alert      *alertState  // open alert, or nil
+	filterOpen bool         // filter popup open
+	notice     string       // shown in the status line until the next key
 }
 
 // New returns the model; run it with Run or a tea.Program.
@@ -125,6 +126,7 @@ func New(ctx context.Context, be Backend, opts Options) *Model {
 		}
 	}
 	m.th = newTheme(Themes[m.themeIdx])
+	m.board.types = defaultTypes()
 	return m
 }
 
@@ -241,6 +243,12 @@ func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 	if m.picker != nil {
 		return m.pickerKey(key)
 	}
+	if m.filterOpen {
+		return m.filterKey(key)
+	}
+	if m.board.searching && m.view == viewBoard {
+		return m.searchKey(k)
+	}
 	switch key {
 	case "ctrl+c", "q":
 		return tea.Quit
@@ -293,6 +301,8 @@ func (m *Model) View() tea.View {
 			popup = m.renderAlert()
 		case m.picker != nil:
 			popup = m.renderPicker()
+		case m.filterOpen:
+			popup = m.renderFilter()
 		}
 		if popup != "" {
 			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
@@ -387,6 +397,10 @@ func (m *Model) claimCounts() (agents, stale int) {
 
 // statusLine shows the latest event.
 func (m *Model) statusLine() string {
+	if m.board.searching && m.view == viewBoard {
+		return m.th.fg(m.th.p.Accent).Render("/ ") + m.th.bright.Render(m.board.query) + m.th.fg(m.th.p.Accent).Render("▌") +
+			"  " + m.th.muted.Render(plural(m.board.shownCount(m), "match", "matches"))
+	}
 	if m.notice != "" {
 		return truncate(m.th.fg(m.th.p.Accent).Render(m.notice), m.width)
 	}
@@ -421,8 +435,8 @@ var viewKeys = map[viewKind][]keyHint{
 		{"d", "delete", "delete the selected item"},
 		{"a", "assign", "claim or release the selected item"},
 		{"l", "link", "manage relations"},
-		{"/", "search", "search by ID or title"},
-		{"f", "filter", "filter by type, label, actor, blocked or stale"},
+		{"/", "search", "search by ID, title, label or assignee"},
+		{"f", "filter", "choose the types shown, or only blocked or stale items"},
 	},
 	viewTree: {
 		{"↑ ↓", "navigate", "move between rows"},
@@ -448,8 +462,13 @@ func (m *Model) commandBar() []string {
 	if m.picker != nil {
 		hints = pickerKeys
 	}
-	if m.alert != nil {
+	switch {
+	case m.alert != nil:
 		hints = alertKeys
+	case m.filterOpen:
+		hints = filterKeys
+	case m.board.searching && m.view == viewBoard:
+		hints = searchKeys
 	}
 	var lines []string
 	line, lineW := "", 0

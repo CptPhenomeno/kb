@@ -138,15 +138,15 @@ func TestBoardSnapshot(t *testing.T) {
 	golden(t, "board_160x48", screen(newModel(t, sampleBoard(), 160, 48)))
 }
 
-func TestBoardHidesEpicStorySubtask(t *testing.T) {
+func TestBoardShowsEpicsAndStoriesHidesSubtasks(t *testing.T) {
 	s := screen(newModel(t, sampleBoard(), 160, 48))
-	for _, hidden := range []string{"Authentication", "API keys per tenant", "Bounded route label"} {
-		if strings.Contains(s, hidden) {
-			t.Errorf("board shows %q, which is not a task or bug", hidden)
+	for _, shown := range []string{"Authentication", "API keys per tenant", "Token login"} {
+		if !strings.Contains(s, shown) {
+			t.Errorf("board does not show %q", shown)
 		}
 	}
-	if !strings.Contains(s, "showing task · bug") {
-		t.Error("header does not say which types are shown")
+	if strings.Contains(s, "Bounded route label") {
+		t.Error("board shows a subtask by default")
 	}
 }
 
@@ -213,9 +213,9 @@ func TestArrowNavigation(t *testing.T) {
 		t.Fatalf("initial selection = %s, want KB-15 (first card of the first column)", got)
 	}
 	steps := []struct{ key, want string }{
-		{"right", "KB-5"}, {"down", "KB-7"}, {"down", "KB-8"}, {"down", "KB-8"},
+		{"right", "KB-5"}, {"down", "KB-6"}, {"down", "KB-7"}, {"down", "KB-8"}, {"down", "KB-8"},
 		// Moving across columns keeps the row, clamped to the column length.
-		{"right", "KB-12"}, {"up", "KB-4"}, {"up", "KB-4"}, {"left", "KB-5"},
+		{"right", "KB-12"}, {"up", "KB-4"}, {"up", "KB-2"}, {"left", "KB-6"},
 	}
 	for _, s := range steps {
 		press(t, m, s.key)
@@ -243,7 +243,7 @@ func TestNavigationSkipsEmptyColumns(t *testing.T) {
 
 func TestDetailOpensAndCloses(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
-	press(t, m, "right", "right", "enter") // KB-4
+	press(t, m, "right", "right", "down", "down", "enter") // KB-4 // KB-4
 	s := screen(m)
 	for _, want := range []string{"Token refresh", "history", "refresh rotates the token", "relates", "KB-5"} {
 		if !strings.Contains(s, want) {
@@ -258,7 +258,7 @@ func TestDetailOpensAndCloses(t *testing.T) {
 
 func TestDetailSnapshot(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
-	press(t, m, "right", "right", "enter")
+	press(t, m, "right", "right", "down", "down", "enter") // KB-4
 	golden(t, "board_detail_160x48", screen(m))
 }
 
