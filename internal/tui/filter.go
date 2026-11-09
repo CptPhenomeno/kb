@@ -159,15 +159,15 @@ func (m *Model) renderFilter() string {
 }
 
 var filterKeys = []keyHint{
-	{"↑ ↓", "move", "move between filters"},
-	{"space", "toggle", "turn the filter on or off"},
-	{"esc", "close", "close the filter popup"},
+	{"↑ ↓", "move", "move between filters", false},
+	{"space", "toggle", "turn the filter on or off", false},
+	{"esc", "close", "close the filter popup", false},
 }
 
 var searchKeys = []keyHint{
-	{"type", "search", "search by ID, title, label or assignee"},
-	{"enter", "keep", "keep the search and go back to the board"},
-	{"esc", "clear", "clear the search"},
+	{"type", "search", "search by ID, title, label or assignee", false},
+	{"enter", "keep", "keep the search and go back to the board", false},
+	{"esc", "clear", "clear the search", false},
 }
 
 // shownCount is the number of cards on the board after filters.

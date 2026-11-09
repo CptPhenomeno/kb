@@ -57,9 +57,9 @@ func (m *Model) pickerKey(key string) tea.Cmd {
 }
 
 var pickerKeys = []keyHint{
-	{"↑ ↓", "preview", "preview the previous or next theme"},
-	{"enter", "apply", "use this theme and save it for your user"},
-	{"esc", "cancel", "go back to the previous theme"},
+	{"↑ ↓", "preview", "preview the previous or next theme", false},
+	{"enter", "apply", "use this theme and save it for your user", false},
+	{"esc", "cancel", "go back to the previous theme", false},
 }
 
 // renderPicker renders the theme list as a popup over the board, with

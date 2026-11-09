@@ -413,52 +413,56 @@ func (m *Model) statusLine() string {
 	return truncate(line, m.width)
 }
 
-// keyHint is one entry of the command bar and of the help.
-type keyHint struct{ key, label, help string }
+// keyHint is one entry of the command bar and of the help. soon marks a
+// key whose feature has not landed yet: it is not advertised.
+type keyHint struct {
+	key, label, help string
+	soon             bool
+}
 
 var globalKeys = []keyHint{
-	{"tab", "next view", "switch to the next view (shift+tab: previous)"},
-	{"ctrl+p", "commands", "open the command palette (ctrl+shift+p too, where the terminal lets it through)"},
-	{"t", "theme", "choose the color theme, with a live preview (saved for your user)"},
-	{"?", "help", "show or hide this help"},
-	{"q", "quit", "quit kb"},
+	{"tab", "next view", "switch to the next view (shift+tab: previous)", false},
+	{"ctrl+p", "commands", "open the command palette (ctrl+shift+p too, where the terminal lets it through)", true},
+	{"t", "theme", "choose the color theme, with a live preview (saved for your user)", false},
+	{"?", "help", "show or hide this help", false},
+	{"q", "quit", "quit kb", false},
 }
 
 var viewKeys = map[viewKind][]keyHint{
 	viewBoard: {
-		{"← → ↑ ↓", "navigate", "move between columns and cards"},
-		{"shift ← →", "move", "move to the previous or next column"},
-		{"shift ↑ ↓", "reorder", "reorder the card in its column"},
-		{"enter", "details", "open the detail panel (esc closes it)"},
-		{"n", "new", "create an item"},
-		{"e", "edit", "edit the selected item"},
-		{"d", "delete", "delete the selected item"},
-		{"a", "assign", "claim or release the selected item"},
-		{"l", "link", "manage relations"},
-		{"/", "search", "search by ID, title, label or assignee"},
-		{"f", "filter", "choose the types shown, or only blocked or stale items"},
+		{"← → ↑ ↓", "navigate", "move between columns and cards", false},
+		{"shift ← →", "move", "move to the previous or next column", false},
+		{"shift ↑ ↓", "reorder", "reorder the card in its column", false},
+		{"enter", "details", "open the detail panel (esc closes it)", false},
+		{"n", "new", "create an item", true},
+		{"e", "edit", "edit the selected item", true},
+		{"d", "delete", "delete the selected item", true},
+		{"a", "assign", "claim or release the selected item", true},
+		{"l", "link", "manage relations", true},
+		{"/", "search", "search by ID, title, label or assignee", false},
+		{"f", "filter", "choose the types shown, or only blocked or stale items", false},
 	},
 	viewTree: {
-		{"↑ ↓", "navigate", "move between rows"},
-		{"← →", "collapse / expand", "collapse or expand a branch"},
-		{"enter", "details", "open the detail panel"},
-		{"n", "new child", "create a child of the selected item"},
-		{"e", "edit", "edit the selected item"},
-		{"/", "search", "search by ID or title"},
-		{"f", "filter", "filter the tree"},
+		{"↑ ↓", "navigate", "move between rows", true},
+		{"← →", "collapse / expand", "collapse or expand a branch", true},
+		{"enter", "details", "open the detail panel", true},
+		{"n", "new child", "create a child of the selected item", true},
+		{"e", "edit", "edit the selected item", true},
+		{"/", "search", "search by ID or title", true},
+		{"f", "filter", "filter the tree", true},
 	},
 	viewActivity: {
-		{"↑ ↓", "select actor", "select an actor"},
-		{"enter", "only this actor", "show only the selected actor's events"},
-		{"esc", "all actors", "show every actor's events"},
-		{"o", "open item", "open the item the actor works on"},
-		{"a", "release claim", "release the actor's claim (useful when stale)"},
+		{"↑ ↓", "select actor", "select an actor", true},
+		{"enter", "only this actor", "show only the selected actor's events", true},
+		{"esc", "all actors", "show every actor's events", true},
+		{"o", "open item", "open the item the actor works on", true},
+		{"a", "release claim", "release the actor's claim (useful when stale)", true},
 	},
 }
 
 // commandBar renders the key hints of the current view, wrapped to width.
 func (m *Model) commandBar() []string {
-	hints := append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)
+	hints := ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...))
 	if m.picker != nil {
 		hints = pickerKeys
 	}
@@ -492,10 +496,21 @@ func (m *Model) commandBar() []string {
 func (m *Model) renderHelp(height int) string {
 	var b strings.Builder
 	b.WriteString(m.th.bright.Render("Keys") + m.th.muted.Render("  ("+m.view.String()+" view; ? or esc closes)") + "\n\n")
-	for _, h := range append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...) {
+	for _, h := range ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)) {
 		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
 	}
 	return b.String()
+}
+
+// ready drops the hints of features that have not landed yet.
+func ready(hints []keyHint) []keyHint {
+	out := hints[:0]
+	for _, h := range hints {
+		if !h.soon {
+			out = append(out, h)
+		}
+	}
+	return out
 }
 
 func plural(n int, one, many string) string {

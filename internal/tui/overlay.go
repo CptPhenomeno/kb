@@ -69,6 +69,6 @@ func (m *Model) renderAlert() string {
 	return m.popupBox(lines, width, m.th.warn)
 }
 
-var alertKeys = []keyHint{{"enter", "ok", "close the alert"}, {"esc", "close", "close the alert"}}
+var alertKeys = []keyHint{{"enter", "ok", "close the alert", false}, {"esc", "close", "close the alert", false}}
 
 func asRule(err error, target **core.RuleError) bool { return errors.As(err, target) }

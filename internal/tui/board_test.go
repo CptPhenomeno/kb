@@ -62,9 +62,10 @@ func TestCommandBarShowsViewKeys(t *testing.T) {
 		view viewKind
 		want []string
 	}{
-		{viewBoard, []string{"← → ↑ ↓ navigate", "shift ← → move", "enter details", "ctrl+p commands", "q quit"}},
-		{viewTree, []string{"← → collapse / expand", "n new child"}},
-		{viewActivity, []string{"enter only this actor", "a release claim"}},
+		{viewBoard, []string{"← → ↑ ↓ navigate", "shift ← → move", "shift ↑ ↓ reorder", "enter details", "/ search", "f filter", "t theme", "q quit"}},
+		// Tree and Activity land in phase 8: only the global keys work there.
+		{viewTree, []string{"tab next view", "q quit"}},
+		{viewActivity, []string{"tab next view", "q quit"}},
 	}
 	for _, c := range cases {
 		m.view = c.view
