@@ -124,3 +124,59 @@ func TestLinkCycleShowsAlert(t *testing.T) {
 		t.Fatalf("a cyclic link must be refused with an alert:\n%s", s)
 	}
 }
+
+func TestLinksShowRelationTitleAndStatus(t *testing.T) {
+	m, svc := newLiveModel(t)
+	if err := svc.Link(context.Background(), "@dev", core.Relation{Kind: core.RelBlocks, From: "KB-3", To: "KB-1"}); err != nil {
+		t.Fatal(err)
+	}
+	reload(t, m)
+	selectID(t, m, "KB-1")
+	press(t, m, "l")
+	var row string
+	for _, line := range strings.Split(screen(m), "\n") {
+		if strings.Contains(line, "blocked by") {
+			row = line
+		}
+	}
+	for _, want := range []string{"KB-3", "Gamma", "To do"} {
+		if !strings.Contains(row, want) {
+			t.Errorf("the link row lacks %q: %q", want, row)
+		}
+	}
+}
+
+func TestEnterGoesToTheLinkedItem(t *testing.T) {
+	m, svc := newLiveModel(t)
+	if err := svc.Link(context.Background(), "@dev", core.Relation{Kind: core.RelRelates, From: "KB-1", To: "KB-3"}); err != nil {
+		t.Fatal(err)
+	}
+	reload(t, m)
+	selectID(t, m, "KB-1")
+	press(t, m, "l", "enter")
+	if m.links != nil || m.selectedID() != "KB-3" {
+		t.Fatalf("enter: popup %v, selected %s, want KB-3", m.links, m.selectedID())
+	}
+}
+
+func TestALinkedItemHiddenByFiltersIsShown(t *testing.T) {
+	m, svc := newStoryModel(t) // KB-1 story, KB-2 done task under it, KB-3 task
+	ctx := context.Background()
+	sub, err := svc.Create(ctx, "@dev", core.Item{Type: core.TypeSubtask, Title: "Hidden subtask", Parent: "KB-3"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.Link(ctx, "@dev", core.Relation{Kind: core.RelRelates, From: "KB-3", To: sub.ID}); err != nil {
+		t.Fatal(err)
+	}
+	reload(t, m)
+	press(t, m, "/", "O", "t", "h", "enter") // search shows only KB-3 "Other"
+	selectID(t, m, "KB-3")
+	press(t, m, "l", "enter")
+	if m.selectedID() != sub.ID {
+		t.Fatalf("selected %s, want the subtask %s", m.selectedID(), sub.ID)
+	}
+	if m.board.query != "" || !m.board.types[core.TypeSubtask] {
+		t.Fatalf("filters still hide the item: query %q, subtasks %v", m.board.query, m.board.types[core.TypeSubtask])
+	}
+}

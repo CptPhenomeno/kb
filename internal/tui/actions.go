@@ -195,6 +195,11 @@ func (m *Model) linksKey(key, text string) tea.Cmd {
 		l.cursor = min(max(0, len(rows)-1), l.cursor+1)
 	case "a":
 		l.adding = true
+	case "enter":
+		if l.cursor < len(rows) {
+			m.links = nil
+			return m.goTo(rows[l.cursor].other)
+		}
 	case "x", "delete", "backspace":
 		if l.cursor < len(rows) {
 			rel, item := rows[l.cursor].rel, *m.snap.Get(l.id)
@@ -225,15 +230,17 @@ func (m *Model) renderLinks() string {
 		lines = append(lines, m.th.muted.Render("no links yet"))
 	}
 	for i, r := range rows {
-		other := r.other
-		if o := m.snap.Get(r.other); o != nil {
-			other += " " + o.Title
-		}
 		marker, style := "  ", m.th.text
 		if i == l.cursor && !l.adding {
 			marker, style = m.th.fg(m.th.p.Accent).Render("› "), m.th.fg(m.th.p.Accent).Bold(true)
 		}
-		lines = append(lines, marker+m.th.muted.Render(fmt.Sprintf("%-14s", r.label))+style.Render(truncate(other, iw-16)))
+		left := marker + m.th.muted.Render(fmt.Sprintf("%-14s", r.label)) + style.Render(r.other)
+		right := ""
+		if o := m.snap.Get(r.other); o != nil {
+			left += " " + style.Render(o.Title)
+			right = m.th.fg(m.th.statusColor[o.Status]).Render(o.Status.Label())
+		}
+		lines = append(lines, spread(left, right, iw))
 	}
 	lines = append(lines, "")
 	if l.adding {
@@ -241,13 +248,14 @@ func (m *Model) renderLinks() string {
 			m.th.bright.Render(l.target)+m.th.fg(m.th.p.Accent).Render("▌"),
 			m.th.muted.Render("← → kind · type an ID or ref · enter adds · esc cancels"))
 	} else {
-		lines = append(lines, m.th.muted.Render("a adds a link · x removes the selected one"))
+		lines = append(lines, m.th.muted.Render("enter goes to the item · a adds a link · x removes the selected one"))
 	}
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
 var linksKeys = []keyHint{
 	{"↑ ↓", "choose", "choose a link", false},
+	{"enter", "go to", "go to the linked item", false},
 	{"a", "add", "add a link", false},
 	{"x", "remove", "remove the selected link", false},
 	{"esc", "close", "close the popup", false},
@@ -258,4 +266,26 @@ var linkAddKeys = []keyHint{
 	{"type", "target", "type the ID or ref of the other item", false},
 	{"enter", "add", "add the link", false},
 	{"esc", "cancel", "go back to the list", false},
+}
+
+// goTo selects an item on the board, switching to the Board view and
+// relaxing the filters and the search when they hide it.
+func (m *Model) goTo(id string) tea.Cmd {
+	it := m.snap.Get(id)
+	if it == nil {
+		return nil
+	}
+	m.view = viewBoard
+	b := &m.board
+	if !b.matches(m, it) {
+		b.types[it.Type] = true
+		b.query, b.searching = "", false
+		b.onlyBlocked, b.onlyStale = false, false
+	}
+	b.restore(m, id)
+	if m.detailOpen {
+		m.history = nil
+		return m.loadHistory(id)
+	}
+	return nil
 }
