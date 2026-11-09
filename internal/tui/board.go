@@ -112,6 +112,21 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 	case "f":
 		m.filterOpen = true
 		return nil
+	case "p":
+		show := !(b.types[core.TypeEpic] || b.types[core.TypeStory])
+		prev := b.selectedID(m)
+		b.types[core.TypeEpic], b.types[core.TypeStory] = show, show
+		b.restore(m, prev)
+		m.notice = "epics and stories hidden"
+		if show {
+			m.notice = "epics and stories shown"
+		}
+		if m.opts.SaveShowParents != nil {
+			if err := m.opts.SaveShowParents(show); err != nil {
+				m.notice += " (could not save: " + err.Error() + ")"
+			}
+		}
+		return nil
 	case "c":
 		if id := b.selectedID(m); id != "" {
 			m.accept = &acceptState{id: id}

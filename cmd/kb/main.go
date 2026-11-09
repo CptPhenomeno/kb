@@ -16,10 +16,11 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	app := cli.DefaultApp()
 	app.LaunchTUI = func(ctx context.Context, s *cli.Session) error {
-		theme := tui.ResolveTheme(os.Getenv("KB_THEME"), store.LoadUserTheme(), s.Config.Theme)
+		prefs := store.LoadUserPrefs()
+		theme := tui.ResolveTheme(os.Getenv("KB_THEME"), prefs.Theme, s.Config.Theme)
 		return tui.Run(ctx, tui.NewBackend(s.Service, s.DB), tui.Options{
 			Project: filepath.Base(s.Root), Actor: s.Actor, Now: s.Service.Now, Theme: theme,
-			SaveTheme: store.SaveUserTheme,
+			SaveTheme: store.SaveUserTheme, ShowParents: prefs.ShowParents, SaveShowParents: store.SaveUserShowParents,
 		})
 	}
 	code := cli.Run(ctx, os.Args[1:], app)

@@ -1,8 +1,11 @@
 package tui
 
 import (
+	"context"
 	"strings"
 	"testing"
+
+	"github.com/CptPhenomeno/kb/internal/core"
 )
 
 func TestSearchIncremental(t *testing.T) {
@@ -79,5 +82,36 @@ func TestFiltersShownInHeader(t *testing.T) {
 		if !strings.Contains(header, want) {
 			t.Errorf("header lacks %q: %s", want, header)
 		}
+	}
+}
+
+func TestPHidesAndShowsEpicsAndStories(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "p")
+	s := screen(m)
+	if strings.Contains(s, "Authentication") || strings.Contains(s, "API keys per tenant") {
+		t.Fatal("p did not hide epics and stories")
+	}
+	if header := strings.Split(s, "\n")[0]; !strings.Contains(header, "showing task · bug") {
+		t.Fatalf("header after p: %s", header)
+	}
+	press(t, m, "p")
+	if !strings.Contains(screen(m), "Authentication") {
+		t.Fatal("p again did not show epics and stories")
+	}
+}
+
+func TestTheParentsChoiceIsSavedForTheUser(t *testing.T) {
+	var saved []bool
+	m := newModel(t, sampleBoard(), 160, 48)
+	m.opts.SaveShowParents = func(show bool) error { saved = append(saved, show); return nil }
+	press(t, m, "p", "p")
+	if len(saved) != 2 || saved[0] || !saved[1] {
+		t.Fatalf("saved = %v, want [false true]", saved)
+	}
+	hidden := false
+	m2 := New(context.Background(), sampleBoard(), Options{ShowParents: &hidden})
+	if m2.board.types[core.TypeEpic] || m2.board.types[core.TypeStory] {
+		t.Fatal("a saved 'hide' choice is not applied at start-up")
 	}
 }

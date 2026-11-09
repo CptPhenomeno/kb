@@ -1,7 +1,7 @@
 package store
 
 import (
-	"fmt"
+	"bytes"
 	"os"
 	"path/filepath"
 
@@ -12,6 +12,12 @@ import (
 // platform's user config directory): they are personal, unlike the
 // versioned .kanban/config.toml.
 
+// UserPrefs are the personal preferences of the TUI user.
+type UserPrefs struct {
+	Theme       string `toml:"theme,omitempty"`
+	ShowParents *bool  `toml:"show_parents,omitempty"` // epics and stories on the board
+}
+
 func userConfigPath() (string, error) {
 	dir, err := os.UserConfigDir()
 	if err != nil {
@@ -20,23 +26,18 @@ func userConfigPath() (string, error) {
 	return filepath.Join(dir, "kb", "config.toml"), nil
 }
 
-// LoadUserTheme returns the theme saved in the user preferences, or "".
-func LoadUserTheme() string {
-	path, err := userConfigPath()
-	if err != nil {
-		return ""
+// LoadUserPrefs reads the user preferences; missing or unreadable
+// preferences are empty.
+func LoadUserPrefs() UserPrefs {
+	var p UserPrefs
+	if path, err := userConfigPath(); err == nil {
+		_, _ = toml.DecodeFile(path, &p)
 	}
-	var prefs struct {
-		Theme string `toml:"theme"`
-	}
-	if _, err := toml.DecodeFile(path, &prefs); err != nil {
-		return ""
-	}
-	return prefs.Theme
+	return p
 }
 
-// SaveUserTheme stores the theme in the user preferences.
-func SaveUserTheme(name string) error {
+// SaveUserPrefs writes the user preferences.
+func SaveUserPrefs(p UserPrefs) error {
 	path, err := userConfigPath()
 	if err != nil {
 		return err
@@ -44,6 +45,28 @@ func SaveUserTheme(name string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	body := fmt.Sprintf("# kb user preferences (not tied to a project).\ntheme = %q\n", name)
-	return os.WriteFile(path, []byte(body), 0o644)
+	var buf bytes.Buffer
+	buf.WriteString("# kb user preferences (not tied to a project).\n")
+	if err := toml.NewEncoder(&buf).Encode(p); err != nil {
+		return err
+	}
+	return os.WriteFile(path, buf.Bytes(), 0o644)
+}
+
+// LoadUserTheme returns the theme saved in the user preferences, or "".
+func LoadUserTheme() string { return LoadUserPrefs().Theme }
+
+// SaveUserTheme stores the theme, keeping the other preferences.
+func SaveUserTheme(name string) error {
+	p := LoadUserPrefs()
+	p.Theme = name
+	return SaveUserPrefs(p)
+}
+
+// SaveUserShowParents stores whether epics and stories are shown on the
+// board, keeping the other preferences.
+func SaveUserShowParents(show bool) error {
+	p := LoadUserPrefs()
+	p.ShowParents = &show
+	return SaveUserPrefs(p)
 }

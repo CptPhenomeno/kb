@@ -25,6 +25,7 @@ var actions = []action{
 	{"Open details", "enter", boardOnly},
 	{"Search", "/", boardOnly},
 	{"Filter", "f", boardOnly},
+	{"Show or hide epics and stories", "p", boardOnly},
 	{"Check acceptance criteria", "c", boardOnly},
 	{"Create item", "n", boardOnly},
 	{"Edit item", "e", boardOnly},

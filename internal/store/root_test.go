@@ -156,6 +156,29 @@ func TestUserConfigThemeRoundTrip(t *testing.T) {
 	}
 }
 
+func TestUserPrefsKeepEachOther(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	if LoadUserPrefs().ShowParents != nil {
+		t.Fatal("show_parents must be unset without a user config")
+	}
+	if err := SaveUserShowParents(false); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveUserTheme("nord"); err != nil {
+		t.Fatal(err)
+	}
+	p := LoadUserPrefs()
+	if p.Theme != "nord" || p.ShowParents == nil || *p.ShowParents {
+		t.Fatalf("prefs = %+v, want theme nord and show_parents false", p)
+	}
+	if err := SaveUserShowParents(true); err != nil {
+		t.Fatal(err)
+	}
+	if p := LoadUserPrefs(); p.Theme != "nord" || !*p.ShowParents {
+		t.Fatalf("prefs = %+v, want theme kept and show_parents true", p)
+	}
+}
+
 func TestConfigInvalidTTL(t *testing.T) {
 	for _, body := range []string{`claim_ttl = "soon"`, `claim_ttl = "-5m"`, `claim_ttl = "0s"`} {
 		path := filepath.Join(t.TempDir(), "config.toml")

@@ -39,6 +39,11 @@ type Options struct {
 	Loc     *time.Location   // Time zone of the times shown; nil means local.
 	// SaveTheme stores the theme chosen in the picker; nil disables saving.
 	SaveTheme func(name string) error
+	// ShowParents is the saved choice of showing epics and stories; nil
+	// means the default (shown).
+	ShowParents *bool
+	// SaveShowParents stores the p toggle; nil disables saving.
+	SaveShowParents func(show bool) error
 }
 
 type viewKind int
@@ -143,6 +148,9 @@ func New(ctx context.Context, be Backend, opts Options) *Model {
 	}
 	m.th = newTheme(Themes[m.themeIdx])
 	m.board.types = defaultTypes()
+	if opts.ShowParents != nil && !*opts.ShowParents {
+		m.board.types[core.TypeEpic], m.board.types[core.TypeStory] = false, false
+	}
 	return m
 }
 
@@ -511,6 +519,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"ctrl+e", "describe", "edit the description of the selected item in $EDITOR", false},
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
+		{"p", "epics & stories", "show or hide epics and stories (saved for your user)", false},
 		{"/", "search", "search by ID, title, label or assignee", false},
 		{"f", "filter", "choose the types shown, or only blocked or stale items", false},
 	},
