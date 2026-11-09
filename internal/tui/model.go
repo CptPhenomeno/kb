@@ -375,7 +375,7 @@ type keyHint struct{ key, label, help string }
 
 var globalKeys = []keyHint{
 	{"tab", "next view", "switch to the next view (shift+tab: previous)"},
-	{"ctrl+shift+p", "commands", "open the command palette (ctrl+p also works)"},
+	{"ctrl+p", "commands", "open the command palette (ctrl+shift+p too, where the terminal lets it through)"},
 	{"t", "theme", "choose the color theme, with a live preview (saved for your user)"},
 	{"?", "help", "show or hide this help"},
 	{"q", "quit", "quit kb"},

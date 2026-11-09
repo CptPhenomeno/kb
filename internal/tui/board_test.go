@@ -62,7 +62,7 @@ func TestCommandBarShowsViewKeys(t *testing.T) {
 		view viewKind
 		want []string
 	}{
-		{viewBoard, []string{"← → ↑ ↓ navigate", "shift ← → move", "enter details", "ctrl+shift+p commands", "q quit"}},
+		{viewBoard, []string{"← → ↑ ↓ navigate", "shift ← → move", "enter details", "ctrl+p commands", "q quit"}},
 		{viewTree, []string{"← → collapse / expand", "n new child"}},
 		{viewActivity, []string{"enter only this actor", "a release claim"}},
 	}
