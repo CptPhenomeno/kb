@@ -1,0 +1,31 @@
+spec: SPEC.md            # default for the spec field of every item
+status: todo             # default initial status
+items:
+  - ref: auth
+    type: epic
+    title: Authentication
+    spec: SPEC.md#authentication
+    children:
+      - ref: auth-login
+        type: story
+        title: Token login
+        points: 5
+        acceptance:
+          - expired token → 401
+          - valid token → 200 with profile
+        children:
+          - ref: auth-login-validate
+            type: task
+            title: Validate token in middleware
+            priority: high
+            points: 3
+            tests:
+              - rejects expired token
+              - accepts valid token
+            blocks: [auth-login-refresh]
+          - ref: auth-login-refresh
+            type: task
+            title: Token refresh
+            points: 2
+            tests:
+              - refresh rotates the token
