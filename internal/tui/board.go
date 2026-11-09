@@ -143,7 +143,8 @@ func (b *boardState) geometry(m *Model) geometry {
 	g := geometry{top: 1, height: m.height - 2 - len(m.commandBar())}
 	boardW := m.width
 	if m.detailOpen || m.picker != nil {
-		g.detailW = min(56, max(36, m.width*35/100))
+		// 40% of the width, leaving the board at least 75 columns.
+		g.detailW = max(36, min(m.width*40/100, m.width-75))
 		boardW = m.width - g.detailW - colGap
 		g.detailX = boardW + colGap
 	}
@@ -265,10 +266,16 @@ func (b *boardState) renderColumn(m *Model, st core.Status, items []*core.Item, 
 // cardLines are the text lines of a card, each at most width wide.
 func cardLines(m *Model, it *core.Item, width int) []string {
 	now := m.opts.Now()
-	right := m.th.fg(m.th.prioColor[it.Priority]).Render(prioMarks[it.Priority]) + pointsLabel(m, it.Points)
-	left := m.th.muted.Render(it.ID) + " " + m.th.fg(m.th.typeColor[it.Type]).Render(it.Type.String())
-	if displayWidth(left)+1+displayWidth(right) > width {
-		left = m.th.muted.Render(it.ID) // narrow column: drop the type
+	// In narrow columns drop, in order, the type, the points and the
+	// priority: the ID is never cut.
+	id := m.th.muted.Render(it.ID)
+	prio := m.th.fg(m.th.prioColor[it.Priority]).Render(prioMarks[it.Priority])
+	left, right := id+" "+m.th.fg(m.th.typeColor[it.Type]).Render(it.Type.String()), prio+pointsLabel(m, it.Points)
+	for _, opt := range [][2]string{{left, right}, {id, right}, {id, prio}, {id, ""}} {
+		left, right = opt[0], opt[1]
+		if displayWidth(left)+1+displayWidth(right) <= width {
+			break
+		}
 	}
 	lines := []string{spread(left, right, width)}
 	for _, l := range wrap(it.Title, width, 2) {

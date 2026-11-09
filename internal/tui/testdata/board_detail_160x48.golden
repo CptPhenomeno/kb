@@ -1,48 +1,48 @@
  kb  api-gateway   Board  Tree  Activity   showing task · bug                                                                  12 items  1 agent active  2 stale
-╭──────────────────╮ ╭──────────────────╮ ╭──────────────────╮ ╭──────────────────╮ ╭─────────────────╮ ╭──────────────────────────────────────────────────────╮
-│ Backlog        1 │ │ To do          3 │ │ In progress    2 │ │ Review         1 │ │ Done          1 │ │ KB-4 · task                                esc close │
-│ ╭──────────────╮ │ │ ╭──────────────╮ │ │ ╭──────────────╮ │ │ ╭──────────────╮ │ │ ╭─────────────╮ │ │ Token refresh                                        │
-│ │ KB-15  ▲ 3pt │ │ │ │ KB-5  ▲▲ 1pt │ │ │ │ KB-4  ▲▲ 2pt │ │ │ │ KB-3  ▲▲ 3pt │ │ │ │ KB-17 · 1pt │ │ │                                                      │
-│ │ Load test    │ │ │ │ Expired      │ │ │ │ Token        │ │ │ │ Validate     │ │ │ │ Health      │ │ │ status    In progress                                │
-│ │ the gateway… │ │ │ │ token …      │ │ │ │ refresh      │ │ │ │ token in …   │ │ │ │ check …     │ │ │ priority  ▲▲ high                                    │
-│ ╰──────────────╯ │ │ │ 0/1          │ │ │ │ ● RED 0/2    │ │ │ │ ● REFACTOR   │ │ │ │ 2/2         │ │ │ points    2                                          │
-│                  │ │ ╰──────────────╯ │ │ │ agent-auth   │ │ │ │ 3/3          │ │ │ ╰─────────────╯ │ │ assignee  agent-auth claim 12m left                  │
-│                  │ │ ╭──────────────╮ │ │ ╰──────────────╯ │ │ │ agent-auth   │ │ │                 │ │ parent    KB-2 Token login                           │
-│                  │ │ │ KB-7  ▲▲ 3pt │ │ │ ╭──────────────╮ │ │ │ STALE 1h     │ │ │                 │ │ spec      SPEC.md#token-refresh                      │
-│                  │ │ │ Key storage  │ │ │ │ KB-12  ▲ 2pt │ │ │ ╰──────────────╯ │ │                 │ │ tdd phase ● RED                                      │
-│                  │ │ │ schema       │ │ │ │ Status code  │ │ │                  │ │                 │ │                                                      │
-│                  │ │ ╰──────────────╯ │ │ │ counters     │ │ │                  │ │                 │ │ Exchange a valid refresh token for a new token pair. │
-│                  │ │ ╭──────────────╮ │ │ │ ● GREEN 2/3  │ │ │                  │ │                 │ │                                                      │
-│                  │ │ │ KB-8   ▲ 3pt │ │ │ │ agent-metri… │ │ │                  │ │                 │ │ The old refresh token is revoked on use.             │
-│                  │ │ │ Key rotation │ │ │ │ STALE 22m    │ │ │                  │ │                 │ │                                                      │
-│                  │ │ │ endpoint     │ │ │ ╰──────────────╯ │ │                  │ │                 │ │ tests 0/2                                            │
-│                  │ │ │  BLOCKED by… │ │ │                  │ │                  │ │                 │ │ ✗ test a                                             │
-│                  │ │ ╰──────────────╯ │ │                  │ │                  │ │                 │ │ ○ test b                                             │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ acceptance 0/2                                       │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ [ ] returns a new access + refresh pair              │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ [ ] reused refresh token → 401                       │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ relations                                            │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ relates   KB-5                                       │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ history                                              │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ 14:02 agent-auth claimed                             │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ 14:03 agent-auth phase → red                         │
-│                  │ │                  │ │                  │ │                  │ │                 │ │ 14:04 agent-auth test "refresh rotates the token" →… │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-│                  │ │                  │ │                  │ │                  │ │                 │ │                                                      │
-╰──────────────────╯ ╰──────────────────╯ ╰──────────────────╯ ╰──────────────────╯ ╰─────────────────╯ ╰──────────────────────────────────────────────────────╯
+╭─────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭──────────────────────────────────────────────────────────────╮
+│ Backlog       1 │ │ To do        3 │ │ In progress  2 │ │ Review       1 │ │ Done         1 │ │ KB-4 · task                                        esc close │
+│ ╭─────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ Token refresh                                                │
+│ │ KB-15 ▲ 3pt │ │ │ │ KB-5    ▲▲ │ │ │ │ KB-4    ▲▲ │ │ │ │ KB-3    ▲▲ │ │ │ │ KB-17    · │ │ │                                                              │
+│ │ Load test   │ │ │ │ Expired    │ │ │ │ Token      │ │ │ │ Validate   │ │ │ │ Health     │ │ │ status    In progress                                        │
+│ │ the gatewa… │ │ │ │ token …    │ │ │ │ refresh    │ │ │ │ token in … │ │ │ │ check …    │ │ │ priority  ▲▲ high                                            │
+│ ╰─────────────╯ │ │ │ 0/1        │ │ │ │ ● RED 0/2  │ │ │ │ ● REFACTOR │ │ │ │ 2/2        │ │ │ points    2                                                  │
+│                 │ │ ╰────────────╯ │ │ │ agent-auth │ │ │ │ 3/3        │ │ │ ╰────────────╯ │ │ assignee  agent-auth claim 12m left                          │
+│                 │ │ ╭────────────╮ │ │ ╰────────────╯ │ │ │ agent-auth │ │ │                │ │ parent    KB-2 Token login                                   │
+│                 │ │ │ KB-7    ▲▲ │ │ │ ╭────────────╮ │ │ │ STALE 1h   │ │ │                │ │ spec      SPEC.md#token-refresh                              │
+│                 │ │ │ Key        │ │ │ │ KB-12    ▲ │ │ │ ╰────────────╯ │ │                │ │ tdd phase ● RED                                              │
+│                 │ │ │ storage …  │ │ │ │ Status     │ │ │                │ │                │ │                                                              │
+│                 │ │ ╰────────────╯ │ │ │ code …     │ │ │                │ │                │ │ Exchange a valid refresh token for a new token pair.         │
+│                 │ │ ╭────────────╮ │ │ │ ● GREEN    │ │ │                │ │                │ │                                                              │
+│                 │ │ │ KB-8 ▲ 3pt │ │ │ │ 2/3        │ │ │                │ │                │ │ The old refresh token is revoked on use.                     │
+│                 │ │ │ Key        │ │ │ │ agent-met… │ │ │                │ │                │ │                                                              │
+│                 │ │ │ rotation … │ │ │ │ STALE 22m  │ │ │                │ │                │ │ tests 0/2                                                    │
+│                 │ │ │  BLOCKED … │ │ │ ╰────────────╯ │ │                │ │                │ │ ✗ test a                                                     │
+│                 │ │ ╰────────────╯ │ │                │ │                │ │                │ │ ○ test b                                                     │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │ acceptance 0/2                                               │
+│                 │ │                │ │                │ │                │ │                │ │ [ ] returns a new access + refresh pair                      │
+│                 │ │                │ │                │ │                │ │                │ │ [ ] reused refresh token → 401                               │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │ relations                                                    │
+│                 │ │                │ │                │ │                │ │                │ │ relates   KB-5                                               │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │ history                                                      │
+│                 │ │                │ │                │ │                │ │                │ │ 14:02 agent-auth claimed                                     │
+│                 │ │                │ │                │ │                │ │                │ │ 14:03 agent-auth phase → red                                 │
+│                 │ │                │ │                │ │                │ │                │ │ 14:04 agent-auth test "refresh rotates the token" → failing  │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+│                 │ │                │ │                │ │                │ │                │ │                                                              │
+╰─────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰──────────────────────────────────────────────────────────────╯
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
 ← → ↑ ↓ navigate   shift ← → move   shift ↑ ↓ reorder   enter details   n new   e edit   d delete   a assign   l link   / search   f filter   tab next view     
 ctrl+shift+p commands   t theme   ? help   q quit                                                                                                               

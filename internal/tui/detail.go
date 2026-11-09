@@ -46,7 +46,7 @@ func (m *Model) renderDetail(w, h int) string {
 			field("assignee", who)
 		}
 		if p := m.snap.Get(it.Parent); p != nil {
-			field("parent", m.th.text.Render(p.ID+" "+p.Title))
+			add(hang(m.th.muted.Render(fmt.Sprintf("%-10s", "parent")), 10, p.ID+" "+p.Title, m.th.text, iw, 10)...)
 		}
 		if it.Spec != "" {
 			field("spec", m.th.fg(m.th.p.Purple).Render(it.Spec))
@@ -61,7 +61,7 @@ func (m *Model) renderDetail(w, h int) string {
 		if len(it.Tests) > 0 {
 			add("", m.th.muted.Render(fmt.Sprintf("tests %d/%d", it.PassingTests(), len(it.Tests))))
 			for _, t := range it.Tests {
-				add(m.th.fg(m.th.testColor[t.State]).Render(testMarks[t.State]) + " " + m.th.text.Render(t.Name))
+				add(hang(m.th.fg(m.th.testColor[t.State]).Render(testMarks[t.State])+" ", 2, t.Name, m.th.text, iw, 2)...)
 			}
 		}
 		if len(it.Acceptance) > 0 {
@@ -71,7 +71,7 @@ func (m *Model) renderDetail(w, h int) string {
 				if c.Done {
 					box = "[x]"
 				}
-				add(m.th.text.Render(box + " " + c.Text))
+				add(hang(m.th.text.Render(box+" "), 4, c.Text, m.th.text, iw, 4)...)
 			}
 		}
 		if rel := relationLines(m, it); len(rel) > 0 {
@@ -87,13 +87,28 @@ func (m *Model) renderDetail(w, h int) string {
 			add(m.th.muted.Render("loading…"))
 		}
 		for _, e := range hist {
-			add(m.th.muted.Render(e.At.In(m.opts.Loc).Format("15:04")) + " " + m.th.actor(e.Actor).Render(e.Actor) + " " +
-				m.th.text.Render(core.DescribeEvent(e)))
+			prefix := m.th.muted.Render(e.At.In(m.opts.Loc).Format("15:04")) + " " + m.th.actor(e.Actor).Render(e.Actor) + " "
+			add(hang(prefix, displayWidth(prefix), core.DescribeEvent(e), m.th.text, iw, 6)...)
 		}
 	}
 	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.th.p.Accent).
 		BorderBackground(m.th.p.Base).Background(m.th.p.Surface).Width(w).Padding(0, 1)
 	return box.Render(paintBlock(fitLines(strings.Join(lines, "\n"), iw, h-2), m.th.p.Surface, iw))
+}
+
+// hang wraps text to width: the first line follows prefix (pw cells wide),
+// the next ones are indented by indent cells, so nothing is cut.
+func hang(prefix string, pw int, text string, style lipgloss.Style, width, indent int) []string {
+	first := wrap(text, max(1, width-pw), 1000)
+	if len(first) == 0 {
+		return []string{prefix}
+	}
+	out := []string{prefix + style.Render(first[0])}
+	rest := strings.TrimSpace(strings.TrimPrefix(strings.Join(strings.Fields(text), " "), first[0]))
+	for _, l := range wrap(rest, max(1, width-indent), 1000) {
+		out = append(out, strings.Repeat(" ", indent)+style.Render(l))
+	}
+	return out
 }
 
 // relationLines lists the relations of an item, blockers first.
