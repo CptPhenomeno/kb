@@ -17,8 +17,9 @@ var errNoRows = sql.ErrNoRows
 
 // DB is an open kb database.
 type DB struct {
-	sql  *sql.DB
-	path string
+	sql   *sql.DB
+	path  string
+	watch watcher
 }
 
 // Open opens (creating it if needed) the database at path, configures it
@@ -47,7 +48,15 @@ func Open(path string) (*DB, error) {
 }
 
 // Close closes the database.
-func (d *DB) Close() error { return d.sql.Close() }
+func (d *DB) Close() error {
+	d.watch.mu.Lock()
+	if d.watch.conn != nil {
+		d.watch.conn.Close()
+		d.watch.conn = nil
+	}
+	d.watch.mu.Unlock()
+	return d.sql.Close()
+}
 
 // Path returns the path of the database file.
 func (d *DB) Path() string { return d.path }
