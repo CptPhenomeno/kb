@@ -45,4 +45,4 @@
 ╰─────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰──────────────────────────────────────────────────────────────╯
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
 ← → ↑ ↓ navigate   shift ← → move   shift ↑ ↓ reorder   enter details   n new   e edit   d delete   a assign   l link   / search   f filter   tab next view     
-ctrl+shift+p commands   t theme   ? help   q quit                                                                                                               
+ctrl+p commands   t theme   ? help   q quit                                                                                                                     
