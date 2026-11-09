@@ -243,7 +243,7 @@ func (c *cli) rootCmd() *cobra.Command {
 		c.versionCmd(), c.initCmd(), c.addCmd(), c.showCmd(), c.listCmd(), c.treeCmd(),
 		c.editCmd(), c.moveCmd(), c.linkCmd(true), c.linkCmd(false), c.nextCmd(),
 		c.claimCmd(), c.releaseCmd(), c.touchCmd(), c.phaseCmd(), c.testCmd(), c.acceptCmd(),
-		c.noteCmd(), c.rmCmd(), c.logCmd(), c.exportCmd(), c.guideCmd(),
+		c.noteCmd(), c.rmCmd(), c.logCmd(), c.exportCmd(), c.guideCmd(), c.importCmd(),
 	)
 	return root
 }
