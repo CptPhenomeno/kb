@@ -103,10 +103,11 @@ type Model struct {
 
 	th         *theme
 	themeIdx   int
-	picker     *pickerState // open theme picker, or nil
-	alert      *alertState  // open alert, or nil
-	filterOpen bool         // filter popup open
-	notice     string       // shown in the status line until the next key
+	picker     *pickerState  // open theme picker, or nil
+	alert      *alertState   // open alert, or nil
+	filterOpen bool          // filter popup open
+	palette    *paletteState // open command palette, or nil
+	notice     string        // shown in the status line until the next key
 }
 
 // New returns the model; run it with Run or a tea.Program.
@@ -229,8 +230,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
-	key := k.String()
 	m.notice = ""
+	return m.dispatch(k.String(), k.Text)
+}
+
+// dispatch handles a key given by name; the palette runs actions through it.
+func (m *Model) dispatch(key, text string) tea.Cmd {
 	if key == "ctrl+c" {
 		return tea.Quit
 	}
@@ -243,17 +248,23 @@ func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 	if m.picker != nil {
 		return m.pickerKey(key)
 	}
+	if m.palette != nil {
+		return m.paletteKey(key, text)
+	}
 	if m.filterOpen {
 		return m.filterKey(key)
 	}
 	if m.board.searching && m.view == viewBoard {
-		return m.searchKey(k)
+		return m.searchKey(key, text)
 	}
 	switch key {
 	case "ctrl+c", "q":
 		return tea.Quit
 	case "?":
 		m.help = !m.help
+		return nil
+	case "ctrl+p", "ctrl+shift+p":
+		m.palette = &paletteState{}
 		return nil
 	case "esc":
 		if m.help {
@@ -303,6 +314,8 @@ func (m *Model) View() tea.View {
 			popup = m.renderPicker()
 		case m.filterOpen:
 			popup = m.renderFilter()
+		case m.palette != nil:
+			popup = m.renderPalette()
 		}
 		if popup != "" {
 			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
@@ -422,7 +435,7 @@ type keyHint struct {
 
 var globalKeys = []keyHint{
 	{"tab", "next view", "switch to the next view (shift+tab: previous)", false},
-	{"ctrl+p", "commands", "open the command palette (ctrl+shift+p too, where the terminal lets it through)", true},
+	{"ctrl+p", "commands", "open the command palette (ctrl+shift+p too, where the terminal lets it through)", false},
 	{"t", "theme", "choose the color theme, with a live preview (saved for your user)", false},
 	{"?", "help", "show or hide this help", false},
 	{"q", "quit", "quit kb", false},
@@ -471,6 +484,8 @@ func (m *Model) commandBar() []string {
 		hints = alertKeys
 	case m.filterOpen:
 		hints = filterKeys
+	case m.palette != nil:
+		hints = paletteKeys
 	case m.board.searching && m.view == viewBoard:
 		hints = searchKeys
 	}

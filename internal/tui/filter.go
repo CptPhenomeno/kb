@@ -108,10 +108,10 @@ func (m *Model) filterKey(key string) tea.Cmd {
 }
 
 // searchKey handles a key while typing a search.
-func (m *Model) searchKey(k tea.KeyPressMsg) tea.Cmd {
+func (m *Model) searchKey(key, text string) tea.Cmd {
 	b := &m.board
 	prev := m.selectedID()
-	switch k.String() {
+	switch key {
 	case "enter":
 		b.searching = false
 		return nil
@@ -122,10 +122,10 @@ func (m *Model) searchKey(k tea.KeyPressMsg) tea.Cmd {
 			b.query = string(r[:len(r)-1])
 		}
 	default:
-		if k.Text == "" {
+		if text == "" {
 			return nil
 		}
-		b.query += k.Text
+		b.query += text
 	}
 	b.restore(m, prev)
 	return nil
