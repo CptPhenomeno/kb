@@ -4,8 +4,10 @@ BIN        := bin/kb
 PKG        := github.com/CptPhenomeno/kb
 VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS    := -s -w -X $(PKG)/internal/buildinfo.Version=$(VERSION)
+DIST       := dist
+PLATFORMS  := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
 
-.PHONY: all fmt fmt-check vet lint test check build clean
+.PHONY: all fmt fmt-check vet lint test check build cross clean
 
 all: check build
 
@@ -36,6 +38,15 @@ check: fmt-check vet lint test
 build:
 	CGO_ENABLED=0 go build -trimpath -ldflags '$(LDFLAGS)' -o $(BIN) ./cmd/kb
 
-## clean: remove the built binary
+## cross: build static kb binaries for every os/arch in PLATFORMS into
+## $(DIST)/kb-<os>-<arch>
+cross:
+	@set -e; for p in $(PLATFORMS); do \
+		os=$${p%/*}; arch=$${p#*/}; out=$(DIST)/kb-$$os-$$arch; \
+		echo "building $$out"; \
+		CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch go build -trimpath -ldflags '$(LDFLAGS)' -o $$out ./cmd/kb; \
+	done
+
+## clean: remove the built binary and the cross builds
 clean:
-	rm -f $(BIN)
+	rm -f $(BIN) $(DIST)/kb-*
