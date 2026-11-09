@@ -110,3 +110,51 @@ func TestDetailListsEveryLinkWithTheLinkedItemsStatus(t *testing.T) {
 		t.Fatalf("link to a finished blocker missing or incomplete: %q\n%s", row, screen(m))
 	}
 }
+
+// longDetail opens the detail of KB-4 with a description longer than the
+// panel, on a short terminal.
+func longDetail(t *testing.T) *Model {
+	t.Helper()
+	be := sampleBoard()
+	var b strings.Builder
+	for i := 1; i <= 30; i++ {
+		b.WriteString("Paragraph line number " + string(rune('A'+i%26)) + ".\n\n")
+	}
+	be.snap.Get("KB-4").Description = b.String()
+	m := newModel(t, be, 160, 30)
+	press(t, m, "right", "right", "down", "down", "enter")
+	return m
+}
+
+func TestPgdownScrollsTheDetailPanel(t *testing.T) {
+	m := longDetail(t)
+	if strings.Contains(screen(m), "history") {
+		t.Fatal("fixture too short: the history is already visible")
+	}
+	for range 10 {
+		press(t, m, "pgdown")
+	}
+	s := screen(m)
+	if !strings.Contains(s, "history") || !strings.Contains(s, "refresh rotates the token") {
+		t.Fatalf("pgdown did not reach the end of the detail:\n%s", s)
+	}
+	press(t, m, "pgup", "pgup", "pgup", "pgup", "pgup", "pgup", "pgup", "pgup", "pgup", "pgup")
+	if !strings.Contains(screen(m), "Token refresh") {
+		t.Fatal("pgup did not come back to the top")
+	}
+	press(t, m, "pgdown", "down", "up") // another item: back to the top
+	if !strings.Contains(screen(m), "KB-4 · task") {
+		t.Fatal("changing the selection must scroll the detail back to the top")
+	}
+}
+
+func TestAMarkerSaysMoreLinesAreBelow(t *testing.T) {
+	m := longDetail(t)
+	if s := screen(m); !strings.Contains(s, "↓") || !strings.Contains(s, "more lines") {
+		t.Fatalf("no marker for the cut content:\n%s", s)
+	}
+	press(t, m, "pgdown")
+	if s := screen(m); !strings.Contains(s, "↑") {
+		t.Fatal("no marker for the content above after scrolling")
+	}
+}

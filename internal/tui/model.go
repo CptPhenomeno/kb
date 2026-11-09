@@ -127,7 +127,10 @@ type Model struct {
 	form       *formState    // open create/edit form, or nil
 	pendingSel string        // item to select after the next reload
 	editing    string        // item whose description is open in $EDITOR
-	notice     string        // shown in the status line until the next key
+
+	detailScroll   int    // first detail line shown
+	detailScrollID string // item the scroll refers to
+	notice         string // shown in the status line until the next key
 }
 
 // New returns the model; run it with Run or a tea.Program.
@@ -511,7 +514,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"← → ↑ ↓", "navigate", "move between columns and cards", false},
 		{"shift ← →", "move", "move to the previous or next column", false},
 		{"shift ↑ ↓", "reorder", "reorder the card in its column", false},
-		{"enter", "details", "open the detail panel (esc closes it)", false},
+		{"enter", "details", "open the detail panel (esc closes it, pgup/pgdown scroll it)", false},
 		{"n", "new", "create an item", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},

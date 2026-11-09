@@ -87,6 +87,12 @@ func firstNonEmpty(cols [5][]*core.Item, start, dir int) int {
 }
 
 func (b *boardState) key(m *Model, key string) tea.Cmd {
+	before := b.selectedID(m)
+	defer func() {
+		if b.selectedID(m) != before {
+			m.detailScroll = 0 // another item: show its detail from the top
+		}
+	}()
 	cols := b.columns(m)
 	switch key {
 	case "left", "right":
@@ -109,6 +115,15 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 		return b.move(m, key == "shift+right")
 	case "shift+up", "shift+down":
 		return b.reorder(m, key == "shift+up")
+	case "pgdown", "pgup":
+		if m.detailOpen {
+			page := max(1, b.geometry(m).height-6)
+			if key == "pgup" {
+				page = -page
+			}
+			m.detailScroll = max(0, m.detailScroll+page)
+		}
+		return nil
 	case "f":
 		m.filterOpen = true
 		return nil
@@ -493,6 +508,14 @@ func (b *boardState) click(m *Model, x, y int) tea.Cmd {
 // wheel moves the selection up or down in the column under the mouse.
 func (b *boardState) wheel(m *Model, x int, up bool) tea.Cmd {
 	g := b.geometry(m)
+	if g.detailW > 0 && x >= g.detailX {
+		if up {
+			m.detailScroll = max(0, m.detailScroll-3)
+		} else {
+			m.detailScroll += 3
+		}
+		return nil
+	}
 	cols := b.columns(m)
 	for c := range cols {
 		if x >= g.colX[c] && x < g.colX[c]+g.colW[c] && len(cols[c]) > 0 {

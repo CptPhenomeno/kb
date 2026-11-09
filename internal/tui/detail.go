@@ -107,9 +107,37 @@ func (m *Model) renderDetail(w, h int) string {
 			add(hang(prefix, displayWidth(prefix), core.DescribeEvent(e), m.th.text, iw, 6)...)
 		}
 	}
+	if it != nil {
+		lines = m.scrollDetail(it.ID, lines, h-2, iw)
+	}
 	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.th.p.Accent).
 		BorderBackground(m.th.p.Base).Background(m.th.p.Surface).Width(w).Padding(0, 1)
 	return box.Render(paintBlock(fitLines(strings.Join(lines, "\n"), iw, h-2), m.th.p.Surface, iw))
+}
+
+// scrollDetail returns the window of the detail lines that fits in height
+// rows, with markers for the lines above and below. The scroll goes back
+// to the top when another item is shown.
+func (m *Model) scrollDetail(id string, lines []string, height, width int) []string {
+	if id != m.detailScrollID {
+		m.detailScrollID, m.detailScroll = id, 0
+	}
+	if len(lines) <= height {
+		m.detailScroll = 0
+		return lines
+	}
+	window := height - 2 // one row for each marker
+	m.detailScroll = max(0, min(m.detailScroll, len(lines)-window))
+	s := m.detailScroll
+	top := ""
+	if s > 0 {
+		top = m.th.muted.Render(center(fmt.Sprintf("↑ %d more lines · pgup", s), width))
+	}
+	out := append([]string{top}, lines[s:min(len(lines), s+window)]...)
+	if below := len(lines) - s - window; below > 0 {
+		out = append(out, m.th.muted.Render(center(fmt.Sprintf("↓ %d more lines · pgdown", below), width)))
+	}
+	return out
 }
 
 // hang wraps text to width: the first line follows prefix (pw cells wide),

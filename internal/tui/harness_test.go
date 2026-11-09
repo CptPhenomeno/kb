@@ -236,6 +236,10 @@ func keyMsg(name string) tea.KeyPressMsg {
 		k.Code = tea.KeyEscape
 	case "backspace":
 		k.Code = tea.KeyBackspace
+	case "pgdown":
+		k.Code = tea.KeyPgDown
+	case "pgup":
+		k.Code = tea.KeyPgUp
 	case "space":
 		k.Code, k.Text = tea.KeySpace, " "
 	default:
