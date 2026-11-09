@@ -117,7 +117,7 @@ func (c *cli) printEvents(evs []core.Event, prev int64) int64 {
 	default:
 		t := newTable(c.app.Stdout)
 		for _, e := range evs {
-			fmt.Fprintf(t, "%s\t%s\t%s\t%s\n", e.At.UTC().Format("2006-01-02 15:04"), e.Actor, e.Item, describeEvent(e))
+			fmt.Fprintf(t, "%s\t%s\t%s\t%s\n", e.At.UTC().Format("2006-01-02 15:04"), e.Actor, e.Item, core.DescribeEvent(e))
 		}
 		t.Flush()
 	}

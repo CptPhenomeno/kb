@@ -288,64 +288,13 @@ func writeItem(w io.Writer, snap *core.Snapshot, it *core.Item, history []core.E
 		fmt.Fprintln(w, "\nhistory")
 		tw := newTable(w)
 		for _, e := range history {
-			fmt.Fprintf(tw, "  %s\t%s\t%s\n", e.At.UTC().Format("2006-01-02 15:04"), e.Actor, describeEvent(e))
+			fmt.Fprintf(tw, "  %s\t%s\t%s\n", e.At.UTC().Format("2006-01-02 15:04"), e.Actor, core.DescribeEvent(e))
 		}
 		tw.Flush()
 	}
 }
 
 var testMark = map[core.TestState]string{core.TestPassing: "✓", core.TestFailing: "✗", core.TestPending: "○"}
-
-// describeEvent renders an event as a short human sentence.
-func describeEvent(e core.Event) string {
-	str := func(k string) string { s, _ := e.Data[k].(string); return s }
-	switch e.Kind {
-	case core.EventCreated:
-		return fmt.Sprintf("created %s in %s", str("type"), str("status"))
-	case core.EventMoved:
-		s := fmt.Sprintf("moved %s → %s", str("from"), str("to"))
-		if e.Data["derived"] == true {
-			s += " (derived)"
-		}
-		return s
-	case core.EventClaimed:
-		return "claimed"
-	case core.EventReleased:
-		return "released the claim of " + str("actor")
-	case core.EventClaimExpired:
-		return "claim of " + str("actor") + " expired"
-	case core.EventLinked, core.EventUnlinked:
-		return fmt.Sprintf("%s: %s %s %s", e.Kind, str("from"), str("kind"), str("to"))
-	case core.EventPhase:
-		return "phase → " + orDash(str("to"))
-	case core.EventTest:
-		if e.Data["added"] == true {
-			return fmt.Sprintf("test added: %q", str("name"))
-		}
-		return fmt.Sprintf("test %q → %s", str("name"), str("state"))
-	case core.EventAcceptance:
-		if e.Data["added"] == true {
-			return fmt.Sprintf("criterion added: %q", str("text"))
-		}
-		if e.Data["done"] == true {
-			return fmt.Sprintf("criterion checked: %q", str("text"))
-		}
-		return fmt.Sprintf("criterion unchecked: %q", str("text"))
-	case core.EventNote:
-		return "note: " + str("text")
-	case core.EventUpdated:
-		changes, _ := e.Data["changes"].(map[string]any)
-		keys := make([]string, 0, len(changes))
-		for k := range changes {
-			keys = append(keys, k)
-		}
-		slices.Sort(keys)
-		return "updated " + strings.Join(keys, ", ")
-	case core.EventDeleted:
-		return "deleted"
-	}
-	return string(e.Kind)
-}
 
 // writeTree prints the hierarchy below the given roots.
 func writeTree(w io.Writer, snap *core.Snapshot, roots []*core.Item, now time.Time) {
