@@ -64,3 +64,33 @@ func TestCardIDNeverTruncated(t *testing.T) {
 		}
 	}
 }
+
+func TestDetailListsChildrenWithTheirStatus(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 60)
+	press(t, m, "right", "right", "down", "enter") // KB-2, story with three children
+	if m.selectedID() != "KB-2" {
+		t.Fatalf("selected %s, want KB-2", m.selectedID())
+	}
+	s := screen(m)
+	if !strings.Contains(s, "children 0/3 done") {
+		t.Fatalf("detail lacks the children header:\n%s", s)
+	}
+	for _, want := range []string{"KB-3 Validate token in middleware", "KB-4 Token refresh", "KB-5 Expired token"} {
+		if !strings.Contains(s, want) {
+			t.Errorf("children list lacks %q", want)
+		}
+	}
+	for _, label := range []string{"Review", "In progress", "To do"} {
+		if !strings.Contains(s, label) {
+			t.Errorf("children list does not show the status %q", label)
+		}
+	}
+}
+
+func TestItemWithoutChildrenHasNoChildrenSection(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 60)
+	press(t, m, "enter") // KB-15, a task without subtasks
+	if strings.Contains(screen(m), "children ") {
+		t.Fatal("a leaf item shows a children section")
+	}
+}

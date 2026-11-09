@@ -58,6 +58,23 @@ func (m *Model) renderDetail(w, h int) string {
 			add("")
 			add(m.md.render(it.ID, it.Version, d, iw, m.themeIdx)...)
 		}
+		if children := m.snap.Children(it.ID); len(children) > 0 {
+			done, _ := core.Progress(m.snap, it)
+			if !it.Type.IsParentType() {
+				done = 0
+				for _, c := range children {
+					if c.Status == core.StatusDone {
+						done++
+					}
+				}
+			}
+			add("", m.th.muted.Render(fmt.Sprintf("children %d/%d done", done, len(children))))
+			for _, c := range children {
+				dot := m.th.fg(m.th.statusColor[c.Status]).Render("●")
+				add(spread(dot+" "+m.th.muted.Render(c.ID)+" "+m.th.text.Render(c.Title),
+					m.th.fg(m.th.statusColor[c.Status]).Render(c.Status.Label()), iw))
+			}
+		}
 		if len(it.Tests) > 0 {
 			add("", m.th.muted.Render(fmt.Sprintf("tests %d/%d", it.PassingTests(), len(it.Tests))))
 			for _, t := range it.Tests {
