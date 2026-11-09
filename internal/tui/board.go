@@ -303,8 +303,9 @@ func renderCard(m *Model, it *core.Item, w int, selected bool) string {
 	if selected {
 		border = m.th.p.Accent
 	}
-	style := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(border).Width(w).Padding(0, 1)
-	return style.Render(strings.Join(cardLines(m, it, w-4), "\n"))
+	style := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(border).
+		BorderBackground(m.th.p.Base).Background(m.th.p.Surface).Width(w).Padding(0, 1)
+	return style.Render(paintBlock(cardLines(m, it, w-4), m.th.p.Surface, w-4))
 }
 
 func pointsLabel(m *Model, p int) string {

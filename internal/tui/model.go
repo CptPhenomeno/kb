@@ -230,9 +230,7 @@ func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 		}
 		return nil
 	case "t":
-		m.themeIdx = (m.themeIdx + 1) % len(Themes)
-		m.th = newTheme(Themes[m.themeIdx])
-		m.md.reset()
+		m.setTheme((m.themeIdx + 1) % len(Themes))
 		m.notice = "theme: " + Themes[m.themeIdx].Name
 		return nil
 	case "tab":
@@ -251,12 +249,20 @@ func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 	return nil
 }
 
+// setTheme switches to the theme at index i.
+func (m *Model) setTheme(i int) {
+	m.themeIdx = i
+	m.th = newTheme(Themes[i])
+	m.md.reset()
+}
+
 // selectedID returns the ID of the selected card on the board.
 func (m *Model) selectedID() string { return m.board.selectedID(m) }
 
 // View renders the whole screen.
 func (m *Model) View() tea.View {
-	v := tea.NewView(m.render())
+	v := tea.NewView(paint(m.render(), m.th.p.Base, m.width, m.height))
+	v.BackgroundColor = m.th.p.Base
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 	v.WindowTitle = "kb — " + m.opts.Project

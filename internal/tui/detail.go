@@ -91,8 +91,9 @@ func (m *Model) renderDetail(w, h int) string {
 				m.th.text.Render(core.DescribeEvent(e)))
 		}
 	}
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.th.p.Accent).Width(w).Padding(0, 1)
-	return box.Render(strings.Join(fitLines(strings.Join(lines, "\n"), iw, h-2), "\n"))
+	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.th.p.Accent).
+		BorderBackground(m.th.p.Base).Background(m.th.p.Surface).Width(w).Padding(0, 1)
+	return box.Render(paintBlock(fitLines(strings.Join(lines, "\n"), iw, h-2), m.th.p.Surface, iw))
 }
 
 // relationLines lists the relations of an item, blockers first.
