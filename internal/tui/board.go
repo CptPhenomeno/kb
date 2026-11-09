@@ -251,7 +251,7 @@ func (b *boardState) renderColumn(m *Model, st core.Status, items []*core.Item, 
 	if len(items) == 0 {
 		lines = append(lines, m.th.muted.Render(center("empty", inner)))
 	}
-	border := m.th.p.Border
+	border := m.th.p.Overlay
 	if m.view == viewBoard && len(items) > 0 && b.col == int(st) {
 		border = m.th.p.Muted
 	}
@@ -299,7 +299,7 @@ func cardLines(m *Model, it *core.Item, width int) []string {
 }
 
 func renderCard(m *Model, it *core.Item, w int, selected bool) string {
-	border := m.th.p.Border
+	border := m.th.p.Overlay
 	if selected {
 		border = m.th.p.Accent
 	}

@@ -143,7 +143,7 @@ func (md *markdown) render(id string, version int, src string, width, themeIdx i
 		return lines
 	}
 	cfg := styles.DarkStyleConfig
-	if strings.Contains(Themes[themeIdx].Name, "light") || strings.Contains(Themes[themeIdx].Name, "latte") {
+	if Themes[themeIdx].Light {
 		cfg = styles.LightStyleConfig
 	}
 	zero := uint(0)
