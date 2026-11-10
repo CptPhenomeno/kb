@@ -27,6 +27,41 @@ Write the plan as YAML and import it in one shot, all or nothing:
     kb import plan.yaml                # create epics, stories, tasks, tests
     kb import plan.yaml --update       # re-import after the spec changes
 
+## Plan format
+
+Children nest under their parent: epic > story > task or bug > subtask.
+Refs are stable keys: links may point to refs defined later in the file,
+and --update matches items by ref.
+
+    spec: SPEC.md                      # default spec of every item
+    status: todo                       # default initial status
+    items:
+      - ref: auth
+        type: epic
+        title: Authentication
+        children:
+          - ref: auth-login
+            type: story
+            title: Token login
+            description: |
+              Users sign in with a token instead of a password.
+              Done when a valid token opens a session.
+            acceptance:
+              - expired token -> 401
+            children:
+              - ref: auth-validate
+                type: task
+                title: Validate token in middleware
+                priority: high
+                points: 3                # 1, 2, 3, 5, 8 or 13
+                tests:
+                  - rejects expired token
+                blocks: [auth-refresh]
+              - ref: auth-refresh
+                type: task
+                title: Token refresh
+                points: 2
+
 ## Writing items
 
 Every item needs a description that a teammate can act on without reading
@@ -51,9 +86,16 @@ tokens"). Test names describe observable behavior ("rejects expired token").
     kb note <id> "what changed and why"
     kb move <id> review                # only allowed when every test passes
 
-Other commands: kb show <id>, kb list --json, kb tree, kb touch <id> (renew
-your claim during long work), kb release <id> (give a task back),
-kb add subtask "<title>" --parent <id>.
+Other commands:
+
+    kb show <id>                       # the item with its history
+    kb list --json                     # filters: --status --type --label --blocked --stale
+    kb list --stale                    # items in progress whose claim expired
+    kb tree                            # the hierarchy with progress and points
+    kb touch <id>                      # renew your claim during long work
+    kb release <id>                    # give a task back
+    kb add subtask "<title>" --parent <id>
+    kb log --follow --json             # stream the events as JSON Lines
 
 ## Rules
 
@@ -66,12 +108,12 @@ kb add subtask "<title>" --parent <id>.
 
 Every command sets an exit code you can branch on:
 
-  0 ok
-  1 error or wrong usage
-  2 not found (also: kb next found nothing available)
-  3 requirements or rules not met
-  4 version conflict (re-read the item, then retry)
-  5 claimed by another actor
+- 0 ok
+- 1 error or wrong usage
+- 2 not found (also: kb next found nothing available)
+- 3 requirements or rules not met
+- 4 version conflict (re-read the item, then retry)
+- 5 claimed by another actor
 `
 
 func (c *cli) guideCmd() *cobra.Command {

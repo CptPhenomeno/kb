@@ -81,7 +81,7 @@ func TestGuideMentionsAllAgentCommands(t *testing.T) {
 		}
 	}
 	for code := 0; code <= 5; code++ {
-		if !strings.Contains(out, "  "+string(rune('0'+code))+" ") {
+		if !strings.Contains(out, "- "+string(rune('0'+code))+" ") {
 			t.Errorf("guide does not explain exit code %d", code)
 		}
 	}
