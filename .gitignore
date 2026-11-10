@@ -4,7 +4,5 @@
 *.test
 *.out
 
-# Local kb board of this repository (see SPEC.md §5)
-.kanban/kb.db
-.kanban/kb.db-wal
-.kanban/kb.db-shm
+# Hidden folders stay local (kb board, agent settings, ...)
+.*/
