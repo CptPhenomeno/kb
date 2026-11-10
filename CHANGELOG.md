@@ -4,7 +4,19 @@ All notable changes to kb are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] - 2026-11-10
+## [1.0.1] - 2026-11-10
+
+The same code as 1.0.0, published from a cleaned-up repository.
+
+### Changed
+
+- The repository holds only the source, its documentation and the MIT
+  licence.
+- The README opens with screenshots of the Board view in a dark and a light
+  theme.
+- 1.0.0 is retracted: `go install` and `go get` pick 1.0.1 or later.
+
+## [1.0.0] - 2026-11-10 [YANKED]
 
 The first release: the core, the CLI for coding agents and the TUI for the
 developer. MCP support is planned after v1.
@@ -75,4 +87,4 @@ developer. MCP support is planned after v1.
   amd64 and arm64. `kb version` reports the git version, or the module
   version when installed with `go install`.
 
-[1.0.0]: https://github.com/CptPhenomeno/kb/releases/tag/v1.0.0
+[1.0.1]: https://github.com/CptPhenomeno/kb/releases/tag/v1.0.1

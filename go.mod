@@ -2,6 +2,8 @@ module github.com/CptPhenomeno/kb
 
 go 1.26.10
 
+retract v1.0.0 // Published with development files; use v1.0.1.
+
 tool honnef.co/go/tools/cmd/staticcheck
 
 require (
