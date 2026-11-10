@@ -4,6 +4,25 @@ All notable changes to kb are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-11-10
+
+The release is automated: pushing a `v*` tag checks the code, builds the
+static binaries and publishes them on GitHub with the checksums and the
+notes taken from this changelog.
+
+### Added
+
+- A release pipeline on a `v*` tag: check, cross builds, `checksums.txt`
+  and a GitHub release whose notes are the section of this changelog.
+- A check on every push to the `develop` branch.
+
+### Changed
+
+- `make cross` names the binaries `kb-<version>-<os>-<arch>`, so the
+  release assets are versioned without extra steps.
+- The setup and the check steps are shared by the check and the release
+  workflows through one composite action.
+
 ## [1.0.1] - 2026-11-10
 
 The same code as 1.0.0, published from a cleaned-up repository.
