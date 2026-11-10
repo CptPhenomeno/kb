@@ -11,6 +11,9 @@ jobs:
     name: Deploy kb
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout kb
+        uses: actions/checkout@v7.0.1
+
       - name: Setup
         uses: ./.github/actions/setup-and-check
 
