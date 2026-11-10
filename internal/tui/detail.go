@@ -14,7 +14,7 @@ import (
 
 // renderDetail renders the side panel of the selected item.
 func (m *Model) renderDetail(w, h int) string {
-	it := m.board.selected(m)
+	it := m.selected()
 	iw := w - 4
 	var lines []string
 	add := func(ls ...string) { lines = append(lines, ls...) }

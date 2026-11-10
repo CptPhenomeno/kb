@@ -16,9 +16,12 @@ func defaultTypes() map[core.Type]bool {
 
 // matches reports whether an item passes the board's filters and search.
 func (b *boardState) matches(m *Model, it *core.Item) bool {
-	if !b.types[it.Type] {
-		return false
-	}
+	return b.types[it.Type] && b.matchesExceptType(m, it)
+}
+
+// matchesExceptType applies every filter but the types: the Tree view shows
+// all types, so the hierarchy stays whole.
+func (b *boardState) matchesExceptType(m *Model, it *core.Item) bool {
 	if b.onlyBlocked {
 		if blocked, _ := core.Blockers(m.snap, it.ID); !blocked {
 			return false
@@ -92,7 +95,7 @@ func (b *boardState) toggleRow(i int) {
 // at once, so the board behind shows the result.
 func (m *Model) filterKey(key string) tea.Cmd {
 	b := &m.board
-	prev := m.selectedID()
+	prevBoard, prevTree := b.selectedID(m), m.tree.selectedID(m)
 	switch key {
 	case "up":
 		b.filterCursor = (b.filterCursor + len(filterRows) - 1) % len(filterRows)
@@ -100,7 +103,8 @@ func (m *Model) filterKey(key string) tea.Cmd {
 		b.filterCursor = (b.filterCursor + 1) % len(filterRows)
 	case "space", "enter":
 		b.toggleRow(b.filterCursor)
-		b.restore(m, prev)
+		b.restore(m, prevBoard)
+		m.tree.restore(m, prevTree)
 	case "esc", "f":
 		m.filterOpen = false
 	}
@@ -110,7 +114,7 @@ func (m *Model) filterKey(key string) tea.Cmd {
 // searchKey handles a key while typing a search.
 func (m *Model) searchKey(key, text string) tea.Cmd {
 	b := &m.board
-	prev := m.selectedID()
+	prevBoard, prevTree := b.selectedID(m), m.tree.selectedID(m)
 	switch key {
 	case "enter":
 		b.searching = false
@@ -127,7 +131,8 @@ func (m *Model) searchKey(key, text string) tea.Cmd {
 		}
 		b.query += text
 	}
-	b.restore(m, prev)
+	b.restore(m, prevBoard)
+	m.tree.restore(m, prevTree)
 	return nil
 }
 

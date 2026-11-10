@@ -1,0 +1,48 @@
+ kb  api-gateway   Board  Tree  Activity   all items                                                                           12 items  1 agent active  1 stale
+12 items · 1 epic · 2 stories                                                                                                            work points 1 done / 18
+  id     type     title                                                                                status       progress            points  assignee        
+  KB-1   epic     ▾ Authentication                                                                     In progress  ░░░░░░░░ 0/1 items       6  —               
+▌ KB-2   story      ▾ Token login                                                                      In progress  ░░░░░░░░ 0/3 items       6  —               
+  KB-3   task         · Validate token in middleware                                                   Review       ████████ 3/3 tests       3  agent-auth      
+  KB-4   task         · Token refresh                                                                  In progress  ░░░░░░░░ 0/2 tests       2  agent-auth      
+  KB-5   bug          · Expired token returns 500 instead of 401                                       To do        ░░░░░░░░ 0/1 tests       1  —               
+  KB-6   story    ▾ API keys per tenant                                                                To do        ░░░░░░░░ 0/2 items       6  —               
+  KB-7   task       · Key storage schema                                                               To do        ░░░░░░░░ —               3  —               
+  KB-8   task       · Key rotation endpoint                                                  BLOCKED   To do        ░░░░░░░░ —               3  —               
+  KB-12  task     ▾ Status code counters                                                        STALE  In progress  █████░░░ 2/3 tests       2  agent-metrics   
+  KB-13  subtask    · Bounded route label                                                              In progress  ░░░░░░░░ —               —  —               
+  KB-15  task     · Load test the gateway with k6                                                      Backlog      ░░░░░░░░ —               3  —               
+  KB-17  task     · Health check endpoint                                                              Done         ████████ 2/2 tests       1  —               
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
+↑ ↓ navigate   ← → collapse / expand   enter details   n new child   e edit   d delete   c check   ctrl+e describe   a assign   l link   / search   f filter    
+tab next view   ctrl+p commands   t theme   ? help   q quit                                                                                                     

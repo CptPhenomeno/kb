@@ -110,6 +110,7 @@ type Model struct {
 	tickEvery time.Duration
 
 	board boardState
+	tree  treeState
 
 	detailOpen bool
 	history    []core.Event
@@ -213,6 +214,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.board.ensureVisible(m)
+		m.tree.ensureVisible(m)
 	case tickMsg:
 		return m, tea.Batch(m.checkVersion(), m.tick())
 	case versionMsg:
@@ -228,15 +230,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		prev := m.selectedID()
+		prevBoard, prevTree := m.board.selectedID(m), m.tree.selectedID(m)
 		if m.pendingSel != "" {
-			prev, m.pendingSel = m.pendingSel, ""
+			switch m.view {
+			case viewTree:
+				prevTree = m.pendingSel
+			default:
+				prevBoard = m.pendingSel
+			}
+			m.pendingSel = ""
 		}
 		m.snap, m.recent, m.version, m.loaded, m.err = msg.snap, msg.recent, msg.version, true, nil
 		if m.detailOpen {
 			m.history = msg.history
 		}
-		m.board.restore(m, prev)
+		m.tree.reveal(m, prevTree)
+		m.board.restore(m, prevBoard)
+		m.tree.restore(m, prevTree)
 	case writeMsg:
 		m.alert = msg.alert
 		if msg.notice != "" {
@@ -266,12 +276,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		return m, m.handleKey(msg)
 	case tea.MouseClickMsg:
-		if m.view == viewBoard && !m.help {
+		switch {
+		case m.help:
+		case m.view == viewBoard:
 			return m, m.board.click(m, msg.X, msg.Y)
+		case m.view == viewTree:
+			return m, m.tree.click(m, msg.X, msg.Y)
 		}
 	case tea.MouseWheelMsg:
-		if m.view == viewBoard && !m.help {
+		switch {
+		case m.help:
+		case m.view == viewBoard:
 			return m, m.board.wheel(m, msg.X, msg.Button == tea.MouseWheelUp)
+		case m.view == viewTree:
+			return m, m.tree.wheel(m, msg.X, msg.Button == tea.MouseWheelUp)
 		}
 	}
 	return m, nil
@@ -314,7 +332,7 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 	if m.filterOpen {
 		return m.filterKey(key)
 	}
-	if m.board.searching && m.view == viewBoard {
+	if m.board.searching && m.view != viewActivity {
 		return m.searchKey(key, text)
 	}
 	switch key {
@@ -346,8 +364,11 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 	if m.help || !m.loaded {
 		return nil
 	}
-	if m.view == viewBoard {
+	switch m.view {
+	case viewBoard:
 		return m.board.key(m, key)
+	case viewTree:
+		return m.tree.key(m, key)
 	}
 	return nil
 }
@@ -358,9 +379,6 @@ func (m *Model) setTheme(i int) {
 	m.th = newTheme(Themes[i])
 	m.md.reset()
 }
-
-// selectedID returns the ID of the selected card on the board.
-func (m *Model) selectedID() string { return m.board.selectedID(m) }
 
 // View renders the whole screen.
 func (m *Model) View() tea.View {
@@ -416,6 +434,8 @@ func (m *Model) render() string {
 		body = m.renderHelp(bodyH)
 	case m.view == viewBoard:
 		body = m.board.render(m, bodyH)
+	case m.view == viewTree:
+		body = m.tree.render(m, bodyH)
 	default:
 		body = m.th.muted.Render(fmt.Sprintf("The %s view is not available yet.", m.view))
 	}
@@ -437,8 +457,11 @@ func (m *Model) header() string {
 		}
 	}
 	left := m.th.logo.Render(" kb ") + " " + m.th.bright.Render(m.opts.Project) + "  " + strings.Join(tabs, "")
-	if m.view == viewBoard {
+	switch m.view {
+	case viewBoard:
 		left += "  " + m.th.muted.Render(m.board.filterLabel())
+	case viewTree:
+		left += "  " + m.th.muted.Render(m.tree.filterLabel(m))
 	}
 	right := ""
 	if m.snap != nil {
@@ -478,9 +501,13 @@ func (m *Model) claimCounts() (agents, stale int) {
 
 // statusLine shows the latest event.
 func (m *Model) statusLine() string {
-	if m.board.searching && m.view == viewBoard {
+	if m.board.searching && m.view != viewActivity {
+		n := m.board.shownCount(m)
+		if m.view == viewTree {
+			n = m.tree.matchCount(m)
+		}
 		return m.th.fg(m.th.p.Accent).Render("/ ") + m.th.bright.Render(m.board.query) + m.th.fg(m.th.p.Accent).Render("▌") +
-			"  " + m.th.muted.Render(plural(m.board.shownCount(m), "match", "matches"))
+			"  " + m.th.muted.Render(plural(n, "match", "matches"))
 	}
 	if m.notice != "" {
 		return truncate(m.th.fg(m.th.p.Accent).Render(m.notice), m.width)
@@ -527,13 +554,18 @@ var viewKeys = map[viewKind][]keyHint{
 		{"f", "filter", "choose the types shown, or only blocked or stale items", false},
 	},
 	viewTree: {
-		{"↑ ↓", "navigate", "move between rows", true},
-		{"← →", "collapse / expand", "collapse or expand a branch", true},
-		{"enter", "details", "open the detail panel", true},
-		{"n", "new child", "create a child of the selected item", true},
-		{"e", "edit", "edit the selected item", true},
-		{"/", "search", "search by ID or title", true},
-		{"f", "filter", "filter the tree", true},
+		{"↑ ↓", "navigate", "move between rows", false},
+		{"← →", "collapse / expand", "collapse or expand a branch (on a leaf, ← goes to the parent)", false},
+		{"enter", "details", "open the detail panel (esc closes it, pgup/pgdown scroll it)", false},
+		{"n", "new child", "create a child of the selected item, with the type the hierarchy suggests", false},
+		{"e", "edit", "edit the selected item", false},
+		{"d", "delete", "delete the selected item", false},
+		{"c", "check", "check the acceptance criteria of the selected item", false},
+		{"ctrl+e", "describe", "edit the description of the selected item in $EDITOR", false},
+		{"a", "assign", "claim or release the selected item", false},
+		{"l", "link", "manage relations", false},
+		{"/", "search", "search by ID, title, label or assignee; ancestors of a match stay shown", false},
+		{"f", "filter", "only blocked or stale items, with their ancestors (types apply to the Board only)", false},
 	},
 	viewActivity: {
 		{"↑ ↓", "select actor", "select an actor", true},
@@ -567,7 +599,7 @@ func (m *Model) commandBar() []string {
 		hints = linksKeys
 	case m.form != nil:
 		hints = formKeys
-	case m.board.searching && m.view == viewBoard:
+	case m.board.searching && m.view != viewActivity:
 		hints = searchKeys
 	}
 	var lines []string

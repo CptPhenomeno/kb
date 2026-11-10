@@ -14,7 +14,11 @@ type action struct {
 	views     []viewKind
 }
 
-var boardOnly = []viewKind{viewBoard}
+var (
+	boardOnly = []viewKind{viewBoard}
+	treeOnly  = []viewKind{viewTree}
+	itemViews = []viewKind{viewBoard, viewTree}
+)
 
 // actions lists only features that work; add an entry when one lands.
 var actions = []action{
@@ -22,17 +26,20 @@ var actions = []action{
 	{"Move to previous column", "shift+left", boardOnly},
 	{"Reorder up", "shift+up", boardOnly},
 	{"Reorder down", "shift+down", boardOnly},
-	{"Open details", "enter", boardOnly},
-	{"Search", "/", boardOnly},
-	{"Filter", "f", boardOnly},
+	{"Open details", "enter", itemViews},
+	{"Search", "/", itemViews},
+	{"Filter", "f", itemViews},
 	{"Show or hide epics and stories", "p", boardOnly},
-	{"Check acceptance criteria", "c", boardOnly},
+	{"Check acceptance criteria", "c", itemViews},
 	{"Create item", "n", boardOnly},
-	{"Edit item", "e", boardOnly},
-	{"Edit description in $EDITOR", "ctrl+e", boardOnly},
-	{"Delete item", "d", boardOnly},
-	{"Claim or release item", "a", boardOnly},
-	{"Manage links", "l", boardOnly},
+	{"Create child item", "n", treeOnly},
+	{"Collapse branch", "left", treeOnly},
+	{"Expand branch", "right", treeOnly},
+	{"Edit item", "e", itemViews},
+	{"Edit description in $EDITOR", "ctrl+e", itemViews},
+	{"Delete item", "d", itemViews},
+	{"Claim or release item", "a", itemViews},
+	{"Manage links", "l", itemViews},
 	{"Choose theme", "t", nil},
 	{"Next view", "tab", nil},
 	{"Previous view", "shift+tab", nil},

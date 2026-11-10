@@ -115,18 +115,6 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 		return b.move(m, key == "shift+right")
 	case "shift+up", "shift+down":
 		return b.reorder(m, key == "shift+up")
-	case "pgdown", "pgup":
-		if m.detailOpen {
-			page := max(1, b.geometry(m).height-6)
-			if key == "pgup" {
-				page = -page
-			}
-			m.detailScroll = max(0, m.detailScroll+page)
-		}
-		return nil
-	case "f":
-		m.filterOpen = true
-		return nil
 	case "p":
 		show := !(b.types[core.TypeEpic] || b.types[core.TypeStory])
 		prev := b.selectedID(m)
@@ -142,55 +130,18 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 			}
 		}
 		return nil
-	case "c":
-		if id := b.selectedID(m); id != "" {
-			m.accept = &acceptState{id: id}
-		}
-		return nil
-	case "d":
-		m.openDelete()
-		return nil
 	case "n":
 		m.form = newForm(nil)
 		return nil
-	case "ctrl+e":
-		if it := b.selected(m); it != nil {
-			m.editing = it.ID
-			return m.editDescription(it.Description, it.ID, it.Version)
-		}
-		return nil
-	case "e":
-		if it := b.selected(m); it != nil {
-			m.form = newForm(it)
-		}
-		return nil
-	case "a":
-		return m.assign()
-	case "l":
-		if id := b.selectedID(m); id != "" {
-			m.links = &linksState{id: id}
-		}
-		return nil
-	case "/":
-		b.searching = true
-		return nil
 	case "enter":
-		if id := b.selectedID(m); id != "" {
-			m.detailOpen = true
-			m.history = nil
-			b.ensureVisible(m)
-			return m.loadHistory(id)
-		}
-		return nil
+		cmd := m.itemKey(key)
+		b.ensureVisible(m)
+		return cmd
 	default:
-		return nil
+		return m.itemKey(key)
 	}
 	b.ensureVisible(m)
-	if m.detailOpen {
-		m.history = nil
-		return m.loadHistory(b.selectedID(m))
-	}
-	return nil
+	return m.selectionMoved()
 }
 
 // move asks the core to move the selected card one column right or left.
@@ -265,8 +216,7 @@ func (b *boardState) geometry(m *Model) geometry {
 	g := geometry{top: 1, height: m.height - 2 - len(m.commandBar())}
 	boardW := m.width
 	if m.detailOpen {
-		// 40% of the width, leaving the board at least 75 columns.
-		g.detailW = max(36, min(m.width*40/100, m.width-75))
+		g.detailW = m.detailWidth()
 		boardW = m.width - g.detailW - colGap
 		g.detailX = boardW + colGap
 	}
@@ -498,11 +448,7 @@ func (b *boardState) click(m *Model, x, y int) tea.Cmd {
 	}
 	b.col, b.row = c, r
 	b.ensureVisible(m)
-	if m.detailOpen {
-		m.history = nil
-		return m.loadHistory(b.selectedID(m))
-	}
-	return nil
+	return m.selectionMoved()
 }
 
 // wheel moves the selection up or down in the column under the mouse.

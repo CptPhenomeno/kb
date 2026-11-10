@@ -66,8 +66,14 @@ func TestPaletteListsContextActions(t *testing.T) {
 		}
 	}
 	press(t, m, "esc", "tab", "ctrl+p")
-	if tree := names(m.palette.matches(m)); contains(tree, "Move to next column") {
+	tree := names(m.palette.matches(m))
+	if contains(tree, "Move to next column") {
 		t.Errorf("the Tree view palette lists board actions: %v", tree)
+	}
+	for _, want := range []string{"Create child item", "Collapse branch", "Edit item", "Open details"} {
+		if !contains(tree, want) {
+			t.Errorf("tree palette lacks %q: %v", want, tree)
+		}
 	}
 	if !strings.Contains(screen(m), "shift ← →") && !strings.Contains(lastLines(screen(m), 2), "enter") {
 		t.Error("palette command bar missing")

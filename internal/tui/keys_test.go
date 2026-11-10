@@ -34,7 +34,7 @@ func TestPaletteAdvertisedOnCtrlP(t *testing.T) {
 // key from here when its feature is implemented.
 var missingFeatures = map[viewKind][]string{
 	viewBoard:    {},
-	viewTree:     {"↑ ↓", "← →", "enter", "n", "e", "/", "f"},
+	viewTree:     {},
 	viewActivity: {"↑ ↓", "enter", "esc", "o", "a"},
 }
 

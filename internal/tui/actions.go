@@ -18,7 +18,7 @@ type confirmState struct {
 }
 
 func (m *Model) openDelete() {
-	it := m.board.selected(m)
+	it := m.selected()
 	if it == nil {
 		return
 	}
@@ -71,7 +71,7 @@ var confirmKeys = []keyHint{{"enter", "delete", "delete the item", false}, {"esc
 // assign claims the selected item for the TUI user, or releases the claim
 // when the user already holds it.
 func (m *Model) assign() tea.Cmd {
-	it := m.board.selected(m)
+	it := m.selected()
 	if it == nil {
 		return nil
 	}
@@ -267,24 +267,31 @@ var linkAddKeys = []keyHint{
 	{"esc", "cancel", "go back to the list", false},
 }
 
-// goTo selects an item on the board, switching to the Board view and
-// relaxing the filters and the search when they hide it.
+// goTo selects an item, relaxing the filters and the search when they
+// hide it. The Tree view selects the row, opening its branch; any other
+// view switches to the Board.
 func (m *Model) goTo(id string) tea.Cmd {
 	it := m.snap.Get(id)
 	if it == nil {
 		return nil
 	}
-	m.view = viewBoard
 	b := &m.board
-	if !b.matches(m, it) {
-		b.types[it.Type] = true
-		b.query, b.searching = "", false
-		b.onlyBlocked, b.onlyStale = false, false
+	if m.view == viewTree {
+		if !m.tree.shown(m, it) {
+			b.query, b.searching = "", false
+			b.onlyBlocked, b.onlyStale = false, false
+		}
+		m.tree.reveal(m, id)
+		m.tree.restore(m, id)
+	} else {
+		m.view = viewBoard
+		if !b.matches(m, it) {
+			b.types[it.Type] = true
+			b.query, b.searching = "", false
+			b.onlyBlocked, b.onlyStale = false, false
+		}
+		b.restore(m, id)
 	}
-	b.restore(m, id)
-	if m.detailOpen {
-		m.history = nil
-		return m.loadHistory(id)
-	}
-	return nil
+	m.detailScroll = 0
+	return m.selectionMoved()
 }
