@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -62,9 +63,10 @@ func TestCommandBarShowsViewKeys(t *testing.T) {
 		view viewKind
 		want []string
 	}{
-		{viewBoard, []string{"← → ↑ ↓ navigate", "shift ← → move", "enter details", "/ search", "f filter", "t theme", "q quit"}},
-		{viewTree, []string{"← → collapse / expand", "n new child", "tab next view", "q quit"}},
-		{viewActivity, []string{"enter only this actor", "o open item", "a release claim", "tab next view"}},
+		{viewBoard, []string{"← → ↑ ↓ navigate", "shift ← → move", "shift ↑ ↓ reorder", "enter details", "/ search", "f filter", "t theme", "q quit"}},
+		// Tree and Activity land in phase 8: only the global keys work there.
+		{viewTree, []string{"tab next view", "q quit"}},
+		{viewActivity, []string{"tab next view", "q quit"}},
 	}
 	for _, c := range cases {
 		m.view = c.view
@@ -307,14 +309,59 @@ func TestBoardAndTreeShowNoStaleBadgeOnFinishedItems(t *testing.T) {
 	}
 }
 
+// The Board starts with the newest change first in each column (KB-39);
+// ties keep the position order.
 func TestColumnsNewestFirst(t *testing.T) {
 	be := sampleBoard()
 	be.snap.Get("KB-8").UpdatedAt = testNow.Add(-time.Minute)
 	be.snap.Get("KB-5").UpdatedAt = testNow.Add(-time.Hour)
 	m := newModel(t, be, 160, 48)
-	// To do holds KB-5, KB-6, KB-7 and KB-8; KB-6 and KB-7 never changed
-	// and keep their position order below the changed ones.
 	if got := boardColumn(m, core.StatusTodo); got != "KB-8 KB-5 KB-6 KB-7" {
 		t.Fatalf("To do = %s, want the newest change first", got)
 	}
+	if !strings.Contains(m.header(), "newest first") {
+		t.Fatalf("header does not say the order: %s", m.header())
+	}
+}
+
+// s switches between newest first and the manual order, and saves it.
+func TestSortToggle(t *testing.T) {
+	be := sampleBoard()
+	be.snap.Get("KB-8").UpdatedAt = testNow.Add(-time.Minute)
+	var saved []string
+	m := New(context.Background(), be, Options{Project: "p", Actor: "@dev", Now: func() time.Time { return testNow }, Loc: time.UTC,
+		SaveBoardSort: func(s string) error { saved = append(saved, s); return nil }})
+	m.tickEvery = 0
+	send(t, m, windowSize(160, 48))
+	runCmd(t, m, m.Init(), 0)
+	press(t, m, "s")
+	if got := boardColumn(m, core.StatusTodo); got != "KB-5 KB-6 KB-7 KB-8" {
+		t.Fatalf("manual order = %s, want the position order", got)
+	}
+	if !strings.Contains(m.header(), "manual order") || !strings.Contains(m.notice, "manual order") {
+		t.Fatalf("header %q / notice %q do not say manual order", m.header(), m.notice)
+	}
+	press(t, m, "s")
+	if got := boardColumn(m, core.StatusTodo); got != "KB-8 KB-5 KB-6 KB-7" {
+		t.Fatalf("back to newest first = %s", got)
+	}
+	if strings.Join(saved, ",") != "manual,recent" {
+		t.Fatalf("saved = %v", saved)
+	}
+	// The saved choice applies at start-up.
+	m2 := New(context.Background(), be, Options{Project: "p", Now: func() time.Time { return testNow }, BoardSort: "manual"})
+	m2.tickEvery = 0
+	send(t, m2, windowSize(160, 48))
+	runCmd(t, m2, m2.Init(), 0)
+	if got := boardColumn(m2, core.StatusTodo); got != "KB-5 KB-6 KB-7 KB-8" {
+		t.Fatalf("BoardSort manual at start-up = %s", got)
+	}
+}
+
+func boardColumn(m *Model, st core.Status) string {
+	var ids []string
+	for _, it := range m.board.columns(m)[st] {
+		ids = append(ids, it.ID)
+	}
+	return strings.Join(ids, " ")
 }

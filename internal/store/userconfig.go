@@ -16,6 +16,7 @@ import (
 type UserPrefs struct {
 	Theme       string `toml:"theme,omitempty"`
 	ShowParents *bool  `toml:"show_parents,omitempty"` // epics and stories on the board
+	BoardSort   string `toml:"board_sort,omitempty"`   // "recent" or "manual"
 }
 
 func userConfigPath() (string, error) {
@@ -68,5 +69,13 @@ func SaveUserTheme(name string) error {
 func SaveUserShowParents(show bool) error {
 	p := LoadUserPrefs()
 	p.ShowParents = &show
+	return SaveUserPrefs(p)
+}
+
+// SaveUserBoardSort stores the order of the board columns ("recent" or
+// "manual"), keeping the other preferences.
+func SaveUserBoardSort(order string) error {
+	p := LoadUserPrefs()
+	p.BoardSort = order
 	return SaveUserPrefs(p)
 }

@@ -84,6 +84,10 @@ func (f *fakeBackend) Edit(context.Context, string, string, core.Patch, int) (*c
 	return nil, errors.New("read-only fake")
 }
 
+func (f *fakeBackend) Reorder(context.Context, string, string, int, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
 // item builds a board item for the fixtures.
 func item(id string, typ core.Type, status core.Status, parent, title string, opts ...func(*core.Item)) *core.Item {
 	it := &core.Item{ID: id, Type: typ, Status: status, Parent: parent, Title: title}

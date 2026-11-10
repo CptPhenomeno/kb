@@ -62,7 +62,11 @@ func (b *boardState) filterLabel() string {
 	if b.query != "" {
 		parts = append(parts, `"`+b.query+`"`)
 	}
-	return "showing " + strings.Join(parts, " · ")
+	order := "newest first"
+	if b.manualOrder {
+		order = "manual order"
+	}
+	return "showing " + strings.Join(parts, " · ") + " · " + order
 }
 
 // filterRows are the rows of the filter popup, in order.

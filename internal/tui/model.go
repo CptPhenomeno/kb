@@ -19,6 +19,7 @@ type Backend interface {
 	Log(ctx context.Context, f core.LogFilter) ([]core.Event, error)
 	DataVersion(ctx context.Context) (int64, error)
 	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
+	Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error)
 	SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error)
 	Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error)
 	Claim(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
@@ -43,6 +44,12 @@ type Options struct {
 	ShowParents *bool
 	// SaveShowParents stores the p toggle; nil disables saving.
 	SaveShowParents func(show bool) error
+	// BoardSort is the saved order of the board columns: "manual" keeps
+	// the position order; anything else shows the newest change first.
+	BoardSort string
+	// SaveBoardSort stores the s toggle ("recent" or "manual"); nil
+	// disables saving.
+	SaveBoardSort func(order string) error
 }
 
 type viewKind int
@@ -152,6 +159,7 @@ func New(ctx context.Context, be Backend, opts Options) *Model {
 	}
 	m.th = newTheme(Themes[m.themeIdx])
 	m.board.types = defaultTypes()
+	m.board.manualOrder = opts.BoardSort == "manual"
 	if opts.ShowParents != nil && !*opts.ShowParents {
 		m.board.types[core.TypeEpic], m.board.types[core.TypeStory] = false, false
 	}
@@ -549,8 +557,10 @@ var globalKeys = []keyHint{
 
 var viewKeys = map[viewKind][]keyHint{
 	viewBoard: {
-		{"← → ↑ ↓", "navigate", "move between columns and cards (each column shows the latest change first)", false},
+		{"← → ↑ ↓", "navigate", "move between columns and cards", false},
 		{"shift ← →", "move", "move to the previous or next column", false},
+		{"shift ↑ ↓", "reorder", "reorder the card in its column (in manual order)", false},
+		{"s", "sort", "show each column newest change first or in manual order (saved for your user)", false},
 		{"enter", "details", "open the detail panel (esc closes it, pgup/pgdown scroll it)", false},
 		{"n", "new", "create an item", false},
 		{"e", "edit", "edit the selected item", false},

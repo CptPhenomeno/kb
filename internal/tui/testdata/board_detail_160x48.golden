@@ -1,4 +1,4 @@
- kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug                                                   12 items  1 agent active  1 stale
+ kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug · newest first                                    12 items  1 agent active  1 stale
 ╭─────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭──────────────────────────────────────────────────────────────╮
 │ Backlog       1 │ │ To do        4 │ │ In progress  4 │ │ Review       1 │ │ Done         1 │ │ KB-4 · task                                        esc close │
 │ ╭─────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ Token refresh                                                │
@@ -44,5 +44,5 @@
 │                 │ │                │ │                │ │                │ │                │ │                                                              │
 ╰─────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰────────────────╯ ╰──────────────────────────────────────────────────────────────╯
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
-← → ↑ ↓ navigate   shift ← → move   enter details   n new   e edit   d delete   c check   ctrl+e describe   a assign   l link   p epics & stories   / search    
-f filter   tab next view   ctrl+p commands   t theme   ? help   q quit                                                                                          
+← → ↑ ↓ navigate   shift ← → move   shift ↑ ↓ reorder   s sort   enter details   n new   e edit   d delete   c check   ctrl+e describe   a assign   l link      
+p epics & stories   / search   f filter   tab next view   ctrl+p commands   t theme   ? help   q quit                                                           

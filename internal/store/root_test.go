@@ -205,3 +205,16 @@ func writeFile(t *testing.T, path, body string) {
 		t.Fatal(err)
 	}
 }
+
+func TestUserBoardSortSaved(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	if err := SaveUserTheme("nord"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveUserBoardSort("manual"); err != nil {
+		t.Fatal(err)
+	}
+	if p := LoadUserPrefs(); p.BoardSort != "manual" || p.Theme != "nord" {
+		t.Fatalf("prefs = %+v, want board_sort manual and the theme kept", p)
+	}
+}
