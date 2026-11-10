@@ -118,7 +118,7 @@ func TestBuildCrossPlatform(t *testing.T) {
 	}
 	for _, tc := range targets {
 		t.Run(tc.goos+"/"+tc.goarch, func(t *testing.T) {
-			path := filepath.Join(dist, "kb-"+tc.goos+"-"+tc.goarch)
+			path := filepath.Join(dist, "kb-"+version+"-"+tc.goos+"-"+tc.goarch)
 			if _, err := os.Stat(path); err != nil {
 				t.Fatalf("make cross did not produce %s: %v", path, err)
 			}

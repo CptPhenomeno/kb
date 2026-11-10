@@ -39,7 +39,7 @@ build:
 	CGO_ENABLED=0 go build -trimpath -ldflags '$(LDFLAGS)' -o $(BIN) ./cmd/kb
 
 ## cross: build static kb binaries for every os/arch in PLATFORMS into
-## $(DIST)/kb-<os>-<arch>
+## $(DIST)/kb-$(VERSION)-<os>-<arch>
 cross:
 	@set -e; for p in $(PLATFORMS); do \
 		os=$${p%/*}; arch=$${p#*/}; out=$(DIST)/kb-$(VERSION)-$$os-$$arch; \
