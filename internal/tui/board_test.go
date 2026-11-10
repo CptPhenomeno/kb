@@ -62,10 +62,9 @@ func TestCommandBarShowsViewKeys(t *testing.T) {
 		view viewKind
 		want []string
 	}{
-		{viewBoard, []string{"← → ↑ ↓ navigate", "shift ← → move", "shift ↑ ↓ reorder", "enter details", "/ search", "f filter", "t theme", "q quit"}},
-		// Tree and Activity land in phase 8: only the global keys work there.
-		{viewTree, []string{"tab next view", "q quit"}},
-		{viewActivity, []string{"tab next view", "q quit"}},
+		{viewBoard, []string{"← → ↑ ↓ navigate", "shift ← → move", "enter details", "/ search", "f filter", "t theme", "q quit"}},
+		{viewTree, []string{"← → collapse / expand", "n new child", "tab next view", "q quit"}},
+		{viewActivity, []string{"enter only this actor", "o open item", "a release claim", "tab next view"}},
 	}
 	for _, c := range cases {
 		m.view = c.view
@@ -305,5 +304,17 @@ func TestBoardAndTreeShowNoStaleBadgeOnFinishedItems(t *testing.T) {
 	}
 	if !strings.Contains(strings.Split(s, "\n")[0], "1 stale") {
 		t.Fatalf("header must count one stale item: %s", strings.Split(s, "\n")[0])
+	}
+}
+
+func TestColumnsNewestFirst(t *testing.T) {
+	be := sampleBoard()
+	be.snap.Get("KB-8").UpdatedAt = testNow.Add(-time.Minute)
+	be.snap.Get("KB-5").UpdatedAt = testNow.Add(-time.Hour)
+	m := newModel(t, be, 160, 48)
+	// To do holds KB-5, KB-6, KB-7 and KB-8; KB-6 and KB-7 never changed
+	// and keep their position order below the changed ones.
+	if got := boardColumn(m, core.StatusTodo); got != "KB-8 KB-5 KB-6 KB-7" {
+		t.Fatalf("To do = %s, want the newest change first", got)
 	}
 }

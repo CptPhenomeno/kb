@@ -19,7 +19,6 @@ type Backend interface {
 	Log(ctx context.Context, f core.LogFilter) ([]core.Event, error)
 	DataVersion(ctx context.Context) (int64, error)
 	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
-	Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error)
 	SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error)
 	Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error)
 	Claim(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
@@ -550,9 +549,8 @@ var globalKeys = []keyHint{
 
 var viewKeys = map[viewKind][]keyHint{
 	viewBoard: {
-		{"← → ↑ ↓", "navigate", "move between columns and cards", false},
+		{"← → ↑ ↓", "navigate", "move between columns and cards (each column shows the latest change first)", false},
 		{"shift ← →", "move", "move to the previous or next column", false},
-		{"shift ↑ ↓", "reorder", "reorder the card in its column", false},
 		{"enter", "details", "open the detail panel (esc closes it, pgup/pgdown scroll it)", false},
 		{"n", "new", "create an item", false},
 		{"e", "edit", "edit the selected item", false},

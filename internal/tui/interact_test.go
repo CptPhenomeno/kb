@@ -109,22 +109,40 @@ func TestAlertDismissWithEnter(t *testing.T) {
 	}
 }
 
-func TestReorder(t *testing.T) {
+// The Board orders each column by last change, newest first: a card
+// that changes jumps to the top (KB-39).
+func TestChangedCardJumpsToTop(t *testing.T) {
 	m, svc := newLiveModel(t)
-	press(t, m, "down", "down") // KB-3
-	press(t, m, "shift+up")
-	if got := columnOrder(t, svc, core.StatusTodo); got != "KB-1 KB-3 KB-2" {
-		t.Fatalf("order after shift+up = %s", got)
+	if got := boardColumn(m, core.StatusTodo); got != "KB-1 KB-2 KB-3" {
+		t.Fatalf("ties keep the position order, got %s", got)
 	}
-	if m.selectedID() != "KB-3" {
-		t.Fatalf("selection = %s, want it to follow KB-3", m.selectedID())
+	svc.Now = func() time.Time { return testNow.Add(time.Minute) }
+	title := "Gamma, renamed"
+	if _, err := svc.Edit(context.Background(), "agent-x", "KB-3", core.Patch{Title: &title}, 0); err != nil {
+		t.Fatal(err)
 	}
-	press(t, m, "shift+up", "shift+up") // already on top: no-op
-	if got := columnOrder(t, svc, core.StatusTodo); got != "KB-3 KB-1 KB-2" {
-		t.Fatalf("order = %s", got)
+	reload(t, m)
+	if got := boardColumn(m, core.StatusTodo); got != "KB-3 KB-1 KB-2" {
+		t.Fatalf("after editing KB-3 the column is %s, want KB-3 on top", got)
 	}
-	press(t, m, "shift+down")
-	if got := columnOrder(t, svc, core.StatusTodo); got != "KB-1 KB-3 KB-2" {
-		t.Fatalf("order after shift+down = %s", got)
+}
+
+// Manual reorder is gone from the TUI: the order is automatic.
+func TestNoManualReorder(t *testing.T) {
+	m, svc := newLiveModel(t)
+	press(t, m, "down", "down", "shift+up")
+	if got := columnOrder(t, svc, core.StatusTodo); got != "KB-1 KB-2 KB-3" {
+		t.Fatalf("shift+up reordered the column: %s", got)
 	}
+	if strings.Contains(lastLines(screen(m), 2), "reorder") {
+		t.Fatal("the command bar still advertises reorder")
+	}
+}
+
+func boardColumn(m *Model, st core.Status) string {
+	var ids []string
+	for _, it := range m.board.columns(m)[st] {
+		ids = append(ids, it.ID)
+	}
+	return strings.Join(ids, " ")
 }

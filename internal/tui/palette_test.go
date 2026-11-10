@@ -55,7 +55,7 @@ func TestPaletteListsContextActions(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
 	press(t, m, "ctrl+p")
 	board := names(m.palette.matches(m))
-	for _, want := range []string{"Move to next column", "Reorder up", "Open details", "Search", "Filter", "Choose theme", "Next view", "Quit"} {
+	for _, want := range []string{"Move to next column", "Open details", "Search", "Filter", "Choose theme", "Next view", "Quit"} {
 		if !contains(board, want) {
 			t.Errorf("board palette lacks %q: %v", want, board)
 		}

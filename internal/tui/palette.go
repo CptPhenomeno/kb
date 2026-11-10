@@ -25,8 +25,6 @@ var (
 var actions = []action{
 	{"Move to next column", "shift+right", boardOnly},
 	{"Move to previous column", "shift+left", boardOnly},
-	{"Reorder up", "shift+up", boardOnly},
-	{"Reorder down", "shift+down", boardOnly},
 	{"Open details", "enter", itemViews},
 	{"Search", "/", itemViews},
 	{"Filter", "f", itemViews},
@@ -151,8 +149,7 @@ func (m *Model) renderPalette() string {
 
 // keyLabel renders a key name the way the command bar does.
 func keyLabel(k string) string {
-	r := strings.NewReplacer("shift+right", "shift →", "shift+left", "shift ←", "shift+up", "shift ↑",
-		"shift+down", "shift ↓")
+	r := strings.NewReplacer("shift+right", "shift →", "shift+left", "shift ←")
 	return r.Replace(k)
 }
 

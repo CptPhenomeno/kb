@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -36,6 +37,9 @@ func (b *boardState) columns(m *Model) [5][]*core.Item {
 				cols[i] = append(cols[i], it)
 			}
 		}
+		// Newest change first; the stable sort keeps the position order
+		// among items changed at the same time.
+		slices.SortStableFunc(cols[i], func(a, b *core.Item) int { return b.UpdatedAt.Compare(a.UpdatedAt) })
 	}
 	return cols
 }
@@ -113,8 +117,6 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 		b.row = max(0, min(b.row+1, len(cols[b.col])-1))
 	case "shift+right", "shift+left":
 		return b.move(m, key == "shift+right")
-	case "shift+up", "shift+down":
-		return b.reorder(m, key == "shift+up")
 	case "p":
 		show := !(b.types[core.TypeEpic] || b.types[core.TypeStory])
 		prev := b.selectedID(m)
@@ -163,36 +165,6 @@ func (b *boardState) move(m *Model, right bool) tea.Cmd {
 		_, err := m.be.Move(m.ctx, actor, item.ID, to, item.Version)
 		if err != nil {
 			return writeMsg{alert: m.moveAlert(&item, to, err)}
-		}
-		return writeMsg{}
-	}
-}
-
-// reorder swaps the selected card with its neighbor above or below in the
-// column, as shown on the board.
-func (b *boardState) reorder(m *Model, up bool) tea.Cmd {
-	cols := b.columns(m)
-	shown := cols[b.col]
-	n := b.row + 1
-	if up {
-		n = b.row - 1
-	}
-	if n < 0 || n >= len(shown) {
-		return nil
-	}
-	it, neighbor := shown[b.row], shown[n]
-	// The core orders the whole column, hidden types included: aim at the
-	// neighbor's index in it.
-	index := 0
-	for i, x := range core.Column(m.snap, it.Status) {
-		if x.ID == neighbor.ID {
-			index = i
-		}
-	}
-	item, actor := *it, m.opts.Actor
-	return func() tea.Msg {
-		if _, err := m.be.Reorder(m.ctx, actor, item.ID, index, item.Version); err != nil {
-			return writeMsg{alert: m.failure(item, "REORDER FAILED", err)}
 		}
 		return writeMsg{}
 	}
