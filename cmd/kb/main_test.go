@@ -21,14 +21,16 @@ func buildKB(t *testing.T, flags ...string) string {
 	return bin
 }
 
+// Without ldflags, a plain go build reports the module version that Go
+// stamps from git (a pseudo-version here), or "dev" when there is none.
 func TestVersionCommandDefault(t *testing.T) {
 	bin := buildKB(t)
 	out, err := exec.Command(bin, "version").Output()
 	if err != nil {
 		t.Fatalf("kb version: %v", err)
 	}
-	if got := strings.TrimSpace(string(out)); got != "kb dev" {
-		t.Fatalf("kb version = %q, want %q", got, "kb dev")
+	if got := strings.TrimSpace(string(out)); got != "kb dev" && !strings.HasPrefix(got, "kb v") {
+		t.Fatalf("kb version = %q, want kb dev or kb v<module version>", got)
 	}
 }
 

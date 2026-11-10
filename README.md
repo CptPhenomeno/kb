@@ -107,3 +107,5 @@ releases, `l` manages links, `/` searches, `f` filters, `t` picks a theme,
 ```sh
 make check        # gofmt, go vet, staticcheck, go test -race
 ```
+
+Changes between versions are listed in [CHANGELOG.md](CHANGELOG.md).
