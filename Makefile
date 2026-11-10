@@ -42,7 +42,7 @@ build:
 ## $(DIST)/kb-<os>-<arch>
 cross:
 	@set -e; for p in $(PLATFORMS); do \
-		os=$${p%/*}; arch=$${p#*/}; out=$(DIST)/kb-$$os-$$arch; \
+		os=$${p%/*}; arch=$${p#*/}; out=$(DIST)/kb-$(VERSION)-$$os-$$arch; \
 		echo "building $$out"; \
 		CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch go build -trimpath -ldflags '$(LDFLAGS)' -o $$out ./cmd/kb; \
 	done

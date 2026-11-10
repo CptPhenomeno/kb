@@ -1,0 +1,11 @@
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  run-check:
+    name: Setup and check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/setup-and-check

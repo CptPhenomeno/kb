@@ -86,5 +86,3 @@ developer. MCP support is planned after v1.
 - Static binaries without cgo; `make cross` builds linux and darwin for
   amd64 and arm64. `kb version` reports the git version, or the module
   version when installed with `go install`.
-
-[1.0.1]: https://github.com/CptPhenomeno/kb/releases/tag/v1.0.1
