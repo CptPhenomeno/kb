@@ -319,42 +319,91 @@ func TestColumnsNewestFirst(t *testing.T) {
 	if got := boardColumn(m, core.StatusTodo); got != "KB-8 KB-5 KB-6 KB-7" {
 		t.Fatalf("To do = %s, want the newest change first", got)
 	}
-	if !strings.Contains(m.header(), "newest first") {
+	if !strings.Contains(m.header(), "sorted by date ↓") {
 		t.Fatalf("header does not say the order: %s", m.header())
 	}
 }
 
-// s switches between newest first and the manual order, and saves it.
-func TestSortToggle(t *testing.T) {
+// sortBoard is the sample board with distinct change dates and points.
+func sortBoard() *fakeBackend {
 	be := sampleBoard()
+	// To do: KB-5 (1pt), KB-6 (story: 6pt below), KB-7 (3pt), KB-8 (3pt).
 	be.snap.Get("KB-8").UpdatedAt = testNow.Add(-time.Minute)
-	var saved []string
-	m := New(context.Background(), be, Options{Project: "p", Actor: "@dev", Now: func() time.Time { return testNow }, Loc: time.UTC,
-		SaveBoardSort: func(s string) error { saved = append(saved, s); return nil }})
+	be.snap.Get("KB-5").UpdatedAt = testNow.Add(-time.Hour)
+	be.snap.Get("KB-7").UpdatedAt = testNow.Add(-2 * time.Hour)
+	return be
+}
+
+func sortModel(t *testing.T, be *fakeBackend, opts Options) *Model {
+	t.Helper()
+	opts.Project, opts.Actor, opts.Loc = "p", "@dev", time.UTC
+	opts.Now = func() time.Time { return testNow }
+	m := New(context.Background(), be, opts)
 	m.tickEvery = 0
 	send(t, m, windowSize(160, 48))
 	runCmd(t, m, m.Init(), 0)
+	return m
+}
+
+func TestSortPopupOpens(t *testing.T) {
+	m := sortModel(t, sortBoard(), Options{})
 	press(t, m, "s")
-	if got := boardColumn(m, core.StatusTodo); got != "KB-5 KB-6 KB-7 KB-8" {
-		t.Fatalf("manual order = %s, want the position order", got)
+	if m.sort == nil {
+		t.Fatal("s did not open the sort popup")
 	}
-	if !strings.Contains(m.header(), "manual order") || !strings.Contains(m.notice, "manual order") {
-		t.Fatalf("header %q / notice %q do not say manual order", m.header(), m.notice)
+	scr := screen(m)
+	for _, want := range []string{"Sort columns", "date", "id", "story points", "descending"} {
+		if !strings.Contains(scr, want) {
+			t.Fatalf("sort popup lacks %q:\n%s", want, scr)
+		}
 	}
-	press(t, m, "s")
-	if got := boardColumn(m, core.StatusTodo); got != "KB-8 KB-5 KB-6 KB-7" {
-		t.Fatalf("back to newest first = %s", got)
+	press(t, m, "esc")
+	if m.sort != nil {
+		t.Fatal("esc did not close the sort popup")
 	}
-	if strings.Join(saved, ",") != "manual,recent" {
-		t.Fatalf("saved = %v", saved)
+}
+
+func TestSortByEveryField(t *testing.T) {
+	cases := []struct {
+		keys []string
+		want string
+	}{
+		{nil, "KB-8 KB-5 KB-7 KB-6"},                                     // default: date descending
+		{[]string{"s", "space", "enter"}, "KB-6 KB-7 KB-5 KB-8"},         // date ascending
+		{[]string{"s", "down", "enter"}, "KB-8 KB-7 KB-6 KB-5"},          // id descending
+		{[]string{"s", "down", "space", "enter"}, "KB-5 KB-6 KB-7 KB-8"}, // id ascending
+		{[]string{"s", "down", "down", "enter"}, "KB-6 KB-7 KB-8 KB-5"},  // points descending, ties by position
+		{[]string{"s", "down", "down", "right", "enter"}, "KB-5 KB-7 KB-8 KB-6"},
 	}
-	// The saved choice applies at start-up.
-	m2 := New(context.Background(), be, Options{Project: "p", Now: func() time.Time { return testNow }, BoardSort: "manual"})
-	m2.tickEvery = 0
-	send(t, m2, windowSize(160, 48))
-	runCmd(t, m2, m2.Init(), 0)
+	for _, c := range cases {
+		m := sortModel(t, sortBoard(), Options{})
+		press(t, m, c.keys...)
+		if got := boardColumn(m, core.StatusTodo); got != c.want {
+			t.Errorf("%v: To do = %s, want %s", c.keys, got, c.want)
+		}
+		if m.sort != nil {
+			t.Errorf("%v: enter did not close the popup", c.keys)
+		}
+	}
+}
+
+func TestSortChoiceSavedAndRestored(t *testing.T) {
+	var saved []string
+	m := sortModel(t, sortBoard(), Options{SaveBoardSort: func(s string) error { saved = append(saved, s); return nil }})
+	press(t, m, "s", "down", "space", "enter")
+	if strings.Join(saved, ",") != "id-asc" {
+		t.Fatalf("saved = %v, want id-asc", saved)
+	}
+	if !strings.Contains(m.header(), "id ↑") {
+		t.Fatalf("header does not show the sort: %s", m.header())
+	}
+	m2 := sortModel(t, sortBoard(), Options{BoardSort: "id-asc"})
 	if got := boardColumn(m2, core.StatusTodo); got != "KB-5 KB-6 KB-7 KB-8" {
-		t.Fatalf("BoardSort manual at start-up = %s", got)
+		t.Fatalf("BoardSort id-asc at start-up = %s", got)
+	}
+	m3 := sortModel(t, sortBoard(), Options{BoardSort: "manual"})
+	if got := boardColumn(m3, core.StatusTodo); got != "KB-5 KB-6 KB-7 KB-8" || !strings.Contains(m3.header(), "manual order") {
+		t.Fatalf("BoardSort manual at start-up = %s, header %s", got, m3.header())
 	}
 }
 

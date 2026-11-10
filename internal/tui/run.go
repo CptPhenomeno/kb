@@ -45,6 +45,10 @@ func (b *serviceBackend) Move(ctx context.Context, actor, id string, to core.Sta
 	return b.svc.Move(ctx, actor, id, to, ifVersion)
 }
 
+func (b *serviceBackend) ArrangeColumn(ctx context.Context, actor string, status core.Status, ids []string) error {
+	return b.svc.ArrangeColumn(ctx, actor, status, ids)
+}
+
 func (b *serviceBackend) Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error) {
 	return b.svc.Reorder(ctx, actor, id, index, ifVersion)
 }

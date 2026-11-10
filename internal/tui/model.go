@@ -20,6 +20,7 @@ type Backend interface {
 	DataVersion(ctx context.Context) (int64, error)
 	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
 	Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error)
+	ArrangeColumn(ctx context.Context, actor string, status core.Status, ids []string) error
 	SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error)
 	Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error)
 	Claim(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
@@ -44,11 +45,11 @@ type Options struct {
 	ShowParents *bool
 	// SaveShowParents stores the p toggle; nil disables saving.
 	SaveShowParents func(show bool) error
-	// BoardSort is the saved order of the board columns: "manual" keeps
-	// the position order; anything else shows the newest change first.
+	// BoardSort is the saved order of the board columns, e.g. "date-desc"
+	// (the default), "id-asc", "points-desc" or "manual".
 	BoardSort string
-	// SaveBoardSort stores the s toggle ("recent" or "manual"); nil
-	// disables saving.
+	// SaveBoardSort stores the order chosen in the sort popup or set by a
+	// manual reorder; nil disables saving.
 	SaveBoardSort func(order string) error
 }
 
@@ -133,6 +134,7 @@ type Model struct {
 	confirm    *confirmState // open delete confirmation, or nil
 	links      *linksState   // open links popup, or nil
 	form       *formState    // open create/edit form, or nil
+	sort       *sortState    // open sort popup, or nil
 	pendingSel string        // item to select after the next reload
 	editing    string        // item whose description is open in $EDITOR
 
@@ -159,7 +161,7 @@ func New(ctx context.Context, be Backend, opts Options) *Model {
 	}
 	m.th = newTheme(Themes[m.themeIdx])
 	m.board.types = defaultTypes()
-	m.board.manualOrder = opts.BoardSort == "manual"
+	m.board.sort = parseBoardSort(opts.BoardSort)
 	if opts.ShowParents != nil && !*opts.ShowParents {
 		m.board.types[core.TypeEpic], m.board.types[core.TypeStory] = false, false
 	}
@@ -341,6 +343,9 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 	if m.form != nil {
 		return m.formKey(key, text)
 	}
+	if m.sort != nil {
+		return m.sortKey(key)
+	}
 	if m.filterOpen {
 		return m.filterKey(key)
 	}
@@ -419,6 +424,8 @@ func (m *Model) View() tea.View {
 			popup = m.renderLinks()
 		case m.form != nil:
 			popup = m.renderForm()
+		case m.sort != nil:
+			popup = m.renderSort()
 		}
 		if popup != "" {
 			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
@@ -559,8 +566,8 @@ var viewKeys = map[viewKind][]keyHint{
 	viewBoard: {
 		{"← → ↑ ↓", "navigate", "move between columns and cards", false},
 		{"shift ← →", "move", "move to the previous or next column", false},
-		{"shift ↑ ↓", "reorder", "reorder the card in its column (in manual order)", false},
-		{"s", "sort", "show each column newest change first or in manual order (saved for your user)", false},
+		{"shift ↑ ↓", "reorder", "reorder the card in its column, starting from the order shown (switches to manual order)", false},
+		{"s", "sort", "sort the columns by date, ID or story points, ascending or descending (saved for your user)", false},
 		{"enter", "details", "open the detail panel (esc closes it, pgup/pgdown scroll it)", false},
 		{"n", "new", "create an item", false},
 		{"e", "edit", "edit the selected item", false},
@@ -620,6 +627,8 @@ func (m *Model) commandBar() []string {
 		hints = linksKeys
 	case m.form != nil:
 		hints = formKeys
+	case m.sort != nil:
+		hints = sortKeys
 	case m.board.searching && m.view != viewActivity:
 		hints = searchKeys
 	}

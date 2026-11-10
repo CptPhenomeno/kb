@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"errors"
 	"slices"
 	"testing"
 	"time"
@@ -332,4 +333,47 @@ func TestBlockingDoneUnblocksTarget(t *testing.T) {
 	}
 	h.mustMove("@dev", a.ID, core.StatusDone)
 	h.mustMove("@dev", b.ID, core.StatusDoing)
+}
+
+// ArrangeColumn writes the order of a whole column at once (the TUI fixes
+// a sorted column before a manual reorder): positions only, no change of
+// updated_at and no events.
+func TestArrangeColumn(t *testing.T) {
+	h := newHarness(t)
+	a := h.add("@dev", core.TypeTask, "a", "")
+	b := h.add("@dev", core.TypeTask, "b", "")
+	c := h.add("@dev", core.TypeTask, "c", "")
+	h.advance(time.Hour)
+	if err := h.svc.ArrangeColumn(ctx, "@dev", core.StatusBacklog, []string{c.ID, a.ID, b.ID}); err != nil {
+		t.Fatal(err)
+	}
+	board, err := h.svc.Board(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var order []string
+	for _, it := range core.Column(board, core.StatusBacklog) {
+		order = append(order, it.ID)
+		if !it.UpdatedAt.Equal(a.UpdatedAt) {
+			t.Errorf("%s updated_at changed to %v", it.ID, it.UpdatedAt)
+		}
+		if n := len(h.history(it.ID)); n != 1 {
+			t.Errorf("%s has %d events, want only created", it.ID, n)
+		}
+	}
+	if want := []string{c.ID, a.ID, b.ID}; !slices.Equal(order, want) {
+		t.Fatalf("column order = %v, want %v", order, want)
+	}
+}
+
+func TestArrangeColumnNeedsTheWholeColumn(t *testing.T) {
+	h := newHarness(t)
+	a := h.add("@dev", core.TypeTask, "a", "")
+	b := h.add("@dev", core.TypeTask, "b", "")
+	todo := h.add("@dev", core.TypeTask, "t", "", withStatus(core.StatusTodo))
+	for _, ids := range [][]string{{a.ID}, {a.ID, b.ID, todo.ID}, {a.ID, a.ID}} {
+		if err := h.svc.ArrangeColumn(ctx, "@dev", core.StatusBacklog, ids); !errors.Is(err, core.ErrRule) {
+			t.Errorf("ArrangeColumn(%v) = %v, want a rule error", ids, err)
+		}
+	}
 }

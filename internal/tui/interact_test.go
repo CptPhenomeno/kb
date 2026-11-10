@@ -111,7 +111,6 @@ func TestAlertDismissWithEnter(t *testing.T) {
 
 func TestReorder(t *testing.T) {
 	m, svc := newLiveModel(t)
-	press(t, m, "s")            // manual order: the one shift+↑/↓ edits
 	press(t, m, "down", "down") // KB-3
 	press(t, m, "shift+up")
 	if got := columnOrder(t, svc, core.StatusTodo); got != "KB-1 KB-3 KB-2" {
@@ -130,16 +129,46 @@ func TestReorder(t *testing.T) {
 	}
 }
 
-// In newest-first order the position is not what the column shows, so
-// shift+↑/↓ moves nothing and says how to get the manual order.
-func TestReorderInNewestFirstExplains(t *testing.T) {
+// A manual reorder while a sort is active starts from the order shown:
+// the column is fixed as seen, then the card moves, and the board shows
+// the manual order from then on.
+func TestReorderAfterSortKeepsShownOrder(t *testing.T) {
 	m, svc := newLiveModel(t)
-	press(t, m, "down", "down", "shift+up")
-	if got := columnOrder(t, svc, core.StatusTodo); got != "KB-1 KB-2 KB-3" {
-		t.Fatalf("shift+up reordered in newest-first order: %s", got)
+	svc.Now = func() time.Time { return testNow.Add(time.Minute) }
+	title := "Beta, renamed"
+	if _, err := svc.Edit(context.Background(), "agent-x", "KB-2", core.Patch{Title: &title}, 0); err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(m.notice, "press s") {
-		t.Fatalf("notice = %q, want a hint to press s", m.notice)
+	reload(t, m)
+	if got := boardColumn(m, core.StatusTodo); got != "KB-2 KB-1 KB-3" {
+		t.Fatalf("newest first = %s", got)
+	}
+	press(t, m, "down", "down", "shift+up") // KB-3 above KB-1, as shown
+	if got := columnOrder(t, svc, core.StatusTodo); got != "KB-2 KB-3 KB-1" {
+		t.Fatalf("stored order = %s, want the shown order with KB-3 moved up", got)
+	}
+	if got := boardColumn(m, core.StatusTodo); got != "KB-2 KB-3 KB-1" || !strings.Contains(m.header(), "manual order") {
+		t.Fatalf("board = %s, header %s: want the manual order", got, m.header())
+	}
+	if m.selectedID() != "KB-3" {
+		t.Fatalf("selection = %s, want it to follow KB-3", m.selectedID())
+	}
+}
+
+// The next sort chosen from the popup overrides the manual order.
+func TestSortOverridesManualOrder(t *testing.T) {
+	m, svc := newLiveModel(t)
+	press(t, m, "down", "down", "shift+up", "shift+up") // KB-3 KB-1 KB-2
+	if got := boardColumn(m, core.StatusTodo); got != "KB-3 KB-1 KB-2" {
+		t.Fatalf("manual = %s", got)
+	}
+	press(t, m, "s", "down", "space", "enter") // id ascending
+	if got := boardColumn(m, core.StatusTodo); got != "KB-1 KB-2 KB-3" {
+		t.Fatalf("after sorting by id = %s", got)
+	}
+	press(t, m, "up", "shift+down") // the selection stays on KB-3: select KB-2 and move it below KB-3
+	if got := columnOrder(t, svc, core.StatusTodo); got != "KB-1 KB-3 KB-2" {
+		t.Fatalf("stored order = %s: the old manual order must be overwritten", got)
 	}
 }
 

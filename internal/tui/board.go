@@ -20,10 +20,10 @@ type boardState struct {
 	types        map[core.Type]bool // types shown on the board
 	onlyBlocked  bool
 	onlyStale    bool
-	query        string // search text
-	searching    bool   // typing into the search
-	filterCursor int    // selected row of the filter popup
-	manualOrder  bool   // columns in position order instead of newest first
+	query        string    // search text
+	searching    bool      // typing into the search
+	filterCursor int       // selected row of the filter popup
+	sort         boardSort // order of the cards in each column
 }
 
 // columns returns the cards of every column in board order.
@@ -38,11 +38,7 @@ func (b *boardState) columns(m *Model) [5][]*core.Item {
 				cols[i] = append(cols[i], it)
 			}
 		}
-		if !b.manualOrder {
-			// Newest change first; the stable sort keeps the position
-			// order among items changed at the same time.
-			slices.SortStableFunc(cols[i], func(a, b *core.Item) int { return b.UpdatedAt.Compare(a.UpdatedAt) })
-		}
+		b.sort.apply(m.snap, cols[i])
 	}
 	return cols
 }
@@ -121,25 +117,9 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 	case "shift+right", "shift+left":
 		return b.move(m, key == "shift+right")
 	case "shift+up", "shift+down":
-		if !b.manualOrder {
-			m.notice = "columns show the newest change first: press s for the manual order, then reorder"
-			return nil
-		}
 		return b.reorder(m, key == "shift+up")
 	case "s":
-		prev := b.selectedID(m)
-		b.manualOrder = !b.manualOrder
-		b.restore(m, prev)
-		order := "recent"
-		m.notice = "columns: newest change first"
-		if b.manualOrder {
-			order, m.notice = "manual", "columns: manual order (shift+↑/↓ reorders)"
-		}
-		if m.opts.SaveBoardSort != nil {
-			if err := m.opts.SaveBoardSort(order); err != nil {
-				m.notice += " (could not save: " + err.Error() + ")"
-			}
-		}
+		m.openSort()
 		return nil
 	case "p":
 		show := !(b.types[core.TypeEpic] || b.types[core.TypeStory])
@@ -195,7 +175,9 @@ func (b *boardState) move(m *Model, right bool) tea.Cmd {
 }
 
 // reorder swaps the selected card with its neighbor above or below in the
-// column, as shown on the board.
+// column, as shown on the board. With a sort active the column is first
+// fixed in the order shown (hidden types included), so the reorder starts
+// from what is on screen; the board then shows the manual order.
 func (b *boardState) reorder(m *Model, up bool) tea.Cmd {
 	cols := b.columns(m)
 	shown := cols[b.col]
@@ -209,15 +191,29 @@ func (b *boardState) reorder(m *Model, up bool) tea.Cmd {
 	it, neighbor := shown[b.row], shown[n]
 	// The core orders the whole column, hidden types included: aim at the
 	// neighbor's index in it.
-	index := 0
-	for i, x := range core.Column(m.snap, it.Status) {
-		if x.ID == neighbor.ID {
-			index = i
+	full := core.Column(m.snap, it.Status)
+	b.sort.apply(m.snap, full)
+	index := slices.IndexFunc(full, func(x *core.Item) bool { return x.ID == neighbor.ID })
+	item, actor := *it, m.opts.Actor
+	if b.sort.manual {
+		return func() tea.Msg {
+			if _, err := m.be.Reorder(m.ctx, actor, item.ID, index, item.Version); err != nil {
+				return writeMsg{alert: m.failure(item, "REORDER FAILED", err)}
+			}
+			return writeMsg{}
 		}
 	}
-	item, actor := *it, m.opts.Actor
+	ids := make([]string, 0, len(full))
+	for _, x := range full {
+		if x.ID != item.ID {
+			ids = append(ids, x.ID)
+		}
+	}
+	ids = slices.Insert(ids, index, item.ID)
+	m.setBoardSort(boardSort{manual: true})
+	m.notice = "columns: manual order, starting from the order shown (s sorts again)"
 	return func() tea.Msg {
-		if _, err := m.be.Reorder(m.ctx, actor, item.ID, index, item.Version); err != nil {
+		if err := m.be.ArrangeColumn(m.ctx, actor, item.Status, ids); err != nil {
 			return writeMsg{alert: m.failure(item, "REORDER FAILED", err)}
 		}
 		return writeMsg{}

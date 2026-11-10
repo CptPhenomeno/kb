@@ -1,4 +1,4 @@
- kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug · newest first                                    12 items  1 agent active  1 stale
+ kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug · sorted by date ↓                                12 items  1 agent active  1 stale
 ╭─────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭────────────────╮ ╭──────────────────────────────────────────────────────────────╮
 │ Backlog       1 │ │ To do        4 │ │ In progress  4 │ │ Review       1 │ │ Done         1 │ │ KB-4 · task                                        esc close │
 │ ╭─────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ ╭────────────╮ │ │ Token refresh                                                │

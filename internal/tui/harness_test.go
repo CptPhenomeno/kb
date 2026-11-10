@@ -84,6 +84,10 @@ func (f *fakeBackend) Edit(context.Context, string, string, core.Patch, int) (*c
 	return nil, errors.New("read-only fake")
 }
 
+func (f *fakeBackend) ArrangeColumn(context.Context, string, core.Status, []string) error {
+	return errors.New("read-only fake")
+}
+
 func (f *fakeBackend) Reorder(context.Context, string, string, int, int) (*core.Item, error) {
 	return nil, errors.New("read-only fake")
 }

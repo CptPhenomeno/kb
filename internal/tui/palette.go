@@ -31,7 +31,7 @@ var actions = []action{
 	{"Search", "/", itemViews},
 	{"Filter", "f", itemViews},
 	{"Show or hide epics and stories", "p", boardOnly},
-	{"Sort columns: newest first or manual order", "s", boardOnly},
+	{"Sort columns by date, ID or story points", "s", boardOnly},
 	{"Check acceptance criteria", "c", itemViews},
 	{"Create item", "n", boardOnly},
 	{"Create child item", "n", treeOnly},

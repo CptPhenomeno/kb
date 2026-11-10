@@ -311,6 +311,48 @@ func (s *Service) Move(ctx context.Context, actor, id string, to Status, ifVersi
 	return &res, nil
 }
 
+// ArrangeColumn writes the order of a whole column: ids must list every
+// item of the column exactly once, top first. Only positions change: no
+// updated_at and no events, since the content of the items is untouched.
+// The TUI uses it to fix a sorted column before a manual reorder.
+func (s *Service) ArrangeColumn(ctx context.Context, actor string, status Status, ids []string) error {
+	return s.write(ctx, actor, func(o *op) error {
+		snap, err := o.tx.Snapshot()
+		if err != nil {
+			return err
+		}
+		col := Column(snap, status)
+		want := map[string]bool{}
+		for _, it := range col {
+			want[it.ID] = true
+		}
+		seen := map[string]bool{}
+		for _, id := range ids {
+			if !want[id] || seen[id] {
+				return NewRuleError(fmt.Sprintf("%s is not in column %s, or is listed twice", id, status))
+			}
+			seen[id] = true
+		}
+		if len(ids) != len(col) {
+			return NewRuleError(fmt.Sprintf("column %s has %d items, %d given", status, len(col), len(ids)))
+		}
+		for pos, id := range ids {
+			if snap.Get(id).Position == pos {
+				continue
+			}
+			cur, err := o.tx.GetItem(id)
+			if err != nil {
+				return err
+			}
+			cur.Position = pos
+			if err := o.tx.UpdateItem(cur, cur.Version); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // Reorder moves an item to the given index of its column (0 is the top).
 // Reordering is always allowed.
 func (s *Service) Reorder(ctx context.Context, actor, id string, index int, ifVersion int) (*Item, error) {
