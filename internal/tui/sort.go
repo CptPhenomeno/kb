@@ -18,11 +18,10 @@ const (
 	sortDate   sortField = iota // last change (updated_at)
 	sortID                      // natural ID order
 	sortPoints                  // story points; the sum below for epics and stories
-	sortFields
 )
 
 var sortFieldNames = [...]string{"date", "id", "points"}
-var sortFieldLabels = [...]string{"date (last change)", "id", "story points"}
+var sortFieldLabels = [...]string{"date", "ID", "story points"}
 
 // boardSort is the order of the Board columns: a field and a direction,
 // or the manual order (position) that shift+↑/↓ edits.
@@ -104,34 +103,39 @@ func (s boardSort) apply(snap *core.Snapshot, items []*core.Item) {
 
 // ---- popup ----
 
-// sortState is the open sort popup: a row per field, each with its own
-// direction, so switching rows keeps what was toggled.
-type sortState struct {
-	cursor int
-	asc    [sortFields]bool
+// sortOption is a choice of the sort popup.
+type sortOption struct {
+	sort boardSort
+	desc string
 }
 
+// sortOptions are the choices of the sort popup, one at a time.
+var sortOptions = []sortOption{
+	{boardSort{field: sortDate}, "newest change first"},
+	{boardSort{field: sortDate, asc: true}, "oldest change first"},
+	{boardSort{field: sortID}, "highest ID first"},
+	{boardSort{field: sortID, asc: true}, "lowest ID first"},
+	{boardSort{field: sortPoints}, "most points first"},
+	{boardSort{field: sortPoints, asc: true}, "fewest points first"},
+}
+
+// sortState is the open sort popup.
+type sortState struct{ cursor int }
+
 func (m *Model) openSort() {
-	s := &sortState{}
-	if cur := m.board.sort; !cur.manual {
-		s.cursor = int(cur.field)
-		s.asc[cur.field] = cur.asc
-	}
-	m.sort = s
+	m.sort = &sortState{cursor: max(0, slices.IndexFunc(sortOptions, func(o sortOption) bool { return o.sort == m.board.sort }))}
 }
 
 func (m *Model) sortKey(key string) tea.Cmd {
 	s := m.sort
 	switch key {
 	case "up":
-		s.cursor = (s.cursor + int(sortFields) - 1) % int(sortFields)
+		s.cursor = (s.cursor + len(sortOptions) - 1) % len(sortOptions)
 	case "down":
-		s.cursor = (s.cursor + 1) % int(sortFields)
-	case "space", "left", "right":
-		s.asc[s.cursor] = !s.asc[s.cursor]
+		s.cursor = (s.cursor + 1) % len(sortOptions)
 	case "enter":
 		m.sort = nil
-		m.setBoardSort(boardSort{field: sortField(s.cursor), asc: s.asc[s.cursor]})
+		m.setBoardSort(sortOptions[s.cursor].sort)
 	case "esc", "s":
 		m.sort = nil
 	}
@@ -157,32 +161,30 @@ func (m *Model) renderSort() string {
 	s := m.sort
 	width := min(58, m.width-4)
 	iw := width - 6
-	lines := []string{
-		spread(m.th.bright.Render("Sort columns"), m.th.muted.Render("now: "+m.board.sort.label()), iw),
-		"",
+	lines := []string{spread(m.th.bright.Render("Sort columns"), m.th.muted.Render("esc close"), iw), ""}
+	for i, o := range sortOptions {
+		cursor, style := "  ", m.th.text
+		if i == s.cursor {
+			cursor, style = m.th.fg(m.th.p.Accent).Render("▸ "), m.th.bright
+		}
+		radio := m.th.muted.Render("○ ")
+		if o.sort == m.board.sort {
+			radio = m.th.fg(m.th.p.Green).Render("● ")
+		}
+		name := fmt.Sprintf("%-17s", sortFieldLabels[o.sort.field]+" "+arrow(o.sort.asc))
+		lines = append(lines, cursor+radio+style.Render(name)+m.th.muted.Render(o.desc))
 	}
-	for f := range sortFields {
-		dir := "↓ descending"
-		if s.asc[f] {
-			dir = "↑ ascending"
-		}
-		mark, style := "  ", m.th.text
-		if int(f) == s.cursor {
-			mark, style = m.th.fg(m.th.p.Accent).Render("▸ "), m.th.bright
-		}
-		lines = append(lines, spread(mark+style.Render(sortFieldLabels[f]), m.th.fg(m.th.p.Cyan).Render(dir), iw))
+	if m.board.sort.manual {
+		lines = append(lines, "", m.th.muted.Render("Now: manual order."))
 	}
 	lines = append(lines, "")
 	lines = append(lines, hang("", 0, "A manual reorder (shift ↑ ↓) starts from the order shown; the next sort chosen here overrides it.",
 		m.th.muted, iw, 0)...)
-	lines = append(lines, "", m.th.muted.Render(fmt.Sprintf("%s direction  %s apply  %s cancel",
-		m.th.chip.Render(" space "), m.th.chip.Render(" enter "), m.th.chip.Render(" esc "))))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
 var sortKeys = []keyHint{
-	{"↑ ↓", "field", "choose what to sort by", false},
-	{"space", "direction", "ascending or descending (← → too)", false},
+	{"↑ ↓", "choose", "choose how to sort", false},
 	{"enter", "apply", "sort every column", false},
 	{"esc", "cancel", "keep the current order", false},
 }

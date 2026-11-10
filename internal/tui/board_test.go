@@ -352,10 +352,25 @@ func TestSortPopupOpens(t *testing.T) {
 		t.Fatal("s did not open the sort popup")
 	}
 	scr := screen(m)
-	for _, want := range []string{"Sort columns", "date", "id", "story points", "descending"} {
+	for _, want := range []string{"Sort columns", "newest change first", "oldest change first", "lowest ID first",
+		"highest ID first", "most points first", "fewest points first"} {
 		if !strings.Contains(scr, want) {
 			t.Fatalf("sort popup lacks %q:\n%s", want, scr)
 		}
+	}
+	// One choice: a single option is marked active, and no row carries a
+	// direction of its own beside another field.
+	active := 0
+	for _, l := range strings.Split(scr, "\n") {
+		if strings.Contains(l, " first") && strings.Contains(l, "●") {
+			active++
+		}
+	}
+	if n := active; n != 1 {
+		t.Fatalf("%d options marked active, want 1:\n%s", n, scr)
+	}
+	if strings.Contains(scr, "descending") || strings.Contains(scr, "ascending") {
+		t.Fatalf("the popup still shows a direction per row:\n%s", scr)
 	}
 	press(t, m, "esc")
 	if m.sort != nil {
@@ -368,12 +383,13 @@ func TestSortByEveryField(t *testing.T) {
 		keys []string
 		want string
 	}{
-		{nil, "KB-8 KB-5 KB-7 KB-6"},                                     // default: date descending
-		{[]string{"s", "space", "enter"}, "KB-6 KB-7 KB-5 KB-8"},         // date ascending
-		{[]string{"s", "down", "enter"}, "KB-8 KB-7 KB-6 KB-5"},          // id descending
-		{[]string{"s", "down", "space", "enter"}, "KB-5 KB-6 KB-7 KB-8"}, // id ascending
-		{[]string{"s", "down", "down", "enter"}, "KB-6 KB-7 KB-8 KB-5"},  // points descending, ties by position
-		{[]string{"s", "down", "down", "right", "enter"}, "KB-5 KB-7 KB-8 KB-6"},
+		{nil, "KB-8 KB-5 KB-7 KB-6"},                                    // default: date descending
+		{[]string{"s", "enter"}, "KB-8 KB-5 KB-7 KB-6"},                 // the cursor starts on the active option
+		{[]string{"s", "down", "enter"}, "KB-6 KB-7 KB-5 KB-8"},         // date ascending
+		{[]string{"s", "down", "down", "enter"}, "KB-8 KB-7 KB-6 KB-5"}, // id descending
+		{[]string{"s", "down", "down", "down", "enter"}, "KB-5 KB-6 KB-7 KB-8"},
+		{[]string{"s", "up", "up", "enter"}, "KB-6 KB-7 KB-8 KB-5"}, // points descending, ties by position
+		{[]string{"s", "up", "enter"}, "KB-5 KB-7 KB-8 KB-6"},       // points ascending
 	}
 	for _, c := range cases {
 		m := sortModel(t, sortBoard(), Options{})
@@ -390,7 +406,7 @@ func TestSortByEveryField(t *testing.T) {
 func TestSortChoiceSavedAndRestored(t *testing.T) {
 	var saved []string
 	m := sortModel(t, sortBoard(), Options{SaveBoardSort: func(s string) error { saved = append(saved, s); return nil }})
-	press(t, m, "s", "down", "space", "enter")
+	press(t, m, "s", "down", "down", "down", "enter")
 	if strings.Join(saved, ",") != "id-asc" {
 		t.Fatalf("saved = %v, want id-asc", saved)
 	}

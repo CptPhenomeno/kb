@@ -162,7 +162,7 @@ func TestSortOverridesManualOrder(t *testing.T) {
 	if got := boardColumn(m, core.StatusTodo); got != "KB-3 KB-1 KB-2" {
 		t.Fatalf("manual = %s", got)
 	}
-	press(t, m, "s", "down", "space", "enter") // id ascending
+	press(t, m, "s", "down", "down", "down", "enter") // id ascending
 	if got := boardColumn(m, core.StatusTodo); got != "KB-1 KB-2 KB-3" {
 		t.Fatalf("after sorting by id = %s", got)
 	}
