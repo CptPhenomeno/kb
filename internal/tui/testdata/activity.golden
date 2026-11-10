@@ -1,0 +1,48 @@
+ kb  api-gateway   Board  Tree  Activity   live · following all actors                                                         12 items  1 agent active  1 stale
+ACTORS                                                 3 EVENTS · all actors                                                                        newest first
+╭──────────────────────────────────────────────────────╮ 14:04  agent-auth     KB-4    test "refresh rotates the token" → failing                               
+│ agent-auth                   active · claim 12m left │ 14:03  agent-auth     KB-4    phase → red                                                              
+│ KB-4 Token refresh                                   │ 14:02  agent-auth     KB-4    claimed                                                                  
+│ ● RED  tests 0/2                 last write just now │ 13:40  @dev           KB-17   moved review → done                                                      
+╰──────────────────────────────────────────────────────╯ 13:34  agent-metrics  KB-12   phase → green                                                            
+╭──────────────────────────────────────────────────────╮ 13:24  agent-metrics  KB-12   claimed                                                                  
+│ agent-metrics          stale · claim expired 22m ago │                                                                                                        
+│ KB-12 Status code counters                           │                                                                                                        
+│ ● GREEN  tests 2/3                    silent for 30m │                                                                                                        
+╰──────────────────────────────────────────────────────╯                                                                                                        
+╭──────────────────────────────────────────────────────╮                                                                                                        
+│ @dev                                           human │                                                                                                        
+│ no claimed item                                      │                                                                                                        
+│                                   last write 24m ago │                                                                                                        
+╰──────────────────────────────────────────────────────╯                                                                                                        
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
+↑ ↓ select actor   enter only this actor   esc all actors   o open item   a release claim   pgup pgdn scroll events   tab next view   ctrl+p commands   t theme 
+? help   q quit                                                                                                                                                 

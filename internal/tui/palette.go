@@ -15,9 +15,10 @@ type action struct {
 }
 
 var (
-	boardOnly = []viewKind{viewBoard}
-	treeOnly  = []viewKind{viewTree}
-	itemViews = []viewKind{viewBoard, viewTree}
+	boardOnly    = []viewKind{viewBoard}
+	treeOnly     = []viewKind{viewTree}
+	itemViews    = []viewKind{viewBoard, viewTree}
+	activityOnly = []viewKind{viewActivity}
 )
 
 // actions lists only features that work; add an entry when one lands.
@@ -40,6 +41,10 @@ var actions = []action{
 	{"Delete item", "d", itemViews},
 	{"Claim or release item", "a", itemViews},
 	{"Manage links", "l", itemViews},
+	{"Show only the selected actor", "enter", activityOnly},
+	{"Show all actors", "esc", activityOnly},
+	{"Open the actor's item", "o", activityOnly},
+	{"Release the actor's claim", "a", activityOnly},
 	{"Choose theme", "t", nil},
 	{"Next view", "tab", nil},
 	{"Previous view", "shift+tab", nil},

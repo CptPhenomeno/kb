@@ -7,13 +7,13 @@ import (
 )
 
 // selected returns the item selected in the current view: a card on the
-// Board, a row of the Tree; nothing in Activity.
+// Board, a row of the Tree, the item of the selected actor in Activity.
 func (m *Model) selected() *core.Item {
 	switch m.view {
 	case viewTree:
 		return m.tree.selected(m)
 	case viewActivity:
-		return nil
+		return m.activity.item(m)
 	default:
 		return m.board.selected(m)
 	}

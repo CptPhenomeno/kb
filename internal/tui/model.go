@@ -109,8 +109,9 @@ type Model struct {
 	// tickEvery is the polling period of the live refresh; 0 disables it.
 	tickEvery time.Duration
 
-	board boardState
-	tree  treeState
+	board    boardState
+	tree     treeState
+	activity activityState
 
 	detailOpen bool
 	history    []core.Event
@@ -282,6 +283,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.board.click(m, msg.X, msg.Y)
 		case m.view == viewTree:
 			return m, m.tree.click(m, msg.X, msg.Y)
+		case m.view == viewActivity:
+			return m, m.activity.click(m, msg.X, msg.Y)
 		}
 	case tea.MouseWheelMsg:
 		switch {
@@ -290,6 +293,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.board.wheel(m, msg.X, msg.Button == tea.MouseWheelUp)
 		case m.view == viewTree:
 			return m, m.tree.wheel(m, msg.X, msg.Button == tea.MouseWheelUp)
+		case m.view == viewActivity:
+			return m, m.activity.wheel(m, msg.X, msg.Button == tea.MouseWheelUp)
 		}
 	}
 	return m, nil
@@ -345,9 +350,12 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 		m.palette = &paletteState{}
 		return nil
 	case "esc":
-		if m.help {
+		switch {
+		case m.help:
 			m.help = false
-		} else if m.detailOpen {
+		case m.view == viewActivity:
+			return m.activity.key(m, key)
+		case m.detailOpen:
 			m.detailOpen = false
 		}
 		return nil
@@ -369,6 +377,8 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 		return m.board.key(m, key)
 	case viewTree:
 		return m.tree.key(m, key)
+	case viewActivity:
+		return m.activity.key(m, key)
 	}
 	return nil
 }
@@ -437,7 +447,7 @@ func (m *Model) render() string {
 	case m.view == viewTree:
 		body = m.tree.render(m, bodyH)
 	default:
-		body = m.th.muted.Render(fmt.Sprintf("The %s view is not available yet.", m.view))
+		body = m.activity.render(m, bodyH)
 	}
 	lines := []string{m.header()}
 	lines = append(lines, fitLines(body, m.width, bodyH)...)
@@ -462,6 +472,8 @@ func (m *Model) header() string {
 		left += "  " + m.th.muted.Render(m.board.filterLabel())
 	case viewTree:
 		left += "  " + m.th.muted.Render(m.tree.filterLabel(m))
+	case viewActivity:
+		left += "  " + m.th.muted.Render(m.activity.filterLabel())
 	}
 	right := ""
 	if m.snap != nil {
@@ -486,7 +498,7 @@ func (m *Model) claimCounts() (agents, stale int) {
 	now := m.opts.Now()
 	seen := map[string]bool{}
 	for _, it := range m.snap.Items() {
-		if core.ClaimState(it, now) == core.ClaimActive {
+		if core.ClaimState(it, now) == core.ClaimActive && it.Status != core.StatusDone {
 			if a := it.Claim.Actor; !core.IsHumanActor(a) && !seen[a] {
 				seen[a] = true
 				agents++
@@ -568,11 +580,12 @@ var viewKeys = map[viewKind][]keyHint{
 		{"f", "filter", "only blocked or stale items, with their ancestors (types apply to the Board only)", false},
 	},
 	viewActivity: {
-		{"↑ ↓", "select actor", "select an actor", true},
-		{"enter", "only this actor", "show only the selected actor's events", true},
-		{"esc", "all actors", "show every actor's events", true},
-		{"o", "open item", "open the item the actor works on", true},
-		{"a", "release claim", "release the actor's claim (useful when stale)", true},
+		{"↑ ↓", "select actor", "select an actor", false},
+		{"enter", "only this actor", "show only the selected actor's events", false},
+		{"esc", "all actors", "show every actor's events", false},
+		{"o", "open item", "open the item the actor works on, on the Board with its detail", false},
+		{"a", "release claim", "release the actor's claim (useful when stale)", false},
+		{"pgup pgdn", "scroll events", "scroll the event stream", false},
 	},
 }
 

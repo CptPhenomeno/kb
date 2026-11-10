@@ -35,7 +35,7 @@ func TestPaletteAdvertisedOnCtrlP(t *testing.T) {
 var missingFeatures = map[viewKind][]string{
 	viewBoard:    {},
 	viewTree:     {},
-	viewActivity: {"↑ ↓", "enter", "esc", "o", "a"},
+	viewActivity: {},
 }
 
 func TestCommandBarHidesKeysNotImplementedYet(t *testing.T) {
