@@ -1,5 +1,10 @@
 # kb
 
+<p align="center">
+  <img src="docs/images/board-tokyo-night.png" width="49%" alt="kb board view with the tokyo-night theme">
+  <img src="docs/images/board-gruvbox-light.png" width="49%" alt="kb board view with the gruvbox-light theme">
+</p>
+
 A kanban board in the terminal for following agentic development. Coding
 agents update the board through a CLI; the developer watches and steers the
 work from a TUI that refreshes live.
