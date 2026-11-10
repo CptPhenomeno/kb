@@ -4,5 +4,12 @@
 *.test
 *.out
 
-# Hidden folders stay local (kb board, agent settings, ...)
+# Hidden folders stay local (kb board, agent settings, ...), except CI
 .*/
+!.github/
+
+# Specification, mockups, plans and the acceptance script stay local
+/SPEC.md
+/design/
+/planning/
+/scripts/
