@@ -1,0 +1,24 @@
+ kb  api-gateway   Board  Tree  Activity   sh… 12 items  1 agent active  1 stale
+ Board  Detail  Criteria  Form   tab or ← → switch · ? or esc closes            
+                                                                                
+                                                                                
+Board view                                                                      
+                                                                                
+  ← → ↑ ↓       move between columns and cards                                  
+  shift ← →     move to the previous or next column                             
+  shift ↑ ↓     reorder the card in its column, starting from the order shown   
+                (switches to manual order)                                      
+  s             sort the columns by date, ID or story points, ascending or      
+                descending (saved for your user)                                
+  enter         open the detail popup                                           
+  n             create an item                                                  
+  e             edit the selected item                                          
+  d             delete the selected item                                        
+  c             manage the acceptance criteria of the selected item             
+  ctrl+e        edit the description of the selected item in $EDITOR            
+                            ↓ 12 more lines · pgdown                            
+14:04  agent-auth  KB-4  test "refresh rotates the token" → failing             
+tab → next tab   shift+tab ← previous tab   ↑ ↓ scroll   pgup pgdn page         
+?/esc close                                                                     
+                                                                                
+                                                                                

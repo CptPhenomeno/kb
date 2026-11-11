@@ -56,7 +56,7 @@ func TestHelpHidesKeysNotImplementedYet(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
 	press(t, m, "?")
 	help := screen(m)
-	for _, want := range []string{"shift ← →", "filter", "theme"} {
+	for _, want := range []string{"shift ← →", "choose the types shown", "choose the color theme"} {
 		if !strings.Contains(help, want) {
 			t.Errorf("help lacks the working key %q", want)
 		}

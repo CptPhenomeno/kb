@@ -604,6 +604,14 @@ var detailKeys = []keyHint{
 	{"esc/enter", "close", "close the detail popup (a click outside closes it too)", false},
 }
 
+var helpKeys = []keyHint{
+	{"tab →", "next tab", "show the next help tab", false},
+	{"shift+tab ←", "previous tab", "show the previous help tab", false},
+	{"↑ ↓", "scroll", "scroll the tab by one line (the mouse wheel too)", false},
+	{"pgup pgdn", "page", "scroll the tab by one page", false},
+	{"?/esc", "close", "close the help", false},
+}
+
 var viewKeys = map[viewKind][]keyHint{
 	viewBoard: {
 		{"← → ↑ ↓", "navigate", "move between columns and cards", false},
@@ -648,11 +656,14 @@ var viewKeys = map[viewKind][]keyHint{
 
 // commandBar renders the key hints of the current view, wrapped to width.
 func (m *Model) commandBar() []string {
-	hints := ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...))
+	viewHints := ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...))
+	hints := viewHints
 	if m.picker != nil {
 		hints = pickerKeys
 	}
 	switch {
+	case m.help:
+		hints = helpKeys
 	case m.alert != nil:
 		hints = alertKeys
 	case m.filterOpen:
@@ -677,9 +688,9 @@ func (m *Model) commandBar() []string {
 		hints = searchKeys
 	}
 	lines := m.wrapHints(hints)
-	if m.detailOpen && !m.popupOpen() {
-		// the view under the detail keeps its size: the bar keeps its height
-		for n := len(m.wrapHints(ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)))); len(lines) < n; {
+	if m.help || m.detailOpen && !m.popupOpen() {
+		// the view under the help or the detail keeps its size: the bar keeps its height
+		for n := len(m.wrapHints(viewHints)); len(lines) < n; {
 			lines = append(lines, "")
 		}
 	}

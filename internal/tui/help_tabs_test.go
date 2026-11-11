@@ -458,3 +458,49 @@ func TestDetailPopupMarkersAreUnchangedAfterTheSharedScrollHelper(t *testing.T) 
 		t.Fatalf("end of the detail:\n%s", s)
 	}
 }
+
+func TestCommandBarShowsTheHelpKeysWhileTheHelpIsOpen(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "?")
+	bar := ansi.Strip(lastLines(screen(m), 2))
+	for _, h := range helpKeys {
+		if !strings.Contains(bar, h.key+" "+h.label) {
+			t.Errorf("command bar misses %q %q: %q", h.key, h.label, bar)
+		}
+	}
+	if strings.Contains(bar, "next view") {
+		t.Errorf("command bar still shows the view keys: %q", bar)
+	}
+	for _, h := range globalKeys {
+		if h.key == "?" && h.help != "show or hide this help" {
+			t.Errorf("global ? hint says %q", h.help)
+		}
+	}
+}
+
+func TestCommandBarShowsTheViewKeysAgainAfterTheHelpCloses(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	before := screen(m)
+	press(t, m, "?", "esc")
+	bar := ansi.Strip(lastLines(screen(m), 2))
+	if !strings.Contains(bar, "next view") || strings.Contains(bar, "pgup pgdn page") {
+		t.Errorf("command bar after closing the help: %q", bar)
+	}
+	if screen(m) != before {
+		t.Error("the screen differs after opening and closing the help")
+	}
+}
+
+func TestHelpBoardTabGoldenAt80By24(t *testing.T) {
+	m := smallHelp(t)
+	if !strings.Contains(screen(m), "more") {
+		t.Fatal("the help shows no marker of hidden lines")
+	}
+	golden(t, "help_board_80x24", screen(m))
+}
+
+func TestHelpFormTabGoldenAt160By48(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "?", "shift+tab")
+	golden(t, "help_form_160x48", screen(m))
+}

@@ -1,0 +1,48 @@
+ kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug · sorted by date ↓                                12 items  1 agent active  1 stale
+ Board  Detail  Criteria  Form   tab or ← → switch · ? or esc closes                                                                                            
+                                                                                                                                                                
+Create and edit form  (n, e)                                                                                                                                    
+                                                                                                                                                                
+  ↑ ↓           move between fields (also tab)                                                                                                                  
+  ← →           change a choice field                                                                                                                           
+  ctrl+e        edit the description in $EDITOR                                                                                                                 
+  ctrl+s        create or save the item from any field                                                                                                          
+  enter         save the item, or open $EDITOR on the description, or add a criterion on acceptance                                                             
+  esc           close without saving                                                                                                                            
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
+tab → next tab   shift+tab ← previous tab   ↑ ↓ scroll   pgup pgdn page   ?/esc close                                                                           
+                                                                                                                                                                
