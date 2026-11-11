@@ -273,3 +273,28 @@ func TestAcceptEditWithoutTextIsUsageError(t *testing.T) {
 	e.fail(1, "accept", "KB-1", "edit", "1", "x", "y")
 	e.fail(1, "accept", "KB-1", "edit", "one", "x")
 }
+
+func TestAcceptRmJSON(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--accept", "a", "--accept", "b")
+	item := e.jsonOf("accept", "KB-1", "rm", "1")
+	acc := item["acceptance"].([]any)
+	if item["id"] != "KB-1" || len(acc) != 1 || acc[0].(map[string]any)["text"] != "b" {
+		t.Fatalf("item = %v", item)
+	}
+}
+
+func TestAcceptRmExitCodes(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--accept", "a", "--accept", "b")
+	e.fail(2, "accept", "KB-1", "rm", "3")
+	e.fail(4, "accept", "KB-1", "rm", "1", "--if-version", "99")
+	e.ok("accept", "KB-1", "rm", "1", "--if-version", "1")
+}
+
+func TestAcceptRmWrongArgumentsIsUsageError(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--accept", "a", "--accept", "b")
+	e.fail(1, "accept", "KB-1", "rm", "1", "2")
+	e.fail(1, "accept", "KB-1", "rm", "one")
+}

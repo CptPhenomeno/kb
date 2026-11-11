@@ -695,6 +695,19 @@ func (s *Service) EditCriterion(ctx context.Context, actor, id string, n int, te
 	})
 }
 
+// RemoveCriterion drops the n-th (1-based) acceptance criterion, keeping the
+// order of the others.
+func (s *Service) RemoveCriterion(ctx context.Context, actor, id string, n int, ifVersion int) (*Item, error) {
+	return s.update(ctx, actor, id, ifVersion, func(it *Item) (EventKind, map[string]any, error) {
+		if n < 1 || n > len(it.Acceptance) {
+			return "", nil, wrapf(ErrNotFound, "acceptance criterion %d of %s", n, id)
+		}
+		removed := it.Acceptance[n-1]
+		it.Acceptance = slices.Delete(it.Acceptance, n-1, n)
+		return EventAcceptance, map[string]any{"text": removed.Text, "done": removed.Done, "removed": true}, nil
+	})
+}
+
 // update applies change to an item, validates it, saves it, records the
 // event and re-evaluates the item and its parents: tests and criteria are
 // requirements, so changing them can move the item's parents, or the item

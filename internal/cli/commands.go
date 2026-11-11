@@ -695,8 +695,8 @@ func (c *cli) testCmd() *cobra.Command {
 func (c *cli) acceptCmd() *cobra.Command {
 	var ifVersion int
 	cmd := &cobra.Command{
-		Use:   "accept <id> add <text>... | accept <id> check|uncheck <n>... | accept <id> edit <n> <text>",
-		Short: "Add, check or edit acceptance criteria",
+		Use:   "accept <id> add <text>... | accept <id> check|uncheck <n>... | accept <id> edit <n> <text> | accept <id> rm <n>",
+		Short: "Add, check, edit or remove acceptance criteria",
 		Args:  args(3, -1),
 		RunE: func(cmd *cobra.Command, a []string) error {
 			return c.with(func(s *Session) error {
@@ -733,6 +733,17 @@ func (c *cli) acceptCmd() *cobra.Command {
 						return &usageError{msg: fmt.Sprintf("criterion number expected, got %q", a[2]), usage: cmd.UseLine()}
 					}
 					if it, err = s.Service.EditCriterion(c.ctx, s.Actor, id, n, a[3], ifVersion); err != nil {
+						return err
+					}
+				case "rm":
+					if len(a) != 3 {
+						return &usageError{msg: "rm takes one criterion number", usage: cmd.UseLine()}
+					}
+					n, err := strconv.Atoi(a[2])
+					if err != nil {
+						return &usageError{msg: fmt.Sprintf("criterion number expected, got %q", a[2]), usage: cmd.UseLine()}
+					}
+					if it, err = s.Service.RemoveCriterion(c.ctx, s.Actor, id, n, ifVersion); err != nil {
 						return err
 					}
 				default:

@@ -109,3 +109,61 @@ func TestEditCriterionDuplicateTextIsRuleViolation(t *testing.T) {
 	_, err := h.svc.EditCriterion(ctx, "@dev", task.ID, 2, "a", 0)
 	assertErr(t, err, core.ErrRule)
 }
+
+func TestRemoveCriterionShiftsFollowingOnes(t *testing.T) {
+	h := newHarness(t)
+	task := h.add("@dev", core.TypeTask, "t", "", withCriteria("a", "b", "c"))
+	if _, err := h.svc.SetCriterion(ctx, "@dev", task.ID, 3, true, 0); err != nil {
+		t.Fatal(err)
+	}
+	got, err := h.svc.RemoveCriterion(ctx, "@dev", task.ID, 2, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Acceptance) != 2 || got.Acceptance[0].Text != "a" || got.Acceptance[0].Done ||
+		got.Acceptance[1].Text != "c" || !got.Acceptance[1].Done {
+		t.Fatalf("acceptance = %+v", got.Acceptance)
+	}
+}
+
+func TestRemoveCriterionRecordsAcceptanceEvent(t *testing.T) {
+	h := newHarness(t)
+	task := h.add("@dev", core.TypeTask, "t", "", withCriteria("a", "gone"))
+	if _, err := h.svc.SetCriterion(ctx, "@dev", task.ID, 2, true, 0); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.svc.RemoveCriterion(ctx, "agent-1", task.ID, 2, 0); err != nil {
+		t.Fatal(err)
+	}
+	ev := lastEvent(t, h, task.ID)
+	if ev.Kind != core.EventAcceptance || ev.Actor != "agent-1" ||
+		ev.Data["text"] != "gone" || ev.Data["done"] != true || ev.Data["removed"] != true {
+		t.Fatalf("event = %+v", ev)
+	}
+}
+
+func TestRemoveLastUncheckedCriterionMovesStoryToDone(t *testing.T) {
+	h := newHarness(t)
+	story := h.add("@dev", core.TypeStory, "s", "", withCriteria("a", "b"))
+	h.add("@dev", core.TypeTask, "t", story.ID, withStatus(core.StatusDone))
+	if _, err := h.svc.SetCriterion(ctx, "@dev", story.ID, 1, true, 0); err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, h, story.ID, core.StatusReview)
+	if _, err := h.svc.RemoveCriterion(ctx, "@dev", story.ID, 2, 0); err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, h, story.ID, core.StatusDone)
+}
+
+func TestRemoveCriterionOutOfRangeIsNotFound(t *testing.T) {
+	h := newHarness(t)
+	task := h.add("@dev", core.TypeTask, "t", "", withCriteria("a"))
+	for _, n := range []int{0, 2, -1} {
+		_, err := h.svc.RemoveCriterion(ctx, "@dev", task.ID, n, 0)
+		assertErr(t, err, core.ErrNotFound)
+	}
+	if n := len(h.get(task.ID).Acceptance); n != 1 {
+		t.Fatalf("%d criteria stored, want 1", n)
+	}
+}
