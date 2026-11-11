@@ -126,7 +126,13 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 		}
 	case "ctrl+e":
 		return m.editDescription(f.fields[fDescription].value, "", 0)
+	case "ctrl+s":
+		f.saving = true
+		return m.submitForm()
 	case "enter":
+		if f.focus == fDescription {
+			return m.editDescription(fld.value, "", 0)
+		}
 		f.saving = true
 		return m.submitForm()
 	default:
@@ -274,11 +280,14 @@ func (m *Model) renderForm() string {
 	if f.info != "" {
 		lines = append(lines, "", m.th.fg(m.th.p.Green).Render("✓ "+f.info))
 	}
-	status := "enter saves"
-	if f.saving {
-		status = "saving…"
+	status := "enter or ctrl+s saves · tab or ↑ ↓ move · ← → change a choice"
+	switch {
+	case f.saving:
+		status = "saving… · tab or ↑ ↓ move · ← → change a choice"
+	case f.focus == fDescription:
+		status = "enter $EDITOR · ctrl+s saves · tab or ↑ ↓ move"
 	}
-	lines = append(lines, "", m.th.muted.Render(status+" · tab or ↑ ↓ move · ← → change a choice"))
+	lines = append(lines, "", m.th.muted.Render(status))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
@@ -288,8 +297,7 @@ const descriptionLines = 6
 // renderWrappedField shows a long text field (title or description) wrapped
 // in the value column, which starts after head. The description is capped at
 // descriptionLines: when longer, the last lines show, led by "…". The cursor
-// follows the last line when the field has the focus, and the description
-// then gets its editor hint on a line of its own.
+// follows the last line when the field has the focus.
 func (m *Model) renderWrappedField(head, value string, capped, focused bool, iw int) []string {
 	limit := 0
 	if capped {
@@ -314,9 +322,6 @@ func (m *Model) renderWrappedField(head, value string, capped, focused bool, iw 
 	if focused {
 		lines[len(lines)-1] += m.th.fg(m.th.p.Accent).Render("▌")
 	}
-	if focused && capped {
-		lines = append(lines, strings.Repeat(" ", 14)+m.th.muted.Render("ctrl+e: $EDITOR"))
-	}
 	return lines
 }
 
@@ -324,7 +329,8 @@ var formKeys = []keyHint{
 	{"↑ ↓", "field", "move between fields (also tab)", false},
 	{"← →", "choice", "change a choice field", false},
 	{"ctrl+e", "editor", "edit the description in $EDITOR", false},
-	{"enter", "save", "create or save the item", false},
+	{"ctrl+s", "save", "create or save the item from any field", false},
+	{"enter", "save · $EDITOR", "save the item, or open $EDITOR on the description", false},
 	{"esc", "cancel", "close without saving", false},
 }
 
@@ -340,7 +346,7 @@ func (m *Model) editorDone(msg editorDoneMsg) tea.Cmd {
 			return nil
 		}
 		m.form.fields[fDescription].value = msg.text
-		m.form.info = fmt.Sprintf("description updated (%s) · enter saves", plural(len(strings.Split(msg.text, "\n")), "line", "lines"))
+		m.form.info = fmt.Sprintf("description updated (%s) · ctrl+s saves", plural(len(strings.Split(msg.text, "\n")), "line", "lines"))
 		return nil
 	}
 	m.editing = ""

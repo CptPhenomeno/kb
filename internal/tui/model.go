@@ -664,6 +664,10 @@ func (m *Model) renderHelp(height int) string {
 	for _, h := range append(append(append([]keyHint{}, acceptKeys...), acceptInputKeys...), acceptConfirmKeys...) {
 		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
 	}
+	b.WriteString("\n" + m.th.bright.Render("Create and edit form") + m.th.muted.Render("  (n, e)") + "\n\n")
+	for _, h := range formKeys {
+		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
+	}
 	return b.String()
 }
 

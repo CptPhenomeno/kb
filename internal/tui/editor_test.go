@@ -35,7 +35,7 @@ func TestFormConfirmsTheDescriptionCameBackFromTheEditor(t *testing.T) {
 	}
 	send(t, m, editorDoneMsg{text: "first line\nsecond line\nthird line"})
 	s := screen(m)
-	if !strings.Contains(s, "description updated (3 lines)") || !strings.Contains(s, "enter saves") {
+	if !strings.Contains(s, "description updated (3 lines)") || !strings.Contains(s, "ctrl+s saves") {
 		t.Fatalf("the form does not confirm the edited description:\n%s", s)
 	}
 }
