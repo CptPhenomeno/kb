@@ -250,15 +250,6 @@ func (m *Model) renderForm() string {
 			value = m.th.fg(m.th.p.Accent).Render("‹ ") + m.th.bright.Render(value) + m.th.fg(m.th.p.Accent).Render(" ›")
 		case fld.choices != nil:
 			value = m.th.text.Render(value)
-		case i == fDescription:
-			first, _, more := strings.Cut(value, "\n")
-			value = m.th.text.Render(first)
-			if more {
-				value += m.th.muted.Render(" …")
-			}
-			if focused {
-				value += m.th.fg(m.th.p.Accent).Render("▌") + m.th.muted.Render("  ctrl+e: $EDITOR")
-			}
 		case focused:
 			value = m.th.bright.Render(value) + m.th.fg(m.th.p.Accent).Render("▌")
 		default:
@@ -268,7 +259,11 @@ func (m *Model) renderForm() string {
 		if focused {
 			marker = m.th.fg(m.th.p.Accent).Render("› ")
 		}
-		lines = append(lines, truncate(marker+label+value, iw))
+		if i == fTitle || i == fDescription {
+			lines = append(lines, m.renderWrappedField(marker+label, fld.value, i == fDescription, focused, iw)...)
+		} else {
+			lines = append(lines, truncate(marker+label+value, iw))
+		}
 		if e, ok := f.errs[i]; ok {
 			lines = append(lines, hang(strings.Repeat(" ", 14)+m.th.warn.Render("✗ "), 16, e, m.th.warn, iw, 16)...)
 		}
@@ -285,6 +280,44 @@ func (m *Model) renderForm() string {
 	}
 	lines = append(lines, "", m.th.muted.Render(status+" · tab or ↑ ↓ move · ← → change a choice"))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
+}
+
+// descriptionLines is the most lines of the description the form shows.
+const descriptionLines = 6
+
+// renderWrappedField shows a long text field (title or description) wrapped
+// in the value column, which starts after head. The description is capped at
+// descriptionLines: when longer, the last lines show, led by "…". The cursor
+// follows the last line when the field has the focus, and the description
+// then gets its editor hint on a line of its own.
+func (m *Model) renderWrappedField(head, value string, capped, focused bool, iw int) []string {
+	limit := 0
+	if capped {
+		limit = descriptionLines
+	}
+	in := wrapInput(value, iw-14, limit)
+	if !focused && len(in) > 1 && in[len(in)-1] == "" {
+		in = in[:len(in)-1]
+	}
+	style := m.th.text
+	if focused {
+		style = m.th.bright
+	}
+	lines := make([]string, len(in))
+	for i, l := range in {
+		lead := strings.Repeat(" ", 14)
+		if i == 0 {
+			lead = head
+		}
+		lines[i] = lead + style.Render(l)
+	}
+	if focused {
+		lines[len(lines)-1] += m.th.fg(m.th.p.Accent).Render("▌")
+	}
+	if focused && capped {
+		lines = append(lines, strings.Repeat(" ", 14)+m.th.muted.Render("ctrl+e: $EDITOR"))
+	}
+	return lines
 }
 
 var formKeys = []keyHint{
