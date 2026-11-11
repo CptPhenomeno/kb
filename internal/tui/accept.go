@@ -14,8 +14,10 @@ type acceptState struct {
 	id     string
 	cursor int
 	mode   inputMode
-	editAt int    // index of the criterion being edited, in edit mode
-	input  string // text typed in the input line
+	editAt int // index of the criterion being edited, in edit mode
+	// confirmDelete is set while asking to delete the selected criterion.
+	confirmDelete bool
+	input         string // text typed in the input line
 }
 
 // inputMode says what the input line of the popup is doing.
@@ -34,8 +36,12 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 		m.accept = nil
 		return nil
 	}
+	a.cursor = clampCursor(a.cursor, len(it.Acceptance))
 	if a.mode != inputNone {
 		return m.acceptInputKey(it, key, text)
+	}
+	if a.confirmDelete {
+		return m.acceptDeleteKey(it, key)
 	}
 	if key == "esc" || key == "c" {
 		m.accept = nil
@@ -48,6 +54,8 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 		if a.cursor < len(it.Acceptance) {
 			a.mode, a.editAt, a.input = inputEdit, a.cursor, it.Acceptance[a.cursor].Text
 		}
+	case "d":
+		a.confirmDelete = a.cursor < len(it.Acceptance)
 	case "up":
 		a.cursor = max(0, a.cursor-1)
 	case "down":
@@ -60,6 +68,31 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 		return func() tea.Msg {
 			if _, err := m.be.SetCriterion(m.ctx, actor, item.ID, n, done, item.Version); err != nil {
 				return writeMsg{alert: m.failure(item, "CHECK FAILED", err)}
+			}
+			return writeMsg{}
+		}
+	}
+	return nil
+}
+
+// clampCursor keeps a cursor on a row of a list of n rows, or on 0 when empty.
+func clampCursor(cursor, n int) int {
+	return max(0, min(cursor, n-1))
+}
+
+// acceptDeleteKey handles a key while the deletion of the selected criterion
+// awaits confirmation: y or enter removes it, n or esc keeps it.
+func (m *Model) acceptDeleteKey(it *core.Item, key string) tea.Cmd {
+	a := m.accept
+	switch key {
+	case "n", "esc":
+		a.confirmDelete = false
+	case "y", "enter":
+		a.confirmDelete = false
+		n, item, actor := a.cursor+1, *it, m.opts.Actor
+		return func() tea.Msg {
+			if _, err := m.be.RemoveCriterion(m.ctx, actor, item.ID, n, item.Version); err != nil {
+				return writeMsg{alert: m.failure(item, "DELETE FAILED", err)}
 			}
 			return writeMsg{}
 		}
@@ -121,6 +154,7 @@ func (m *Model) renderAccept() string {
 		lines = append(lines, m.renderAcceptInput(iw)...)
 		return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 	}
+	cursor := clampCursor(m.accept.cursor, len(it.Acceptance))
 	for i, c := range it.Acceptance {
 		box := "[ ] "
 		if c.Done {
@@ -128,12 +162,16 @@ func (m *Model) renderAccept() string {
 		}
 		style := m.th.text
 		marker := "  "
-		if i == m.accept.cursor {
+		if i == cursor {
 			style, marker = m.th.fg(m.th.p.Accent).Bold(true), m.th.fg(m.th.p.Accent).Render("› ")
 		}
 		lines = append(lines, hang(marker+style.Render(box), 6, c.Text, style, iw, 6)...)
 	}
 	lines = append(lines, m.renderAcceptInput(iw)...)
+	if m.accept.confirmDelete {
+		lines = append(lines, "")
+		lines = append(lines, m.renderAcceptConfirm(cursor+1, it.Acceptance[cursor].Text, iw)...)
+	}
 	lines = append(lines, "", m.th.muted.Render(fmt.Sprintf("%d/%d checked · status %s · every change is saved at once",
 		it.CheckedCriteria(), len(it.Acceptance), it.Status.Label())))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
@@ -160,6 +198,15 @@ func (m *Model) renderAcceptInput(w int) []string {
 		lines[i] = lead + m.th.text.Render(l)
 	}
 	return lines
+}
+
+// renderAcceptConfirm asks to delete the criterion n (1-based) with the given
+// text, truncated to fit the width w.
+func (m *Model) renderAcceptConfirm(n int, text string, w int) []string {
+	head := fmt.Sprintf("Delete criterion %d ", n)
+	q := head + `"` + truncate(text, max(1, w-len([]rune(head))-3)) + `"?`
+	return []string{m.th.warn.Bold(true).Render(q),
+		m.th.warn.Render("y/enter delete") + m.th.muted.Render(" · n/esc keep")}
 }
 
 var acceptKeys = []keyHint{

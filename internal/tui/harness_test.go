@@ -26,10 +26,12 @@ type fakeBackend struct {
 	events     []core.Event
 	version    int64
 	boardCalls int
-	adds       []addCall  // AddCriterion calls, in order
-	addErr     error      // returned by AddCriterion
-	edits      []editCall // EditCriterion calls, in order
-	editErr    error      // returned by EditCriterion
+	adds       []addCall    // AddCriterion calls, in order
+	addErr     error        // returned by AddCriterion
+	edits      []editCall   // EditCriterion calls, in order
+	editErr    error        // returned by EditCriterion
+	removes    []removeCall // RemoveCriterion calls, in order
+	removeErr  error        // returned by RemoveCriterion
 }
 
 // editCall is one recorded EditCriterion call.
@@ -37,6 +39,13 @@ type editCall struct {
 	id      string
 	n       int
 	text    string
+	version int
+}
+
+// removeCall is one recorded RemoveCriterion call.
+type removeCall struct {
+	id      string
+	n       int
 	version int
 }
 
@@ -82,6 +91,11 @@ func (f *fakeBackend) AddCriterion(_ context.Context, _, id, text string, ifVers
 func (f *fakeBackend) EditCriterion(_ context.Context, _, id string, n int, text string, ifVersion int) (*core.Item, error) {
 	f.edits = append(f.edits, editCall{id, n, text, ifVersion})
 	return nil, f.editErr
+}
+
+func (f *fakeBackend) RemoveCriterion(_ context.Context, _, id string, n int, ifVersion int) (*core.Item, error) {
+	f.removes = append(f.removes, removeCall{id, n, ifVersion})
+	return nil, f.removeErr
 }
 
 func (f *fakeBackend) Remove(context.Context, string, string, bool) ([]string, error) {
