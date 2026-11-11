@@ -143,6 +143,7 @@ type Model struct {
 
 	detailScroll   int    // first detail line shown
 	detailScrollID string // item the scroll refers to
+	detailID       string // item shown in the detail popup
 	notice         string // shown in the status line until the next key
 }
 
@@ -194,7 +195,7 @@ func (m *Model) checkVersion() tea.Cmd {
 func (m *Model) load() tea.Cmd {
 	detailID := ""
 	if m.detailOpen {
-		detailID = m.selectedID()
+		detailID = m.detailID
 	}
 	return func() tea.Msg {
 		var msg loadedMsg
@@ -255,7 +256,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.snap, m.recent, m.version, m.loaded, m.err = msg.snap, msg.recent, msg.version, true, nil
 		if m.detailOpen {
-			m.history = msg.history
+			if m.snap.Get(m.detailID) == nil {
+				m.detailOpen = false
+				m.notice = m.detailID + " was deleted"
+			} else {
+				m.history = msg.history
+			}
 		}
 		m.tree.reveal(m, prevTree)
 		m.board.restore(m, prevBoard)

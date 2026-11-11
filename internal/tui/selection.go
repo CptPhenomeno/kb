@@ -63,6 +63,7 @@ func (m *Model) itemKey(key string) tea.Cmd {
 	case "enter":
 		if it != nil {
 			m.detailOpen = true
+			m.showDetail(it.ID)
 			m.history = nil
 			return m.loadHistory(it.ID)
 		}
@@ -109,6 +110,7 @@ func (m *Model) selectionMoved() tea.Cmd {
 	if !m.detailOpen {
 		return nil
 	}
+	m.showDetail(m.selectedID())
 	m.history = nil
-	return m.loadHistory(m.selectedID())
+	return m.loadHistory(m.detailID)
 }

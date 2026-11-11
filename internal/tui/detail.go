@@ -12,10 +12,10 @@ import (
 	"github.com/CptPhenomeno/kb/internal/core"
 )
 
-// detailLines is the full content of the detail of the selected item,
+// detailLines is the full content of the detail of the item shown,
 // wrapped to iw cells.
 func (m *Model) detailLines(iw int) []string {
-	it := m.selected()
+	it := m.detailItem()
 	var lines []string
 	add := func(ls ...string) { lines = append(lines, ls...) }
 	if it == nil {
@@ -110,25 +110,38 @@ func (m *Model) detailLines(iw int) []string {
 	return lines
 }
 
-// renderDetail renders the detail popup of the selected item, w by h cells.
+// renderDetail renders the detail popup of the item shown, w by h cells.
 func (m *Model) renderDetail(w, h int) string {
 	iw := w - 4
 	lines := m.detailLines(iw)
-	if it := m.selected(); it != nil {
-		lines = m.scrollDetail(it.ID, lines, h-2, iw)
+	if m.detailItem() != nil {
+		lines = m.scrollDetail(lines, h-2, iw)
 	}
 	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.th.p.Accent).
 		BorderBackground(m.th.p.Base).Background(m.th.p.Surface).Width(w).Padding(0, 1)
 	return box.Render(paintBlock(fitLines(strings.Join(lines, "\n"), iw, h-2), m.th.p.Surface, iw))
 }
 
-// scrollDetail returns the window of the detail lines that fits in height
-// rows, with markers for the lines above and below. The scroll goes back
-// to the top when another item is shown.
-func (m *Model) scrollDetail(id string, lines []string, height, width int) []string {
+// detailItem is the item shown in the detail popup, or nil.
+func (m *Model) detailItem() *core.Item {
+	if m.snap == nil {
+		return nil
+	}
+	return m.snap.Get(m.detailID)
+}
+
+// showDetail points the detail popup at id: the scroll goes back to the top
+// unless it is the item the scroll already refers to.
+func (m *Model) showDetail(id string) {
+	m.detailID = id
 	if id != m.detailScrollID {
 		m.detailScrollID, m.detailScroll = id, 0
 	}
+}
+
+// scrollDetail returns the window of the detail lines that fits in height
+// rows, with markers for the lines above and below.
+func (m *Model) scrollDetail(lines []string, height, width int) []string {
 	if len(lines) <= height {
 		m.detailScroll = 0
 		return lines

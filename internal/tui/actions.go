@@ -292,6 +292,5 @@ func (m *Model) goTo(id string) tea.Cmd {
 		}
 		b.restore(m, id)
 	}
-	m.detailScroll = 0
 	return m.selectionMoved()
 }

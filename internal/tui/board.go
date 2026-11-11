@@ -90,12 +90,6 @@ func firstNonEmpty(cols [5][]*core.Item, start, dir int) int {
 }
 
 func (b *boardState) key(m *Model, key string) tea.Cmd {
-	before := b.selectedID(m)
-	defer func() {
-		if b.selectedID(m) != before {
-			m.detailScroll = 0 // another item: show its detail from the top
-		}
-	}()
 	cols := b.columns(m)
 	switch key {
 	case "left", "right":

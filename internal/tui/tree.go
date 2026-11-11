@@ -147,12 +147,6 @@ var childType = map[core.Type]core.Type{
 }
 
 func (t *treeState) key(m *Model, key string) tea.Cmd {
-	before := t.selectedID(m)
-	defer func() {
-		if t.selectedID(m) != before {
-			m.detailScroll = 0
-		}
-	}()
 	rows := t.rows(m)
 	if len(rows) == 0 {
 		return m.itemKey(key)
@@ -426,9 +420,6 @@ func (t *treeState) click(m *Model, x, y int) tea.Cmd {
 	i, ok := t.rowAt(m, x, y)
 	if !ok {
 		return nil
-	}
-	if t.cursor != i {
-		m.detailScroll = 0
 	}
 	t.cursor = i
 	t.ensureVisible(m)
