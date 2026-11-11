@@ -110,3 +110,37 @@ func TestGuidePlanExampleImports(t *testing.T) {
 		t.Fatalf("the plan example created %q, want 4 items", got)
 	}
 }
+
+// The guide lists the accept edit and rm commands.
+func TestGuideDocumentsAcceptEditAndRm(t *testing.T) {
+	e := newEnv(t)
+	out := e.ok("guide")
+	for _, want := range []string{`kb accept <id> edit <n> "<text>"`, "kb accept <id> rm <n>"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("guide does not list %q", want)
+		}
+	}
+}
+
+// The accept usage line lists the edit and rm actions.
+func TestAcceptUsageListsEditAndRm(t *testing.T) {
+	cmd := (&cli{app: DefaultApp()}).acceptCmd()
+	for _, want := range []string{"edit <n> <text>", "rm <n>"} {
+		if !strings.Contains(cmd.UseLine(), want) {
+			t.Errorf("accept usage %q does not list %q", cmd.UseLine(), want)
+		}
+	}
+}
+
+// docs/cli-json.md documents the acceptance event fields and rules.
+func TestCLIJSONDocumentsAcceptanceEvents(t *testing.T) {
+	data, err := os.ReadFile("../../docs/cli-json.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"edited"`, `"old"`, `"removed"`, `"added"`, "blank", "duplicate"} {
+		if !strings.Contains(string(data), want) {
+			t.Errorf("docs/cli-json.md does not mention %s in the acceptance event", want)
+		}
+	}
+}

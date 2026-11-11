@@ -87,6 +87,19 @@ Timestamps are RFC 3339 in UTC. Lists are never `null`.
 `claim_expired`, `linked`, `unlinked`, `phase`, `test`, `acceptance`,
 `note`, `deleted`. Moves made by propagation carry `"derived": true`.
 
+The `data` of an `acceptance` event describes one criterion (`n` is its
+1-based position):
+
+| Fields | Meaning |
+|--------|---------|
+| `text`, `done` | the criterion after a check or uncheck |
+| `"added": true` | `accept <id> add`: the criterion was appended |
+| `"edited": true`, `"old"` | `accept <id> edit`: `text` is the new text, `old` the previous one; `done` is `false` because an edit unchecks |
+| `"removed": true` | `accept <id> rm`: `text` and `done` are those of the removed criterion; later criteria shift up |
+
+Criterion text that is blank, or a duplicate of another criterion of the
+same item, exits 3 (`rule`); a missing `n` exits 2 (`not_found`).
+
 ## Errors
 
 With `--json`, errors are printed on stdout and the exit code is set:

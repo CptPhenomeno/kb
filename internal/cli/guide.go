@@ -92,6 +92,8 @@ Other commands:
     kb list --json                     # filters: --status --type --label --blocked --stale
     kb list --stale                    # items in progress whose claim expired
     kb tree                            # the hierarchy with progress and points
+    kb accept <id> edit <n> "<text>"   # replace a criterion's text; it is unchecked again
+    kb accept <id> rm <n>              # remove a criterion; later ones shift up
     kb touch <id>                      # renew your claim during long work
     kb release <id>                    # give a task back
     kb add subtask "<title>" --parent <id>
