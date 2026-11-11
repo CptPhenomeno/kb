@@ -409,6 +409,10 @@ func (m *Model) setTheme(i int) {
 func (m *Model) View() tea.View {
 	content := paint(m.render(), m.th.p.Base, m.width, m.height)
 	if m.width >= minWidth && m.height >= minHeight {
+		if m.detailOpen && !m.help && m.loaded && (m.view == viewBoard || m.view == viewTree) {
+			w, h := m.detailSize()
+			content = paint(overlay(content, m.renderDetail(w, h), m.width, m.height), m.th.p.Base, m.width, m.height)
+		}
 		popup := ""
 		switch {
 		case m.alert != nil:
@@ -571,7 +575,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"shift ← →", "move", "move to the previous or next column", false},
 		{"shift ↑ ↓", "reorder", "reorder the card in its column, starting from the order shown (switches to manual order)", false},
 		{"s", "sort", "sort the columns by date, ID or story points, ascending or descending (saved for your user)", false},
-		{"enter", "details", "open the detail panel (esc closes it, pgup/pgdown scroll it)", false},
+		{"enter", "details", "open the detail popup (esc or enter closes it, pgup/pgdown scroll it)", false},
 		{"n", "new", "create an item", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
@@ -586,7 +590,7 @@ var viewKeys = map[viewKind][]keyHint{
 	viewTree: {
 		{"↑ ↓", "navigate", "move between rows", false},
 		{"← →", "collapse / expand", "collapse or expand a branch (on a leaf, ← goes to the parent)", false},
-		{"enter", "details", "open the detail panel (esc closes it, pgup/pgdown scroll it)", false},
+		{"enter", "details", "open the detail popup (esc or enter closes it, pgup/pgdown scroll it)", false},
 		{"n", "new child", "create a child of the selected item, with the type the hierarchy suggests", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},

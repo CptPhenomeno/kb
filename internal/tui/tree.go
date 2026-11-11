@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 
 	"github.com/CptPhenomeno/kb/internal/core"
 )
@@ -268,11 +267,6 @@ func rcell(s string, w int) string {
 
 func (t *treeState) render(m *Model, height int) string {
 	w := m.width
-	detailW := 0
-	if m.detailOpen {
-		detailW = m.detailWidth()
-		w = m.width - detailW - colGap
-	}
 	rows := t.rows(m)
 	cols, titleW := t.layout(rows, w)
 	lines := []string{t.summary(m, w), t.header(m, cols, titleW)}
@@ -284,12 +278,7 @@ func (t *treeState) render(m *Model, height int) string {
 	if len(rows) == 0 {
 		lines = append(lines, m.th.muted.Render("  nothing matches"))
 	}
-	body := strings.Join(fitLines(strings.Join(lines, "\n"), w, height), "\n")
-	if detailW == 0 {
-		return body
-	}
-	return lipgloss.JoinHorizontal(lipgloss.Top, paintBlock(strings.Split(body, "\n"), m.th.p.Base, w),
-		strings.Repeat(" ", colGap), m.renderDetail(detailW, height))
+	return strings.Join(fitLines(strings.Join(lines, "\n"), w, height), "\n")
 }
 
 // summary counts the parents and the work points of the board.
@@ -426,9 +415,6 @@ func (t *treeState) renderRow(m *Model, r treeRow, c treeCols, titleW, w int, se
 // rowAt returns the index of the row at screen row y, below the header,
 // the summary and the column titles.
 func (t *treeState) rowAt(m *Model, x, y int) (int, bool) {
-	if m.detailOpen && x >= m.width-m.detailWidth() {
-		return 0, false
-	}
 	i := t.scroll + y - 3
 	if y < 3 || i >= len(t.rows(m)) || y-3 >= t.listHeight(m) {
 		return 0, false
@@ -450,14 +436,6 @@ func (t *treeState) click(m *Model, x, y int) tea.Cmd {
 }
 
 func (t *treeState) wheel(m *Model, x int, up bool) tea.Cmd {
-	if m.detailOpen && x >= m.width-m.detailWidth() {
-		if up {
-			m.detailScroll = max(0, m.detailScroll-3)
-		} else {
-			m.detailScroll += 3
-		}
-		return nil
-	}
 	if up {
 		return t.key(m, "up")
 	}

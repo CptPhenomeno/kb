@@ -258,9 +258,12 @@ func TestDetailOpensAndCloses(t *testing.T) {
 	}
 }
 
-func TestDetailSnapshot(t *testing.T) {
+func TestBoardDetailGoldenShowsTheCenteredPopup(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
 	press(t, m, "right", "right", "down", "down", "enter") // KB-4
+	if !popupCorners(screen(m), 20, 6, 120, 36) {
+		t.Fatal("the detail is not a centered popup")
+	}
 	golden(t, "board_detail_160x48", screen(m))
 }
 

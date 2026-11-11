@@ -12,7 +12,7 @@ import (
 	"github.com/CptPhenomeno/kb/internal/core"
 )
 
-// renderDetail renders the side panel of the selected item.
+// renderDetail renders the detail popup of the selected item, w by h cells.
 func (m *Model) renderDetail(w, h int) string {
 	it := m.selected()
 	iw := w - 4

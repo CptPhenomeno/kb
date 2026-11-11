@@ -224,12 +224,10 @@ func (b *boardState) reorder(m *Model, up bool) tea.Cmd {
 
 // geometry of the board area for the current terminal size.
 type geometry struct {
-	top     int    // first screen row of the board area
-	height  int    // rows of the board area
-	colX    [5]int // left edge of each column
-	colW    [5]int // width of each column, borders included
-	detailX int    // left edge of the detail panel
-	detailW int    // 0 when the detail panel is closed
+	top    int    // first screen row of the board area
+	height int    // rows of the board area
+	colX   [5]int // left edge of each column
+	colW   [5]int // width of each column, borders included
 }
 
 const colGap = 1
@@ -237,11 +235,6 @@ const colGap = 1
 func (b *boardState) geometry(m *Model) geometry {
 	g := geometry{top: 1, height: m.height - 2 - len(m.commandBar())}
 	boardW := m.width
-	if m.detailOpen {
-		g.detailW = m.detailWidth()
-		boardW = m.width - g.detailW - colGap
-		g.detailX = boardW + colGap
-	}
 	base := (boardW - 4*colGap) / 5
 	extra := (boardW - 4*colGap) % 5
 	x := 0
@@ -321,9 +314,6 @@ func (b *boardState) render(m *Model, height int) string {
 			parts = append(parts, strings.Repeat(" ", colGap))
 		}
 		parts = append(parts, b.renderColumn(m, st, cols[i], b.scroll[i], g.colW[i], height, sel))
-	}
-	if g.detailW > 0 {
-		parts = append(parts, strings.Repeat(" ", colGap), m.renderDetail(g.detailW, height))
 	}
 	return lipgloss.JoinHorizontal(lipgloss.Top, parts...)
 }
@@ -476,14 +466,6 @@ func (b *boardState) click(m *Model, x, y int) tea.Cmd {
 // wheel moves the selection up or down in the column under the mouse.
 func (b *boardState) wheel(m *Model, x int, up bool) tea.Cmd {
 	g := b.geometry(m)
-	if g.detailW > 0 && x >= g.detailX {
-		if up {
-			m.detailScroll = max(0, m.detailScroll-3)
-		} else {
-			m.detailScroll += 3
-		}
-		return nil
-	}
 	cols := b.columns(m)
 	for c := range cols {
 		if x >= g.colX[c] && x < g.colX[c]+g.colW[c] && len(cols[c]) > 0 {

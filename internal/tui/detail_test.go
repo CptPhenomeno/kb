@@ -4,21 +4,113 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/CptPhenomeno/kb/internal/core"
 )
 
-func TestDetailPanelGrowsWithTerminal(t *testing.T) {
-	widths := map[int]int{}
-	for _, w := range []int{100, 160, 240} {
-		m := newModel(t, sampleBoard(), w, 48)
-		press(t, m, "enter")
-		widths[w] = m.board.geometry(m).detailW
+// popupCorners reports whether the screen shows a popup frame with its top
+// left corner at (x, y) and the given outer size.
+func popupCorners(s string, x, y, w, h int) bool {
+	lines := strings.Split(s, "\n")
+	at := func(row, col int) rune {
+		if row >= len(lines) {
+			return 0
+		}
+		r := []rune(lines[row])
+		if col >= len(r) {
+			return 0
+		}
+		return r[col]
 	}
-	if !(widths[100] < widths[160] && widths[160] < widths[240]) {
-		t.Fatalf("detail widths %v must grow with the terminal", widths)
+	return at(y, x) == '╭' && at(y, x+w-1) == '╮' && at(y+h-1, x) == '╰' && at(y+h-1, x+w-1) == '╯'
+}
+
+func TestEnterOpensDetailPopupCenteredAt75Percent(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "right", "right", "down", "down", "enter") // KB-4
+	if !m.detailOpen {
+		t.Fatal("enter did not open the detail")
 	}
-	if widths[240] <= 56 {
-		t.Fatalf("detail width at 240 columns = %d, want more than the old 56 cap", widths[240])
+	if !popupCorners(screen(m), 20, 6, 120, 36) {
+		t.Fatalf("no 120x36 popup centered at (20,6):\n%s", screen(m))
+	}
+}
+
+func TestDetailPopupIsAtLeast60By16OnASmallTerminal(t *testing.T) {
+	m := newModel(t, sampleBoard(), 70, 20)
+	press(t, m, "enter")
+	if !popupCorners(screen(m), 5, 2, 60, 16) {
+		t.Fatalf("no 60x16 popup centered at (5,2):\n%s", screen(m))
+	}
+}
+
+func TestDetailPopupNeverExceedsTheScreenMinusOneCellPerSide(t *testing.T) {
+	m := newModel(t, sampleBoard(), 100, 15)
+	press(t, m, "enter")
+	if !popupCorners(screen(m), 12, 1, 75, 13) {
+		t.Fatalf("no 75x13 popup at (12,1):\n%s", screen(m))
+	}
+}
+
+func TestBoardColumnsUseTheFullWidthWithTheDetailOpen(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	closed := m.board.geometry(m)
+	press(t, m, "enter")
+	g := m.board.geometry(m)
+	if g != closed || g.colX[4]+g.colW[4] != 160 {
+		t.Fatalf("columns with the detail open %v, closed %v: want the same, ending at 160", g, closed)
+	}
+}
+
+func TestTreeRowsUseTheFullWidthWithTheDetailOpen(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "enter")
+	if _, ok := m.tree.rowAt(m, 150, 3); !ok {
+		t.Fatal("the tree list does not reach the right edge with the detail open")
+	}
+	first := strings.Split(ansi.Strip(m.tree.render(m, m.bodyHeight())), "\n")[2]
+	if displayWidth(strings.TrimRight(first, " ")) < 130 {
+		t.Fatalf("tree row is not drawn at full width: %q", first)
+	}
+}
+
+func TestEnterOnATreeRowOpensTheDetailPopup(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "enter")
+	if !m.detailOpen || !popupCorners(screen(m), 20, 6, 120, 36) {
+		t.Fatalf("enter on a tree row did not open the centered popup:\n%s", screen(m))
+	}
+}
+
+func TestEscClosesTheDetailPopup(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "enter", "esc")
+	if m.detailOpen || popupCorners(screen(m), 20, 6, 120, 36) {
+		t.Fatal("esc did not close the detail popup")
+	}
+}
+
+func TestEnterClosesTheDetailPopup(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "enter", "enter")
+	if m.detailOpen || popupCorners(screen(m), 20, 6, 120, 36) {
+		t.Fatal("enter did not close the detail popup")
+	}
+}
+
+func TestDetailTextWrapsInThePopupWidth(t *testing.T) {
+	be := sampleBoard()
+	line := strings.Repeat("alpha beta ", 9) + "gamma" // 104 cells, fits the popup but not the old panel
+	be.snap.Get("KB-4").Description = line + " " + strings.Repeat("delta ", 25) + "ZEBRA"
+	m := newModel(t, be, 160, 48)
+	press(t, m, "right", "right", "down", "down", "enter") // KB-4
+	s := screen(m)
+	if !strings.Contains(s, line) {
+		t.Fatalf("a 104-cell line is wrapped before the popup width:\n%s", s)
+	}
+	if !strings.Contains(s, "ZEBRA") {
+		t.Fatalf("the end of the wrapped description is missing:\n%s", s)
 	}
 }
 
@@ -55,8 +147,7 @@ func TestTestsAndCriteriaWrap(t *testing.T) {
 }
 
 func TestCardIDNeverTruncated(t *testing.T) {
-	m := newModel(t, sampleBoard(), 160, 48)
-	press(t, m, "enter") // the detail panel makes the columns narrow
+	m := newModel(t, sampleBoard(), 100, 48) // narrow columns
 	s := screen(m)
 	for _, id := range []string{"KB-15", "KB-17", "KB-12"} {
 		if !strings.Contains(s, id+" ") {

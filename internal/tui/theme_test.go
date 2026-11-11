@@ -170,8 +170,8 @@ func TestThemePickerPopupCentered(t *testing.T) {
 func TestBoardStaysVisibleAroundThePopup(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
 	press(t, m, "t")
-	if w := m.board.geometry(m).detailW; w != 0 {
-		t.Fatalf("the picker takes a side panel of %d columns; it must float over the full board", w)
+	if g := m.board.geometry(m); g.colX[4]+g.colW[4] != m.width {
+		t.Fatalf("the picker narrows the board; it must float over the full width")
 	}
 	s := screen(m)
 	for _, col := range []string{"Backlog", "Done"} {

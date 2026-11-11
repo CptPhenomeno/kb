@@ -20,6 +20,14 @@ func overlay(base, popup string, width, height int) string {
 	).Render()
 }
 
+// detailSize is the outer size of the detail popup: 75% of the screen, at
+// least 60x16, never more than the screen minus one cell per side.
+func (m *Model) detailSize() (w, h int) {
+	w = min(max(m.width*75/100, 60), m.width-2)
+	h = min(max(m.height*75/100, 16), m.height-2)
+	return w, h
+}
+
 // popupBox frames popup content on the surface color.
 func (m *Model) popupBox(lines []string, width int, border lipgloss.Style) string {
 	inner := width - 6

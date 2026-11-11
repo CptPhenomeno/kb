@@ -30,10 +30,6 @@ func (m *Model) selectedID() string {
 // bodyHeight is the number of rows between the header and the status line.
 func (m *Model) bodyHeight() int { return m.height - 2 - len(m.commandBar()) }
 
-// detailWidth is the width of the detail panel for the current terminal:
-// 40% of the width, leaving the view at least 75 columns.
-func (m *Model) detailWidth() int { return max(36, min(m.width*40/100, m.width-75)) }
-
 // itemKey handles the keys that act on the selected item, the same in the
 // Board and the Tree view.
 func (m *Model) itemKey(key string) tea.Cmd {
@@ -73,7 +69,9 @@ func (m *Model) itemKey(key string) tea.Cmd {
 			m.links = &linksState{id: it.ID}
 		}
 	case "enter":
-		if it != nil {
+		if m.detailOpen {
+			m.detailOpen = false
+		} else if it != nil {
 			m.detailOpen = true
 			m.history = nil
 			return m.loadHistory(it.ID)
@@ -82,7 +80,7 @@ func (m *Model) itemKey(key string) tea.Cmd {
 	return nil
 }
 
-// selectionMoved reloads the history shown in the open detail panel after
+// selectionMoved reloads the history shown in the open detail popup after
 // the selection changed.
 func (m *Model) selectionMoved() tea.Cmd {
 	if !m.detailOpen {
