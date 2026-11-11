@@ -4,6 +4,49 @@ All notable changes to kb are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-11-11
+
+Acceptance criteria are fully manageable from the CLI and the TUI, the form
+keeps long text readable, the item detail opens in a large popup and the
+help is split into tabs.
+
+### Added
+
+- `kb accept <id> edit <n> "<text>"` replaces the text of a criterion and
+  unchecks it, since the new text has to be verified again; a story that
+  was done steps back.
+- `kb accept <id> rm <n>` removes a criterion and the following ones shift
+  up; removing the last unchecked criterion can close the story.
+- `kb log`, `kb show` and the Activity view describe edited and removed
+  criteria; `kb guide` and `docs/cli-json.md` document the new commands and
+  the fields of the `acceptance` event.
+- The criteria popup (`c`) adds a criterion with `n`, edits the selected
+  one with `e` and deletes it with `d` after a `y`/`n` confirmation; the
+  input line wraps in the popup.
+- The create form has an `acceptance` field: `enter` adds a criterion,
+  `backspace` on an empty input removes the last one, and text still in
+  the input is added when the form is saved.
+- `ctrl+s` saves the form from any field.
+
+### Changed
+
+- The item detail opens with `enter` in a centered popup at 75% of the
+  screen instead of a side panel, so the Board and the Tree keep their full
+  width. It scrolls with the arrows, `pgup`/`pgdown` and the mouse wheel;
+  `e`, `ctrl+e`, `c`, `a` and `l` act on the item from the popup, a click
+  outside closes it, and it closes with a notice if the item is deleted.
+- In the form, the title and the description wrap in the popup width; the
+  description shows up to six lines, the last ones with a leading `…` when
+  longer, and the cursor stays visible.
+- `enter` on the description opens `$EDITOR`; on the other fields it still
+  saves.
+- The help (`?`) is split into tabs: the current view, Detail, Criteria and
+  Form. `tab` and the arrows switch tab, long tabs scroll, and every tab
+  reads in full on an 80x24 terminal.
+- With the detail popup or the help open, keys that do not apply there do
+  nothing, `q` included; `ctrl+c` still quits.
+- The `c` key and its palette action are now "Manage acceptance criteria".
+
 ## [1.0.2] - 2026-11-10
 
 The release is automated: pushing a `v*` tag checks the code, builds the
