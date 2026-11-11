@@ -23,6 +23,7 @@ type Backend interface {
 	ArrangeColumn(ctx context.Context, actor string, status core.Status, ids []string) error
 	SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error)
 	AddCriterion(ctx context.Context, actor, id, text string, ifVersion int) (*core.Item, error)
+	EditCriterion(ctx context.Context, actor, id string, n int, text string, ifVersion int) (*core.Item, error)
 	Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error)
 	Claim(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
 	Release(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)

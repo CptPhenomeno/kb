@@ -13,9 +13,19 @@ import (
 type acceptState struct {
 	id     string
 	cursor int
-	adding bool   // the input line for a new criterion is open
+	mode   inputMode
+	editAt int    // index of the criterion being edited, in edit mode
 	input  string // text typed in the input line
 }
+
+// inputMode says what the input line of the popup is doing.
+type inputMode int
+
+const (
+	inputNone inputMode = iota
+	inputAdd
+	inputEdit
+)
 
 func (m *Model) acceptKey(key, text string) tea.Cmd {
 	a := m.accept
@@ -24,7 +34,7 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 		m.accept = nil
 		return nil
 	}
-	if a.adding {
+	if a.mode != inputNone {
 		return m.acceptInputKey(it, key, text)
 	}
 	if key == "esc" || key == "c" {
@@ -33,7 +43,11 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 	}
 	switch key {
 	case "n":
-		a.adding, a.input = true, ""
+		a.mode, a.input = inputAdd, ""
+	case "e":
+		if a.cursor < len(it.Acceptance) {
+			a.mode, a.editAt, a.input = inputEdit, a.cursor, it.Acceptance[a.cursor].Text
+		}
 	case "up":
 		a.cursor = max(0, a.cursor-1)
 	case "down":
@@ -53,13 +67,13 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 	return nil
 }
 
-// acceptInputKey handles a key while the input line of a new criterion is
-// open: every key but esc, enter and backspace is typed as text.
+// acceptInputKey handles a key while the input line, to add or to edit a
+// criterion, is open: every key but esc, enter and backspace is typed as text.
 func (m *Model) acceptInputKey(it *core.Item, key, text string) tea.Cmd {
 	a := m.accept
 	switch key {
 	case "esc":
-		a.adding = false
+		a.mode = inputNone
 	case "backspace":
 		if r := []rune(a.input); len(r) > 0 {
 			a.input = string(r[:len(r)-1])
@@ -69,11 +83,19 @@ func (m *Model) acceptInputKey(it *core.Item, key, text string) tea.Cmd {
 		if crit == "" {
 			return nil
 		}
-		a.adding = false
+		mode, n := a.mode, a.editAt+1
+		a.mode = inputNone
 		item, actor := *it, m.opts.Actor
 		return func() tea.Msg {
-			if _, err := m.be.AddCriterion(m.ctx, actor, item.ID, crit, item.Version); err != nil {
-				return writeMsg{alert: m.failure(item, "ADD FAILED", err)}
+			title, err := "ADD FAILED", error(nil)
+			if mode == inputEdit {
+				title = "EDIT FAILED"
+				_, err = m.be.EditCriterion(m.ctx, actor, item.ID, n, crit, item.Version)
+			} else {
+				_, err = m.be.AddCriterion(m.ctx, actor, item.ID, crit, item.Version)
+			}
+			if err != nil {
+				return writeMsg{alert: m.failure(item, title, err)}
 			}
 			return writeMsg{}
 		}
@@ -117,14 +139,17 @@ func (m *Model) renderAccept() string {
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
-// renderAcceptInput shows the input line of a new criterion, wrapped in
-// width w with the cursor after the last character.
+// renderAcceptInput shows the input line to add or edit a criterion, wrapped
+// in width w with the cursor after the last character.
 func (m *Model) renderAcceptInput(w int) []string {
-	if !m.accept.adding {
+	prefix := "+ "
+	switch m.accept.mode {
+	case inputNone:
 		return nil
+	case inputEdit:
+		prefix = "✎ "
 	}
-	const prefix = "+ "
-	in := wrapInput(m.accept.input, w-len(prefix), 0)
+	in := wrapInput(m.accept.input, w-2, 0)
 	in[len(in)-1] += m.th.fg(m.th.p.Accent).Render("▌")
 	lines := make([]string, len(in))
 	for i, l := range in {
