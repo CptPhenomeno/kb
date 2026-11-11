@@ -575,7 +575,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"n", "new", "create an item", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
-		{"c", "check", "check the acceptance criteria of the selected item", false},
+		{"c", "criteria", "manage the acceptance criteria of the selected item", false},
 		{"ctrl+e", "describe", "edit the description of the selected item in $EDITOR", false},
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
@@ -590,7 +590,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"n", "new child", "create a child of the selected item, with the type the hierarchy suggests", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
-		{"c", "check", "check the acceptance criteria of the selected item", false},
+		{"c", "criteria", "manage the acceptance criteria of the selected item", false},
 		{"ctrl+e", "describe", "edit the description of the selected item in $EDITOR", false},
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
@@ -621,7 +621,7 @@ func (m *Model) commandBar() []string {
 	case m.palette != nil:
 		hints = paletteKeys
 	case m.accept != nil:
-		hints = acceptKeys
+		hints = m.accept.hints()
 	case m.confirm != nil:
 		hints = confirmKeys
 	case m.links != nil && m.links.adding:
@@ -658,6 +658,10 @@ func (m *Model) renderHelp(height int) string {
 	var b strings.Builder
 	b.WriteString(m.th.bright.Render("Keys") + m.th.muted.Render("  ("+m.view.String()+" view; ? or esc closes)") + "\n\n")
 	for _, h := range ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)) {
+		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
+	}
+	b.WriteString("\n" + m.th.bright.Render("Criteria popup") + m.th.muted.Render("  (c)") + "\n\n")
+	for _, h := range append(append(append([]keyHint{}, acceptKeys...), acceptInputKeys...), acceptConfirmKeys...) {
 		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
 	}
 	return b.String()

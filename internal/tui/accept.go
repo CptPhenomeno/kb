@@ -150,7 +150,7 @@ func (m *Model) renderAccept() string {
 	}
 	if len(it.Acceptance) == 0 {
 		lines = append(lines, m.th.muted.Render(it.ID+" has no acceptance criteria."),
-			m.th.muted.Render(fmt.Sprintf("Add them with: kb accept %s add \"<criterion>\"", it.ID)))
+			m.th.muted.Render("Press n to add one."))
 		lines = append(lines, m.renderAcceptInput(iw)...)
 		return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 	}
@@ -212,5 +212,29 @@ func (m *Model) renderAcceptConfirm(n int, text string, w int) []string {
 var acceptKeys = []keyHint{
 	{"↑ ↓", "choose", "choose a criterion", false},
 	{"space", "check", "check or uncheck the criterion (saved at once)", false},
+	{"n", "new", "add a criterion", false},
+	{"e", "edit", "edit the selected criterion (its check is cleared)", false},
+	{"d", "delete", "delete the selected criterion, after confirmation", false},
 	{"esc", "close", "close the popup", false},
+}
+
+var acceptInputKeys = []keyHint{
+	{"enter", "save", "save the criterion", false},
+	{"esc", "cancel", "cancel without saving", false},
+}
+
+var acceptConfirmKeys = []keyHint{
+	{"y/enter", "delete", "confirm: delete the criterion", false},
+	{"n/esc", "keep", "keep the criterion", false},
+}
+
+// hints returns the keys that work in the current state of the popup.
+func (a *acceptState) hints() []keyHint {
+	switch {
+	case a.mode != inputNone:
+		return acceptInputKeys
+	case a.confirmDelete:
+		return acceptConfirmKeys
+	}
+	return acceptKeys
 }
