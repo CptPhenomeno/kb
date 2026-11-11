@@ -22,6 +22,7 @@ type Backend interface {
 	Reorder(ctx context.Context, actor, id string, index, ifVersion int) (*core.Item, error)
 	ArrangeColumn(ctx context.Context, actor string, status core.Status, ids []string) error
 	SetCriterion(ctx context.Context, actor, id string, n int, done bool, ifVersion int) (*core.Item, error)
+	AddCriterion(ctx context.Context, actor, id, text string, ifVersion int) (*core.Item, error)
 	Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error)
 	Claim(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
 	Release(ctx context.Context, actor, id string, ifVersion int) (*core.Item, error)
@@ -332,7 +333,7 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 		return m.paletteKey(key, text)
 	}
 	if m.accept != nil {
-		return m.acceptKey(key)
+		return m.acceptKey(key, text)
 	}
 	if m.confirm != nil {
 		return m.confirmKey(key)

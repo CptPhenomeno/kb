@@ -57,6 +57,10 @@ func (b *serviceBackend) SetCriterion(ctx context.Context, actor, id string, n i
 	return b.svc.SetCriterion(ctx, actor, id, n, done, ifVersion)
 }
 
+func (b *serviceBackend) AddCriterion(ctx context.Context, actor, id, text string, ifVersion int) (*core.Item, error) {
+	return b.svc.AddCriterion(ctx, actor, id, text, ifVersion)
+}
+
 func (b *serviceBackend) Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error) {
 	return b.svc.Remove(ctx, actor, id, recursive)
 }

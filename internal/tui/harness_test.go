@@ -26,6 +26,14 @@ type fakeBackend struct {
 	events     []core.Event
 	version    int64
 	boardCalls int
+	adds       []addCall // AddCriterion calls, in order
+	addErr     error     // returned by AddCriterion
+}
+
+// addCall is one recorded AddCriterion call.
+type addCall struct {
+	id, text string
+	version  int
 }
 
 func (f *fakeBackend) Board(context.Context) (*core.Snapshot, error) {
@@ -54,6 +62,11 @@ func (f *fakeBackend) Move(context.Context, string, string, core.Status, int) (*
 
 func (f *fakeBackend) SetCriterion(context.Context, string, string, int, bool, int) (*core.Item, error) {
 	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) AddCriterion(_ context.Context, _, id, text string, ifVersion int) (*core.Item, error) {
+	f.adds = append(f.adds, addCall{id, text, ifVersion})
+	return nil, f.addErr
 }
 
 func (f *fakeBackend) Remove(context.Context, string, string, bool) ([]string, error) {
