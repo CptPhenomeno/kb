@@ -82,6 +82,7 @@ func TestHelpListsCtrlSAndTheContextualEnter(t *testing.T) {
 	if !strings.Contains(bar, "ctrl+s") || !strings.Contains(bar, "enter") || !strings.Contains(bar, "$EDITOR") {
 		t.Fatalf("command bar does not list the form keys:\n%s", bar)
 	}
+	send(t, m, windowSize(160, 64)) // tall enough for every section of the help
 	press(t, m, "esc", "?")
 	s := screen(m)
 	if !strings.Contains(s, "ctrl+s") || !strings.Contains(s, "or open $EDITOR on the description") {

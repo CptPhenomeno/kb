@@ -589,13 +589,24 @@ var globalKeys = []keyHint{
 	{"q", "quit", "quit kb", false},
 }
 
+var detailKeys = []keyHint{
+	{"↑ ↓", "scroll", "scroll the detail by one line (the mouse wheel too)", false},
+	{"pgup pgdn", "page", "scroll the detail by one page", false},
+	{"e", "edit", "edit the item shown", false},
+	{"ctrl+e", "describe", "edit its description in $EDITOR", false},
+	{"c", "criteria", "manage its acceptance criteria", false},
+	{"a", "assign", "claim or release it", false},
+	{"l", "link", "manage its relations", false},
+	{"esc/enter", "close", "close the detail popup (a click outside closes it too)", false},
+}
+
 var viewKeys = map[viewKind][]keyHint{
 	viewBoard: {
 		{"← → ↑ ↓", "navigate", "move between columns and cards", false},
 		{"shift ← →", "move", "move to the previous or next column", false},
 		{"shift ↑ ↓", "reorder", "reorder the card in its column, starting from the order shown (switches to manual order)", false},
 		{"s", "sort", "sort the columns by date, ID or story points, ascending or descending (saved for your user)", false},
-		{"enter", "details", "open the detail popup (esc or enter closes it, pgup/pgdown scroll it)", false},
+		{"enter", "details", "open the detail popup", false},
 		{"n", "new", "create an item", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
@@ -610,7 +621,7 @@ var viewKeys = map[viewKind][]keyHint{
 	viewTree: {
 		{"↑ ↓", "navigate", "move between rows", false},
 		{"← →", "collapse / expand", "collapse or expand a branch (on a leaf, ← goes to the parent)", false},
-		{"enter", "details", "open the detail popup (esc or enter closes it, pgup/pgdown scroll it)", false},
+		{"enter", "details", "open the detail popup", false},
 		{"n", "new child", "create a child of the selected item, with the type the hierarchy suggests", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
@@ -625,7 +636,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"↑ ↓", "select actor", "select an actor", false},
 		{"enter", "only this actor", "show only the selected actor's events", false},
 		{"esc", "all actors", "show every actor's events", false},
-		{"o", "open item", "open the item the actor works on, on the Board with its detail", false},
+		{"o", "open item", "open the item the actor works on, on the Board with its detail popup", false},
 		{"a", "release claim", "release the actor's claim (useful when stale)", false},
 		{"pgup pgdn", "scroll events", "scroll the event stream", false},
 	},
@@ -656,9 +667,23 @@ func (m *Model) commandBar() []string {
 		hints = formKeys
 	case m.sort != nil:
 		hints = sortKeys
+	case m.detailOpen && !m.popupOpen():
+		hints = detailKeys
 	case m.board.searching && m.view != viewActivity:
 		hints = searchKeys
 	}
+	lines := m.wrapHints(hints)
+	if m.detailOpen && !m.popupOpen() {
+		// the view under the detail keeps its size: the bar keeps its height
+		for n := len(m.wrapHints(ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)))); len(lines) < n; {
+			lines = append(lines, "")
+		}
+	}
+	return lines
+}
+
+// wrapHints renders key hints as chips, wrapped to the width of the screen.
+func (m *Model) wrapHints(hints []keyHint) []string {
 	var lines []string
 	line, lineW := "", 0
 	for _, h := range hints {
@@ -682,6 +707,10 @@ func (m *Model) renderHelp(height int) string {
 	var b strings.Builder
 	b.WriteString(m.th.bright.Render("Keys") + m.th.muted.Render("  ("+m.view.String()+" view; ? or esc closes)") + "\n\n")
 	for _, h := range ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)) {
+		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
+	}
+	b.WriteString("\n" + m.th.bright.Render("Detail popup") + m.th.muted.Render("  (enter)") + "\n\n")
+	for _, h := range detailKeys {
 		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
 	}
 	b.WriteString("\n" + m.th.bright.Render("Criteria popup") + m.th.muted.Render("  (c)") + "\n\n")

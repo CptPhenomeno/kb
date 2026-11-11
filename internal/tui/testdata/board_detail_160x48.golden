@@ -44,5 +44,5 @@
 │                              │ │                             │ │                             │ │                             │ │                             │
 ╰──────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
-← → ↑ ↓ navigate   shift ← → move   shift ↑ ↓ reorder   s sort   enter details   n new   e edit   d delete   c criteria   ctrl+e describe   a assign   l link   
-p epics & stories   / search   f filter   tab next view   ctrl+p commands   t theme   ? help   q quit                                                           
+↑ ↓ scroll   pgup pgdn page   e edit   ctrl+e describe   c criteria   a assign   l link   esc/enter close                                                       
+                                                                                                                                                                
