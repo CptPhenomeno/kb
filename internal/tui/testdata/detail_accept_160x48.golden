@@ -1,0 +1,48 @@
+ kb  api-gateway   Board  Tree  Activity   showing epic · story · task · bug · sorted by date ↓                                12 items  1 agent active  1 stale
+╭──────────────────────────────╮ ╭─────────────────────────────╮ ╭─────────────────────────────╮ ╭─────────────────────────────╮ ╭─────────────────────────────╮
+│ Backlog                    1 │ │ To do                     4 │ │ In progress               4 │ │ Review                    1 │ │ Done                      1 │
+│ ╭──────────────────────────╮ │ │ ╭─────────────────────────╮ │ │ ╭─────────────────────────╮ │ │ ╭─────────────────────────╮ │ │ ╭─────────────────────────╮ │
+│ │ KB-15 task         ▲ 3pt │ │ │ │ KB-5 bug         ▲▲ 1pt │ │ │ │ KB-1 epic             ▲ │ │ │ │ KB-3 task        ▲▲ 3pt │ │ │ │ KB-17 task        · 1pt │ │
+│ │ Load test the gateway    │ │ │ │ Expired token returns   │ │ │ │ Authentication          │ │ │ │ Validate token in       │ │ │ │ Health check endpoint   │ │
+│ │ with k6         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮                 │ │
+│ ╰─────────────────│ KB-4 · task                                                                                                esc close │─────────────────╯ │
+│                   │ Token refresh                                                                                                        │                   │
+│                   │                                                                                                                      │                   │
+│                   │ status    In progress                                                                                                │                   │
+│                   │ priority  ▲▲ high                                                                                                    │                   │
+│                   │ points    2                                                                                                          │                   │
+│                   │ assignee  agent-auth claim 12m left                                                                                  │                   │
+│                   │ parent    KB-2 Token login                                                                                           │                   │
+│                   │ spec      SPEC.md#token-refresh                                                                                      │                   │
+│                   │ tdd phase ● RED                                                                                                      │                   │
+│                   │                                                                                                                      │                   │
+│                   │ Exchange a valid refre╭──────────────────────────────────────────────────────────────────────╮                       │                   │
+│                   │                       │                                                                      │                       │                   │
+│                   │ The old refresh token │  Acceptance                                               esc close  │                       │                   │
+│                   │                       │  KB-4 Token refresh                                                  │                       │                   │
+│                   │ tests 0/2             │                                                                      │                       │                   │
+│                   │ ✗ test a              │    [x] returns a new access + refresh pair                           │                       │                   │
+│                   │ ○ test b              │  › [ ] reused refresh token → 401                                    │                       │                   │
+│                   │                       │    [ ] an expired refresh token → 401 with a clear message           │                       │                   │
+│                   │ acceptance 1/3        │                                                                      │                       │                   │
+│                   │ [x] returns a new acce│  1/3 checked · status In progress · every change is saved at once    │                       │                   │
+│                   │ [ ] reused refresh tok│                                                                      │                       │                   │
+│                   │ [ ] an expired refresh╰──────────────────────────────────────────────────────────────────────╯                       │                   │
+│                   │                                                                                                                      │                   │
+│                   │ links (l to manage, enter there to go)                                                                               │                   │
+│                   │ relates       KB-5 Expired token returns 500 instead of 401                                                    To do │                   │
+│                   │                                                                                                                      │                   │
+│                   │ history                                                                                                              │                   │
+│                   │ 14:02 agent-auth claimed                                                                                             │                   │
+│                   │ 14:03 agent-auth phase → red                                                                                         │                   │
+│                   │ 14:04 agent-auth test "refresh rotates the token" → failing                                                          │                   │
+│                   │                                                                                                                      │                   │
+│                   │                                                                                                                      │                   │
+│                   │                                                                                                                      │                   │
+│                   ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯                   │
+│                              │ │                             │ │                             │ │                             │ │                             │
+│                              │ │                             │ │                             │ │                             │ │                             │
+│                              │ │                             │ │                             │ │                             │ │                             │
+╰──────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯
+14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
+↑ ↓ choose   space check   n new   e edit   d delete   esc close                                                                                                

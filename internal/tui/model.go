@@ -290,6 +290,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.handleKey(msg)
 	case tea.MouseClickMsg:
 		switch {
+		case m.detailOpen && m.popupOpen():
 		case m.detailOpen:
 			m.detailClick(msg.X, msg.Y)
 		case m.help:
@@ -302,6 +303,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.MouseWheelMsg:
 		switch {
+		case m.detailOpen && m.popupOpen():
 		case m.detailOpen:
 			m.scrollDetailBy(wheelStep(msg.Button == tea.MouseWheelUp))
 		case m.help:
@@ -314,6 +316,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+// popupOpen reports whether a popup is drawn over the view, and over the
+// detail when it is open: it owns the mouse as well as the keyboard.
+func (m *Model) popupOpen() bool {
+	return m.alert != nil || m.picker != nil || m.palette != nil || m.accept != nil || m.confirm != nil ||
+		m.links != nil || m.form != nil || m.sort != nil || m.filterOpen
 }
 
 func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
