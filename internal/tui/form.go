@@ -24,14 +24,15 @@ type formField struct {
 
 // formState is the open create or edit form.
 type formState struct {
-	editID  string // "" for a new item
-	version int
-	fields  []formField
-	focus   int
-	errs    map[int]string // validation errors by field
-	general string         // an error not tied to a field
-	info    string         // a confirmation, e.g. after the editor
-	saving  bool
+	editID   string // "" for a new item
+	version  int
+	fields   []formField
+	focus    int
+	errs     map[int]string // validation errors by field
+	general  string         // an error not tied to a field
+	info     string         // a confirmation, e.g. after the editor
+	saving   bool
+	criteria []string // criteria added so far in the create form
 }
 
 // Field indexes.
@@ -44,6 +45,7 @@ const (
 	fLabels
 	fSpec
 	fDescription
+	fAcceptance // create form only
 )
 
 var (
@@ -63,7 +65,9 @@ func newForm(it *core.Item) *formState {
 		{label: "spec"},
 		{label: "description"},
 	}}
-	if it != nil {
+	if it == nil {
+		f.fields = append(f.fields, formField{label: "acceptance"})
+	} else {
 		f.editID, f.version = it.ID, it.Version
 		f.fields[fTitle].value = it.Title
 		f.fields[fType].value, f.fields[fType].locked = it.Type.String(), true
@@ -119,7 +123,11 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 			fld.value = fld.choices[i]
 		}
 	case "backspace":
-		if fld.choices == nil {
+		if f.focus == fAcceptance && fld.value == "" {
+			if n := len(f.criteria); n > 0 {
+				f.criteria = f.criteria[:n-1]
+			}
+		} else if fld.choices == nil {
 			if r := []rune(fld.value); len(r) > 0 {
 				fld.value = string(r[:len(r)-1])
 			}
@@ -130,8 +138,12 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 		f.saving = true
 		return m.submitForm()
 	case "enter":
-		if f.focus == fDescription {
+		switch f.focus {
+		case fDescription:
 			return m.editDescription(fld.value, "", 0)
+		case fAcceptance:
+			f.addPendingCriterion()
+			return nil
 		}
 		f.saving = true
 		return m.submitForm()
@@ -141,6 +153,19 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 		}
 	}
 	return nil
+}
+
+// addPendingCriterion moves the text typed in the acceptance input, if not
+// blank, to the list of criteria.
+func (f *formState) addPendingCriterion() {
+	if len(f.fields) <= fAcceptance {
+		return
+	}
+	in := &f.fields[fAcceptance]
+	if text := strings.TrimSpace(in.value); text != "" {
+		f.criteria = append(f.criteria, text)
+		in.value = ""
+	}
 }
 
 // editDescription opens a description in $VISUAL or $EDITOR; target and
@@ -174,6 +199,7 @@ func (m *Model) editDescription(initial, target string, version int) tea.Cmd {
 // back next to the field they concern.
 func (m *Model) submitForm() tea.Cmd {
 	f := m.form
+	f.addPendingCriterion()
 	val := func(i int) string { return strings.TrimSpace(f.fields[i].value) }
 	prio, _ := core.ParsePriority(val(fPriority))
 	points, _ := strconv.Atoi(val(fPoints))
@@ -189,6 +215,9 @@ func (m *Model) submitForm() tea.Cmd {
 		typ, _ := core.ParseType(val(fType))
 		it := core.Item{Type: typ, Title: val(fTitle), Parent: val(fParent), Priority: prio, Points: points,
 			Labels: labels, Spec: val(fSpec), Description: desc}
+		for _, text := range f.criteria {
+			it.Acceptance = append(it.Acceptance, core.Criterion{Text: text})
+		}
 		return func() tea.Msg {
 			created, err := m.be.Create(m.ctx, actor, it)
 			if err != nil {
@@ -227,6 +256,8 @@ func formError(err error) formDoneMsg {
 		field = fParent
 	case strings.Contains(lower, "points"):
 		field = fPoints
+	case strings.Contains(lower, "acceptance criterion"):
+		field = fAcceptance
 	case strings.Contains(lower, "tdd phase"), strings.Contains(lower, "tests are not allowed"):
 		field = fType
 	}
@@ -265,10 +296,15 @@ func (m *Model) renderForm() string {
 		if focused {
 			marker = m.th.fg(m.th.p.Accent).Render("› ")
 		}
-		if i == fTitle || i == fDescription {
+		if i == fTitle || i == fDescription || i == fAcceptance {
 			lines = append(lines, m.renderWrappedField(marker+label, fld.value, i == fDescription, focused, iw)...)
 		} else {
 			lines = append(lines, truncate(marker+label+value, iw))
+		}
+		if i == fAcceptance {
+			for _, c := range f.criteria {
+				lines = append(lines, hang(strings.Repeat(" ", 14)+m.th.muted.Render("• "), 16, c, m.th.text, iw, 16)...)
+			}
 		}
 		if e, ok := f.errs[i]; ok {
 			lines = append(lines, hang(strings.Repeat(" ", 14)+m.th.warn.Render("✗ "), 16, e, m.th.warn, iw, 16)...)
@@ -286,6 +322,8 @@ func (m *Model) renderForm() string {
 		status = "saving… · tab or ↑ ↓ move · ← → change a choice"
 	case f.focus == fDescription:
 		status = "enter $EDITOR · ctrl+s saves · tab or ↑ ↓ move"
+	case f.focus == fAcceptance:
+		status = "enter adds · ctrl+s saves · backspace on empty removes the last · tab or ↑ ↓ move"
 	}
 	lines = append(lines, "", m.th.muted.Render(status))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
@@ -330,7 +368,7 @@ var formKeys = []keyHint{
 	{"← →", "choice", "change a choice field", false},
 	{"ctrl+e", "editor", "edit the description in $EDITOR", false},
 	{"ctrl+s", "save", "create or save the item from any field", false},
-	{"enter", "save · $EDITOR", "save the item, or open $EDITOR on the description", false},
+	{"enter", "save · $EDITOR · add", "save the item, or open $EDITOR on the description, or add a criterion on acceptance", false},
 	{"esc", "cancel", "close without saving", false},
 }
 
