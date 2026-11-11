@@ -142,13 +142,20 @@ func (m *Model) showDetail(id string) {
 // scrollDetail returns the window of the detail lines that fits in height
 // rows, with markers for the lines above and below.
 func (m *Model) scrollDetail(lines []string, height, width int) []string {
+	out, scroll := m.scrollWindow(lines, m.detailScroll, height, width)
+	m.detailScroll = scroll
+	return out
+}
+
+// scrollWindow returns the window of lines that fits in height rows from the
+// scroll offset, with markers for the lines above and below, and the offset
+// clamped to the content. Lines that fit are returned as they are.
+func (m *Model) scrollWindow(lines []string, scroll, height, width int) ([]string, int) {
 	if len(lines) <= height {
-		m.detailScroll = 0
-		return lines
+		return lines, 0
 	}
-	window := detailWindow(height)
-	m.detailScroll = max(0, min(m.detailScroll, len(lines)-window))
-	s := m.detailScroll
+	window := scrollWindowSize(height)
+	s := max(0, min(scroll, len(lines)-window))
 	top := ""
 	if s > 0 {
 		top = m.th.muted.Render(center(fmt.Sprintf("↑ %d more lines · pgup", s), width))
@@ -157,13 +164,16 @@ func (m *Model) scrollDetail(lines []string, height, width int) []string {
 	if below := len(lines) - s - window; below > 0 {
 		out = append(out, m.th.muted.Render(center(fmt.Sprintf("↓ %d more lines · pgdown", below), width)))
 	}
-	return out
+	return out, s
 }
 
+// scrollWindowSize is the number of content lines shown at once in height
+// rows when the content needs scrolling: one row goes to each marker.
+func scrollWindowSize(height int) int { return max(1, height-2) }
+
 // detailWindow is the number of content lines shown at once in a detail
-// popup of the given inner height when the content needs scrolling: one row
-// goes to each marker.
-func detailWindow(height int) int { return max(1, height-2) }
+// popup of the given inner height when the content needs scrolling.
+func detailWindow(height int) int { return scrollWindowSize(height) }
 
 // scrollDetailBy scrolls the open detail by delta lines, never above the top
 // or past the last page.

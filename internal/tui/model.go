@@ -109,6 +109,7 @@ type Model struct {
 	width, height int
 	view          viewKind
 	help          bool
+	helpScroll    int // first help line shown
 	helpTab       int // active help tab: 0 is the current view, then helpTabNames
 
 	snap    *core.Snapshot
@@ -301,6 +302,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case m.detailOpen:
 			m.detailClick(msg.X, msg.Y)
 		case m.help:
+			m.helpClick(msg.X, msg.Y)
 		case m.view == viewBoard:
 			return m, m.board.click(m, msg.X, msg.Y)
 		case m.view == viewTree:
@@ -314,6 +316,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case m.detailOpen:
 			m.scrollDetailBy(wheelStep(msg.Button == tea.MouseWheelUp))
 		case m.help:
+			m.scrollHelpBy(wheelStep(msg.Button == tea.MouseWheelUp))
 		case m.view == viewBoard:
 			return m, m.board.wheel(m, msg.X, msg.Button == tea.MouseWheelUp)
 		case m.view == viewTree:
@@ -709,7 +712,8 @@ var helpTabNames = []string{"Detail", "Criteria", "Form"}
 
 // openHelp shows the help on the tab of the current view.
 func (m *Model) openHelp() {
-	m.help, m.helpTab = true, 0
+	m.help = true
+	m.setHelpTab(0)
 }
 
 // helpKey handles a key while the help is open: tab and shift+tab (or the
@@ -718,9 +722,17 @@ func (m *Model) helpKey(key string) tea.Cmd {
 	n := len(helpTabNames) + 1
 	switch key {
 	case "tab", "right":
-		m.helpTab = (m.helpTab + 1) % n
+		m.setHelpTab((m.helpTab + 1) % n)
 	case "shift+tab", "left":
-		m.helpTab = (m.helpTab + n - 1) % n
+		m.setHelpTab((m.helpTab + n - 1) % n)
+	case "up":
+		m.scrollHelpBy(-1)
+	case "down":
+		m.scrollHelpBy(1)
+	case "pgup":
+		m.scrollHelpBy(-helpWindow(m.helpContentHeight()))
+	case "pgdown":
+		m.scrollHelpBy(helpWindow(m.helpContentHeight()))
 	case "?", "esc":
 		m.help = false
 	}
@@ -740,28 +752,87 @@ func (m *Model) helpHints(tab int) (title, opens string, hints []keyHint) {
 	return "Create and edit form", "n, e", formKeys
 }
 
-func (m *Model) renderHelp(height int) string {
+// helpWindow is the number of help lines shown at once in the given height
+// when the tab needs scrolling.
+func helpWindow(height int) int { return scrollWindowSize(height) }
+
+// helpContentHeight is the room the scrolling part of the help has: the body
+// minus the tab bar and the blank line under it.
+func (m *Model) helpContentHeight() int { return m.bodyHeight() - 2 }
+
+// helpHintCol is the width of the indent and the key chip before a help text.
+const helpHintCol = 16
+
+// helpLines is the content of the active help tab below the tab bar, wrapped
+// to width cells.
+func (m *Model) helpLines(width int) []string {
+	title, opens, hints := m.helpHints(m.helpTab)
+	head := m.th.bright.Render(title)
+	if opens != "" {
+		head += m.th.muted.Render("  (" + opens + ")")
+	}
+	lines := []string{head, ""}
+	for _, h := range hints {
+		prefix := "  " + m.th.chip.Render(fmt.Sprintf("%-12s", h.key)) + "  "
+		lines = append(lines, hang(prefix, helpHintCol, h.help, m.th.text, width, helpHintCol)...)
+	}
+	return lines
+}
+
+// helpTabBar renders the help tab bar and returns the x range of each label.
+func (m *Model) helpTabBar() (bar string, spans [][2]int) {
 	names := append([]string{m.view.String()}, helpTabNames...)
-	tabs := make([]string, len(names))
+	x := 0
 	for i, n := range names {
 		style := m.th.tabOff
 		if i == m.helpTab {
 			style = m.th.tabOn
 		}
-		tabs[i] = style.Render(" " + n + " ")
+		label := style.Render(" " + n + " ")
+		w := lipgloss.Width(label)
+		spans = append(spans, [2]int{x, x + w})
+		x += w
+		bar += label
 	}
-	title, opens, hints := m.helpHints(m.helpTab)
-	var b strings.Builder
-	b.WriteString(strings.Join(tabs, "") + m.th.muted.Render("  tab or ← → switch · ? or esc closes") + "\n\n")
-	b.WriteString(m.th.bright.Render(title))
-	if opens != "" {
-		b.WriteString(m.th.muted.Render("  (" + opens + ")"))
+	return bar + m.th.muted.Render("  tab or ← → switch · ? or esc closes"), spans
+}
+
+// setHelpTab opens a help tab from its top.
+func (m *Model) setHelpTab(tab int) {
+	m.helpTab, m.helpScroll = tab, 0
+}
+
+// scrollHelpBy scrolls the help tab by delta lines, never above the top or
+// past the last page; a tab that fits does not scroll.
+func (m *Model) scrollHelpBy(delta int) {
+	total, height := len(m.helpLines(m.width)), m.helpContentHeight()
+	if total <= height {
+		m.helpScroll = 0
+		return
 	}
-	b.WriteString("\n\n")
-	for _, h := range hints {
-		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
+	m.helpScroll = max(0, min(m.helpScroll+delta, total-helpWindow(height)))
+}
+
+// helpClick opens the help tab whose label is at (x, y) of the screen; a
+// click anywhere else does nothing.
+func (m *Model) helpClick(x, y int) {
+	if y != 1 {
+		return
 	}
-	return b.String()
+	_, spans := m.helpTabBar()
+	for i, s := range spans {
+		if x >= s[0] && x < s[1] {
+			m.setHelpTab(i)
+			return
+		}
+	}
+}
+
+func (m *Model) renderHelp(height int) string {
+	bar, _ := m.helpTabBar()
+	body, scroll := m.scrollWindow(m.helpLines(m.width), m.helpScroll, height-2, m.width)
+	m.helpScroll = scroll
+	return strings.Join(append([]string{bar, ""}, body...), "\n")
 }
 
 // ready drops the hints of features that have not landed yet.
