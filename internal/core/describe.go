@@ -40,6 +40,12 @@ func DescribeEvent(e Event) string {
 		if e.Data["added"] == true {
 			return fmt.Sprintf("criterion added: %q", str("text"))
 		}
+		if e.Data["edited"] == true {
+			return fmt.Sprintf("criterion edited: %q → %q", str("old"), str("text"))
+		}
+		if e.Data["removed"] == true {
+			return fmt.Sprintf("criterion removed: %q", str("text"))
+		}
 		if e.Data["done"] == true {
 			return fmt.Sprintf("criterion checked: %q", str("text"))
 		}

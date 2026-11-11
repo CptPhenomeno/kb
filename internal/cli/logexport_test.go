@@ -86,3 +86,19 @@ func TestGuideMentionsAllAgentCommands(t *testing.T) {
 		}
 	}
 }
+
+func TestLogShowsCriterionEditsAndRemovals(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--accept", "old", "--accept", "extra")
+	e.ok("accept", "KB-1", "edit", "1", "new text")
+	e.ok("accept", "KB-1", "rm", "2")
+	out := e.ok("log", "KB-1")
+	for _, want := range []string{
+		`criterion edited: "old" → "new text"`,
+		`criterion removed: "extra"`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("log lacks %q:\n%s", want, out)
+		}
+	}
+}
