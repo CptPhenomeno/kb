@@ -109,6 +109,7 @@ type Model struct {
 	width, height int
 	view          viewKind
 	help          bool
+	helpTab       int // active help tab: 0 is the current view, then helpTabNames
 
 	snap    *core.Snapshot
 	recent  []core.Event
@@ -377,20 +378,20 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 	if m.detailOpen {
 		return m.detailKey(key)
 	}
+	if m.help {
+		return m.helpKey(key)
+	}
 	switch key {
 	case "ctrl+c", "q":
 		return tea.Quit
 	case "?":
-		m.help = !m.help
+		m.openHelp()
 		return nil
 	case "ctrl+p", "ctrl+shift+p":
 		m.palette = &paletteState{}
 		return nil
 	case "esc":
-		switch {
-		case m.help:
-			m.help = false
-		case m.view == viewActivity:
+		if m.view == viewActivity {
 			return m.activity.key(m, key)
 		}
 		return nil
@@ -404,7 +405,7 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 		m.view = (m.view + viewCount - 1) % viewCount
 		return nil
 	}
-	if m.help || !m.loaded {
+	if !m.loaded {
 		return nil
 	}
 	switch m.view {
@@ -703,22 +704,61 @@ func (m *Model) wrapHints(hints []keyHint) []string {
 	return append(lines, line)
 }
 
+// helpTabNames are the help tabs after the one of the current view.
+var helpTabNames = []string{"Detail", "Criteria", "Form"}
+
+// openHelp shows the help on the tab of the current view.
+func (m *Model) openHelp() {
+	m.help, m.helpTab = true, 0
+}
+
+// helpKey handles a key while the help is open: tab and shift+tab (or the
+// arrows) change the help tab, ? and esc close it, the rest does nothing.
+func (m *Model) helpKey(key string) tea.Cmd {
+	n := len(helpTabNames) + 1
+	switch key {
+	case "tab", "right":
+		m.helpTab = (m.helpTab + 1) % n
+	case "shift+tab", "left":
+		m.helpTab = (m.helpTab + n - 1) % n
+	case "?", "esc":
+		m.help = false
+	}
+	return nil
+}
+
+// helpHints returns the title, the opening key and the hints of a help tab.
+func (m *Model) helpHints(tab int) (title, opens string, hints []keyHint) {
+	switch tab {
+	case 0:
+		return m.view.String() + " view", "", ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...))
+	case 1:
+		return "Detail popup", "enter", detailKeys
+	case 2:
+		return "Criteria popup", "c", append(append(append([]keyHint{}, acceptKeys...), acceptInputKeys...), acceptConfirmKeys...)
+	}
+	return "Create and edit form", "n, e", formKeys
+}
+
 func (m *Model) renderHelp(height int) string {
+	names := append([]string{m.view.String()}, helpTabNames...)
+	tabs := make([]string, len(names))
+	for i, n := range names {
+		style := m.th.tabOff
+		if i == m.helpTab {
+			style = m.th.tabOn
+		}
+		tabs[i] = style.Render(" " + n + " ")
+	}
+	title, opens, hints := m.helpHints(m.helpTab)
 	var b strings.Builder
-	b.WriteString(m.th.bright.Render("Keys") + m.th.muted.Render("  ("+m.view.String()+" view; ? or esc closes)") + "\n\n")
-	for _, h := range ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...)) {
-		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
+	b.WriteString(strings.Join(tabs, "") + m.th.muted.Render("  tab or ← → switch · ? or esc closes") + "\n\n")
+	b.WriteString(m.th.bright.Render(title))
+	if opens != "" {
+		b.WriteString(m.th.muted.Render("  (" + opens + ")"))
 	}
-	b.WriteString("\n" + m.th.bright.Render("Detail popup") + m.th.muted.Render("  (enter)") + "\n\n")
-	for _, h := range detailKeys {
-		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
-	}
-	b.WriteString("\n" + m.th.bright.Render("Criteria popup") + m.th.muted.Render("  (c)") + "\n\n")
-	for _, h := range append(append(append([]keyHint{}, acceptKeys...), acceptInputKeys...), acceptConfirmKeys...) {
-		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
-	}
-	b.WriteString("\n" + m.th.bright.Render("Create and edit form") + m.th.muted.Render("  (n, e)") + "\n\n")
-	for _, h := range formKeys {
+	b.WriteString("\n\n")
+	for _, h := range hints {
 		fmt.Fprintf(&b, "  %s  %s\n", m.th.chip.Render(fmt.Sprintf("%-12s", h.key)), m.th.text.Render(h.help))
 	}
 	return b.String()

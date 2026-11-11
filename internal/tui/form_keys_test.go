@@ -75,15 +75,15 @@ func TestFormStatusLineShowsTheContextualKeys(t *testing.T) {
 }
 
 // While the form is open it takes every key, including ?, so the keys show
-// in the command bar; the help screen lists them for when it is closed.
+// in the command bar; the Form tab of the help lists them for when it is closed.
 func TestHelpListsCtrlSAndTheContextualEnter(t *testing.T) {
 	m := openForm(t)
 	bar := lastLines(screen(m), 3)
 	if !strings.Contains(bar, "ctrl+s") || !strings.Contains(bar, "enter") || !strings.Contains(bar, "$EDITOR") {
 		t.Fatalf("command bar does not list the form keys:\n%s", bar)
 	}
-	send(t, m, windowSize(160, 64)) // tall enough for every section of the help
-	press(t, m, "esc", "?")
+	send(t, m, windowSize(160, 48))
+	press(t, m, "esc", "?", "tab", "tab", "tab")
 	s := screen(m)
 	if !strings.Contains(s, "ctrl+s") || !strings.Contains(s, "or open $EDITOR on the description") {
 		t.Fatalf("help does not list ctrl+s and the contextual enter:\n%s", s)

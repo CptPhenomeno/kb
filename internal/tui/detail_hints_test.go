@@ -35,7 +35,7 @@ func TestCommandBarShowsTheInnerPopupKeysOverTheDetail(t *testing.T) {
 
 func TestHelpListsTheDetailPopupKeys(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
-	press(t, m, "?")
+	press(t, m, "?", "tab")
 	help := screen(m)
 	for _, want := range []string{"Detail popup", "scroll the detail by one line", "scroll the detail by one page", "close the detail popup"} {
 		if !strings.Contains(help, want) {

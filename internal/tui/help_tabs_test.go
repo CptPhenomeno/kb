@@ -1,0 +1,226 @@
+package tui
+
+import (
+	"strings"
+	"testing"
+)
+
+var wantHelpTabs = []string{"Board", "Detail", "Criteria", "Form"}
+
+// activeHelpTab returns the name of the help tab drawn with the active tab
+// style of the header, or "" when none is.
+func activeHelpTab(m *Model) string {
+	raw := m.renderHelp(m.bodyHeight())
+	for _, n := range []string{"Board", "Tree", "Activity", "Detail", "Criteria", "Form"} {
+		if strings.Contains(raw, m.th.tabOn.Render(" "+n+" ")) {
+			return n
+		}
+	}
+	return ""
+}
+
+func helpModel(t *testing.T) *Model {
+	t.Helper()
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "?")
+	return m
+}
+
+func TestHelpOpensOnTheTabOfTheCurrentView(t *testing.T) {
+	for view, name := range map[string]string{"": "Board", "tab": "Tree", "tab,tab": "Activity"} {
+		m := newModel(t, sampleBoard(), 160, 48)
+		if view != "" {
+			press(t, m, strings.Split(view, ",")...)
+		}
+		press(t, m, "?")
+		if got := activeHelpTab(m); got != name {
+			t.Errorf("view %q: active help tab %q, want %q", name, got, name)
+		}
+	}
+}
+
+func TestHelpTabBarListsTheViewDetailCriteriaAndForm(t *testing.T) {
+	m := helpModel(t)
+	lines := strings.Split(screen(m), "\n")
+	bar := lines[1]
+	last := -1
+	for _, n := range wantHelpTabs {
+		i := strings.Index(bar, " "+n+" ")
+		if i < 0 || i < last {
+			t.Fatalf("tab bar lacks %q in order:\n%s", n, bar)
+		}
+		last = i
+	}
+	if strings.Contains(screen(m), "Keys  (") {
+		t.Errorf("the old Keys title is still there:\n%s", screen(m))
+	}
+}
+
+func TestActiveHelpTabUsesTheHeaderTabStyle(t *testing.T) {
+	m := helpModel(t)
+	raw := m.renderHelp(m.bodyHeight())
+	if !strings.Contains(raw, m.th.tabOn.Render(" Board ")) {
+		t.Errorf("active tab does not use tabOn")
+	}
+	for _, n := range []string{"Detail", "Criteria", "Form"} {
+		if !strings.Contains(raw, m.th.tabOff.Render(" "+n+" ")) {
+			t.Errorf("inactive tab %s does not use tabOff", n)
+		}
+	}
+}
+
+func TestTabAndRightGoToTheNextHelpTab(t *testing.T) {
+	for _, k := range []string{"tab", "right"} {
+		m := helpModel(t)
+		for _, want := range []string{"Detail", "Criteria", "Form"} {
+			press(t, m, k)
+			if got := activeHelpTab(m); got != want {
+				t.Errorf("%s: active tab %q, want %q", k, got, want)
+			}
+		}
+	}
+}
+
+func TestShiftTabAndLeftGoToThePreviousHelpTab(t *testing.T) {
+	for _, k := range []string{"shift+tab", "left"} {
+		m := helpModel(t)
+		press(t, m, "tab", "tab", "tab")
+		for _, want := range []string{"Criteria", "Detail", "Board"} {
+			press(t, m, k)
+			if got := activeHelpTab(m); got != want {
+				t.Errorf("%s: active tab %q, want %q", k, got, want)
+			}
+		}
+	}
+}
+
+func TestHelpTabsWrapAroundInBothDirections(t *testing.T) {
+	m := helpModel(t)
+	press(t, m, "shift+tab")
+	if got := activeHelpTab(m); got != "Form" {
+		t.Errorf("shift+tab from the first tab: %q, want Form", got)
+	}
+	press(t, m, "tab")
+	if got := activeHelpTab(m); got != "Board" {
+		t.Errorf("tab from the last tab: %q, want Board", got)
+	}
+	press(t, m, "left")
+	if got := activeHelpTab(m); got != "Form" {
+		t.Errorf("left from the first tab: %q, want Form", got)
+	}
+	press(t, m, "right")
+	if got := activeHelpTab(m); got != "Board" {
+		t.Errorf("right from the last tab: %q, want Board", got)
+	}
+}
+
+func TestTabChangesTheHelpTabAndNotTheViewWhileTheHelpIsOpen(t *testing.T) {
+	m := helpModel(t)
+	press(t, m, "tab", "shift+tab", "shift+tab", "right", "left")
+	if m.view != viewBoard {
+		t.Errorf("view changed to %v", m.view)
+	}
+	press(t, m, "esc", "tab")
+	if m.view != viewTree {
+		t.Errorf("tab does not switch views once the help is closed: %v", m.view)
+	}
+}
+
+func TestReopeningTheHelpStartsFromTheViewTab(t *testing.T) {
+	m := helpModel(t)
+	press(t, m, "tab", "tab", "esc", "?")
+	if got := activeHelpTab(m); got != "Board" {
+		t.Errorf("after esc: %q", got)
+	}
+	press(t, m, "tab", "?", "?")
+	if got := activeHelpTab(m); got != "Board" {
+		t.Errorf("after ?: %q", got)
+	}
+}
+
+func TestPaletteHelpOpensTheHelpOnTheViewTab(t *testing.T) {
+	m := helpModel(t)
+	press(t, m, "tab", "esc", "ctrl+p")
+	for _, r := range "Help" {
+		press(t, m, string(r))
+	}
+	press(t, m, "enter")
+	if !m.help {
+		t.Fatal("the palette did not open the help")
+	}
+	if got := activeHelpTab(m); got != "Board" {
+		t.Errorf("active tab %q, want Board", got)
+	}
+}
+
+func TestOtherKeysDoNothingWhileTheHelpIsOpen(t *testing.T) {
+	m := helpModel(t)
+	for _, k := range []string{"t", "ctrl+p", "n", "e", "c", "enter", "/", "f", "s", "1", "up", "down", "shift+right"} {
+		if press(t, m, k) {
+			t.Fatalf("%s quit", k)
+		}
+		if !m.help || m.picker != nil || m.palette != nil || m.form != nil || m.accept != nil || m.filterOpen || m.sort != nil || m.detailOpen || m.board.searching {
+			t.Fatalf("%s did something while the help is open", k)
+		}
+		if m.view != viewBoard {
+			t.Fatalf("%s changed the view", k)
+		}
+		if got := activeHelpTab(m); got != "Board" {
+			t.Fatalf("%s changed the help tab to %q", k, got)
+		}
+	}
+}
+
+func TestQDoesNotQuitWhileTheHelpIsOpen(t *testing.T) {
+	m := helpModel(t)
+	if press(t, m, "q") {
+		t.Fatal("q quit with the help open")
+	}
+	if !m.help {
+		t.Error("q closed the help")
+	}
+}
+
+func TestCtrlCQuitsWithTheHelpOpen(t *testing.T) {
+	m := helpModel(t)
+	if !press(t, m, "ctrl+c") {
+		t.Fatal("ctrl+c did not quit")
+	}
+}
+
+func TestEscAndQuestionMarkCloseTheHelp(t *testing.T) {
+	for _, k := range []string{"esc", "?"} {
+		m := helpModel(t)
+		press(t, m, "tab", k)
+		if m.help {
+			t.Errorf("%s did not close the help", k)
+		}
+	}
+}
+
+func TestDetailTabListsTheDetailPopupKeys(t *testing.T) {
+	m := helpModel(t)
+	press(t, m, "tab")
+	s := screen(m)
+	for _, h := range detailKeys {
+		if !strings.Contains(s, h.key) || !strings.Contains(s, h.help) {
+			t.Errorf("detail tab lacks %q %q:\n%s", h.key, h.help, s)
+		}
+	}
+	if strings.Contains(s, "add a criterion") || strings.Contains(s, "save the form") {
+		t.Errorf("detail tab shows other tabs' keys:\n%s", s)
+	}
+}
+
+func TestCriteriaTabListsTheListInputAndConfirmationKeys(t *testing.T) {
+	m := helpModel(t)
+	press(t, m, "tab", "tab")
+	s := screen(m)
+	for _, hints := range [][]keyHint{acceptKeys, acceptInputKeys, acceptConfirmKeys} {
+		for _, h := range hints {
+			if !strings.Contains(s, h.help) {
+				t.Errorf("criteria tab lacks %q:\n%s", h.help, s)
+			}
+		}
+	}
+}

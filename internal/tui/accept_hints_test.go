@@ -58,7 +58,7 @@ func TestCommandBarShowsTheConfirmationKeysWhileDeleting(t *testing.T) {
 
 func TestHelpListsThePopupKeys(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
-	press(t, m, "?")
+	press(t, m, "?", "tab", "tab")
 	help := screen(m)
 	for _, want := range []string{"add a criterion", "edit the selected criterion", "delete the selected criterion", "save the criterion", "cancel", "confirm"} {
 		if !strings.Contains(help, want) {

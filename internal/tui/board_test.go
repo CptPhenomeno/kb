@@ -44,7 +44,7 @@ func TestHelpToggle(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
 	press(t, m, "?")
 	s := screen(m)
-	if !strings.Contains(s, "Keys") || !strings.Contains(s, "move to the previous or next column") {
+	if !strings.Contains(s, "move to the previous or next column") {
 		t.Fatalf("help not shown:\n%s", s)
 	}
 	press(t, m, "esc")
