@@ -88,7 +88,7 @@ func TestWrapInputWideCharactersDoNotOverflow(t *testing.T) {
 			if w >= 2 {
 				assertFits(t, got, w)
 			}
-			if strings.Join(got, "") != text {
+			if strings.ReplaceAll(strings.Join(got, ""), " ", "") != strings.ReplaceAll(text, " ", "") {
 				t.Errorf("w=%d: characters lost: %q", w, got)
 			}
 		}
@@ -96,5 +96,37 @@ func TestWrapInputWideCharactersDoNotOverflow(t *testing.T) {
 	got := wrapInput("日本語", 4, 0)
 	if strings.Join(got, "|") != "日本|語" {
 		t.Errorf("got %q", got)
+	}
+}
+
+func TestWrapInputClippedFirstLineDropsLeadingCells(t *testing.T) {
+	got := wrapInput("zz\nthe refresh token\nend", 17, 2)
+	if got[0] != "…he refresh token" {
+		t.Errorf("got %q, want the leading cell replaced by the ellipsis", got[0])
+	}
+	got = wrapInput("日本語のテキスト日本語の", 8, 3)
+	if !strings.HasPrefix(got[0], "…キスト") || displayWidth(got[0]) > 8 {
+		t.Errorf("wide leading character: got %q", got[0])
+	}
+}
+
+func TestWrapInputSpaceAtWrapPointDoesNotStartNextLine(t *testing.T) {
+	got := wrapInput("abcd efgh", 4, 0)
+	if strings.Join(got, "|") != "abcd|efgh|" {
+		t.Errorf("got %q", got)
+	}
+	got = wrapInput("abcd ", 4, 0)
+	if strings.Join(got, "|") != "abcd|" {
+		t.Errorf("typed space on a full line: got %q, want the cursor on a new empty line", got)
+	}
+	got = wrapInput("one two three four", 9, 0)
+	for _, l := range got {
+		if strings.HasPrefix(l, " ") {
+			t.Errorf("line starts with a space: %q", got)
+		}
+	}
+	got = wrapInput("ab  cd", 10, 0)
+	if len(got) != 1 || got[0] != "ab  cd" {
+		t.Errorf("inner spaces must stay: %q", got)
 	}
 }

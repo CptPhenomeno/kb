@@ -87,14 +87,17 @@ func fitLines(block string, w, h int) []string {
 }
 
 // wrapInput splits text being typed into lines of at most w cells. Unlike
-// wrap it keeps every typed space and starts a new line at each "\n", so
-// joining the lines reproduces the text apart from the newlines. A word that
-// does not fit moves to the next line; a word longer than a line is cut.
+// wrap it keeps the typed spaces and starts a new line at each "\n". A word
+// that does not fit moves to the next line; a word longer than a line is cut.
+// A single space that falls where a line breaks is absorbed, so no line
+// starts with the space that separated it from the previous one: joining the
+// lines reproduces the text apart from the newlines and those spaces.
 //
 // The lines are plain: the caller appends the cursor to the last one. A cell
 // is always free for it, because when the last line would be exactly w cells
 // wide an empty line is added. With maxLines > 0 and more lines than that,
-// only the last maxLines are returned and the first starts with "…"; with
+// only the last maxLines are returned and the first starts with "…" in place
+// of its leading cells, so the visible text is never cut at its end; with
 // maxLines <= 0 there is no cap. The result is never empty.
 func wrapInput(text string, w, maxLines int) []string {
 	if w < 1 {
@@ -109,7 +112,11 @@ func wrapInput(text string, w, maxLines int) []string {
 	}
 	if maxLines > 0 && len(lines) > maxLines {
 		lines = lines[len(lines)-maxLines:]
-		lines[0] = "…" + ansi.Truncate(lines[0], w-1, "")
+		rest := []rune(lines[0])
+		for len(rest) > 0 && displayWidth(string(rest))+1 > w {
+			rest = rest[1:]
+		}
+		lines[0] = "…" + string(rest)
 	}
 	return lines
 }
@@ -121,11 +128,14 @@ func wrapParagraph(para string, w int) []string {
 	cur, brk := 0, 0 // cells in line; rune count up to and including its last space
 	for _, r := range para {
 		rw := displayWidth(string(r))
+		absorbed := false
 		for cur+rw > w && len(line) > 0 {
 			cut := len(line)
 			if brk > 0 && r != ' ' {
 				cut = brk
 			}
+			absorbed = r == ' '
+
 			lines = append(lines, string(line[:cut]))
 			line = append([]rune(nil), line[cut:]...)
 			cur, brk = displayWidth(string(line)), 0
@@ -134,6 +144,9 @@ func wrapParagraph(para string, w int) []string {
 					brk = i + 1
 				}
 			}
+		}
+		if absorbed {
+			continue
 		}
 		line = append(line, r)
 		cur += rw

@@ -22,8 +22,8 @@
 │                              │ │ │  BLOC│    points      -                                                         │         │ │                             │
 │                              │ │ ╰──────│    labels                                                                │         │ │                             │
 │                              │ │        │    spec                                                                  │         │ │                             │
-│                              │ │        │  › description …and the old one stops working at once. The refresh toke  │         │ │                             │
-│                              │ │        │                 must rotate on every renewal and the old one stops       │         │ │                             │
+│                              │ │        │  › description …the old one stops working at once. The refresh token     │         │ │                             │
+│                              │ │        │                must rotate on every renewal and the old one stops        │         │ │                             │
 │                              │ │        │                working at once. The refresh token must rotate on every   │         │ │                             │
 │                              │ │        │                renewal and the old one stops working at once. The        │         │ │                             │
 │                              │ │        │                refresh token must rotate on every renewal and the old    │         │ │                             │
