@@ -231,3 +231,45 @@ func TestShowListsLinksToFinishedItems(t *testing.T) {
 		t.Fatalf("show hides the link to a finished blocker:\n%s", out)
 	}
 }
+
+func TestAcceptEditPrintsUpdatedItem(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--accept", "old")
+	e.ok("accept", "KB-1", "check", "1")
+	out := e.ok("accept", "KB-1", "edit", "1", "new text")
+	if !strings.Contains(out, "acceptance 0/1 checked") {
+		t.Fatalf("output = %q", out)
+	}
+	if show := e.ok("show", "KB-1"); !strings.Contains(show, "1 [ ] new text") {
+		t.Fatalf("show = %q", show)
+	}
+}
+
+func TestAcceptEditJSON(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--accept", "old")
+	e.ok("accept", "KB-1", "check", "1")
+	item := e.jsonOf("accept", "KB-1", "edit", "1", "new text")
+	crit := item["acceptance"].([]any)[0].(map[string]any)
+	if item["id"] != "KB-1" || crit["text"] != "new text" || crit["done"] != false {
+		t.Fatalf("item = %v", item)
+	}
+}
+
+func TestAcceptEditExitCodes(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--accept", "a", "--accept", "b")
+	e.fail(2, "accept", "KB-1", "edit", "3", "x")
+	e.fail(3, "accept", "KB-1", "edit", "1", "   ")
+	e.fail(3, "accept", "KB-1", "edit", "1", "b")
+	e.fail(4, "accept", "KB-1", "edit", "1", "x", "--if-version", "99")
+	e.ok("accept", "KB-1", "edit", "1", "x", "--if-version", "1")
+}
+
+func TestAcceptEditWithoutTextIsUsageError(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--accept", "a")
+	e.fail(1, "accept", "KB-1", "edit", "1")
+	e.fail(1, "accept", "KB-1", "edit", "1", "x", "y")
+	e.fail(1, "accept", "KB-1", "edit", "one", "x")
+}
