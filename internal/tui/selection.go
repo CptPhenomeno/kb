@@ -35,14 +35,6 @@ func (m *Model) bodyHeight() int { return m.height - 2 - len(m.commandBar()) }
 func (m *Model) itemKey(key string) tea.Cmd {
 	it := m.selected()
 	switch key {
-	case "pgdown", "pgup":
-		if m.detailOpen {
-			page := max(1, m.bodyHeight()-6)
-			if key == "pgup" {
-				page = -page
-			}
-			m.detailScroll = max(0, m.detailScroll+page)
-		}
 	case "f":
 		m.filterOpen = true
 	case "/":
@@ -69,15 +61,46 @@ func (m *Model) itemKey(key string) tea.Cmd {
 			m.links = &linksState{id: it.ID}
 		}
 	case "enter":
-		if m.detailOpen {
-			m.detailOpen = false
-		} else if it != nil {
+		if it != nil {
 			m.detailOpen = true
 			m.history = nil
 			return m.loadHistory(it.ID)
 		}
 	}
 	return nil
+}
+
+// detailKey handles the keys of the open detail popup: it owns the keyboard,
+// so the view under it never sees a key.
+func (m *Model) detailKey(key string) tea.Cmd {
+	switch key {
+	case "up", "down":
+		m.scrollDetailBy(wheelStep(key == "up"))
+	case "pgup", "pgdown":
+		m.scrollDetailPage(wheelStep(key == "pgup"))
+	case "esc", "enter":
+		m.detailOpen = false
+	case "e", "ctrl+e", "c", "a", "l":
+		return m.itemKey(key)
+	}
+	return nil
+}
+
+// detailClick closes the detail popup on a click outside of it.
+func (m *Model) detailClick(x, y int) {
+	w, h := m.detailSize()
+	left, top := max(0, (m.width-w)/2), max(0, (m.height-h)/2)
+	if x < left || x >= left+w || y < top || y >= top+h {
+		m.detailOpen = false
+	}
+}
+
+// wheelStep is -1 going up and 1 going down.
+func wheelStep(up bool) int {
+	if up {
+		return -1
+	}
+	return 1
 }
 
 // selectionMoved reloads the history shown in the open detail popup after

@@ -290,6 +290,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.handleKey(msg)
 	case tea.MouseClickMsg:
 		switch {
+		case m.detailOpen:
+			m.detailClick(msg.X, msg.Y)
 		case m.help:
 		case m.view == viewBoard:
 			return m, m.board.click(m, msg.X, msg.Y)
@@ -300,6 +302,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.MouseWheelMsg:
 		switch {
+		case m.detailOpen:
+			m.scrollDetailBy(wheelStep(msg.Button == tea.MouseWheelUp))
 		case m.help:
 		case m.view == viewBoard:
 			return m, m.board.wheel(m, msg.X, msg.Button == tea.MouseWheelUp)
@@ -355,6 +359,9 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 	if m.board.searching && m.view != viewActivity {
 		return m.searchKey(key, text)
 	}
+	if m.detailOpen {
+		return m.detailKey(key)
+	}
 	switch key {
 	case "ctrl+c", "q":
 		return tea.Quit
@@ -370,8 +377,6 @@ func (m *Model) dispatch(key, text string) tea.Cmd {
 			m.help = false
 		case m.view == viewActivity:
 			return m.activity.key(m, key)
-		case m.detailOpen:
-			m.detailOpen = false
 		}
 		return nil
 	case "t":

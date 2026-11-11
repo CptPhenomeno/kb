@@ -233,8 +233,8 @@ func TestPgdownScrollsTheDetailPanel(t *testing.T) {
 	if !strings.Contains(screen(m), "Token refresh") {
 		t.Fatal("pgup did not come back to the top")
 	}
-	press(t, m, "pgdown", "down", "up") // another item: back to the top
-	if !strings.Contains(screen(m), "KB-4 · task") {
+	press(t, m, "pgdown", "esc", "down", "enter") // another item: back to the top
+	if strings.Contains(screen(m), "· pgup") {
 		t.Fatal("changing the selection must scroll the detail back to the top")
 	}
 }

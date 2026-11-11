@@ -12,10 +12,10 @@ import (
 	"github.com/CptPhenomeno/kb/internal/core"
 )
 
-// renderDetail renders the detail popup of the selected item, w by h cells.
-func (m *Model) renderDetail(w, h int) string {
+// detailLines is the full content of the detail of the selected item,
+// wrapped to iw cells.
+func (m *Model) detailLines(iw int) []string {
 	it := m.selected()
-	iw := w - 4
 	var lines []string
 	add := func(ls ...string) { lines = append(lines, ls...) }
 	if it == nil {
@@ -107,7 +107,14 @@ func (m *Model) renderDetail(w, h int) string {
 			add(hang(prefix, displayWidth(prefix), core.DescribeEvent(e), m.th.text, iw, 6)...)
 		}
 	}
-	if it != nil {
+	return lines
+}
+
+// renderDetail renders the detail popup of the selected item, w by h cells.
+func (m *Model) renderDetail(w, h int) string {
+	iw := w - 4
+	lines := m.detailLines(iw)
+	if it := m.selected(); it != nil {
 		lines = m.scrollDetail(it.ID, lines, h-2, iw)
 	}
 	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.th.p.Accent).
@@ -126,7 +133,7 @@ func (m *Model) scrollDetail(id string, lines []string, height, width int) []str
 		m.detailScroll = 0
 		return lines
 	}
-	window := height - 2 // one row for each marker
+	window := detailWindow(height)
 	m.detailScroll = max(0, min(m.detailScroll, len(lines)-window))
 	s := m.detailScroll
 	top := ""
@@ -138,6 +145,29 @@ func (m *Model) scrollDetail(id string, lines []string, height, width int) []str
 		out = append(out, m.th.muted.Render(center(fmt.Sprintf("↓ %d more lines · pgdown", below), width)))
 	}
 	return out
+}
+
+// detailWindow is the number of content lines shown at once in a detail
+// popup of the given inner height when the content needs scrolling: one row
+// goes to each marker.
+func detailWindow(height int) int { return max(1, height-2) }
+
+// scrollDetailBy scrolls the open detail by delta lines, never above the top
+// or past the last page.
+func (m *Model) scrollDetailBy(delta int) {
+	w, h := m.detailSize()
+	total, height := len(m.detailLines(w-4)), h-2
+	if total <= height {
+		m.detailScroll = 0
+		return
+	}
+	m.detailScroll = max(0, min(m.detailScroll+delta, total-detailWindow(height)))
+}
+
+// scrollDetailPage scrolls the open detail by one popup page.
+func (m *Model) scrollDetailPage(dir int) {
+	_, h := m.detailSize()
+	m.scrollDetailBy(dir * detailWindow(h-2))
 }
 
 // hang wraps text to width: the first line follows prefix (pw cells wide),
