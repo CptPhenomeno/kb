@@ -101,17 +101,27 @@ func (m *Model) renderPicker() string {
 		m.th.muted.Render("the board behind previews the selected theme"),
 		"",
 	}
+	var rows []string
+	sel := 0 // line of the selected theme in rows
+	top := 0 // first line to keep visible: its group heading when it leads the group
 	groupOf := func(i int) bool { return Themes[i].Light }
 	for k, i := range pickerOrder() {
 		if k == 0 || groupOf(i) != groupOf(pickerOrder()[k-1]) {
 			heading := "Dark"
 			if groupOf(i) {
 				heading = "Light"
-				lines = append(lines, "")
+				rows = append(rows, "")
 			}
-			lines = append(lines, m.th.bright.Render(heading))
+			rows = append(rows, m.th.bright.Render(heading))
 		}
 		p := Themes[i]
+		if i == m.picker.cursor {
+			sel = len(rows)
+			top = sel
+			if k == 0 || groupOf(i) != groupOf(pickerOrder()[k-1]) {
+				top = sel - 1
+			}
+		}
 		marker, name := "  ", m.th.text.Render(p.Name)
 		if i == m.picker.cursor {
 			marker, name = m.th.fg(m.th.p.Accent).Render("› "), m.th.fg(m.th.p.Accent).Bold(true).Render(p.Name)
@@ -119,8 +129,12 @@ func (m *Model) renderPicker() string {
 		if i == m.picker.original {
 			name += m.th.muted.Render(" (current)")
 		}
-		lines = append(lines, spread("  "+marker+name, swatches(p), iw))
+		rows = append(rows, spread("  "+marker+name, swatches(p), iw))
 	}
+	// The popup adds a border and padding (4 rows) around header, list and
+	// footer; the list scrolls with the selection when the rest does not fit.
+	avail := max(3, m.height-4-len(lines)-2)
+	lines = append(lines, scrollWindowAt(rows, top, sel, avail, m.th.muted, 4)...)
 	lines = append(lines, "", m.th.muted.Render("enter saves the choice for your user"))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }

@@ -459,6 +459,11 @@ func tailWindow(head, items []string, avail int, style lipgloss.Style) []string 
 // scrollWindow cuts lines to avail, keeping lines lo..hi visible, with "more"
 // markers where lines are hidden.
 func scrollWindow(lines []string, lo, hi, avail int, style lipgloss.Style) []string {
+	return scrollWindowAt(lines, lo, hi, avail, style, 14)
+}
+
+// scrollWindowAt is scrollWindow with the "more" markers indented by indent.
+func scrollWindowAt(lines []string, lo, hi, avail int, style lipgloss.Style, indent int) []string {
 	if len(lines) <= avail {
 		return lines
 	}
@@ -474,11 +479,11 @@ func scrollWindow(lines []string, lo, hi, avail int, style lipgloss.Style) []str
 	}
 	var out []string
 	if start > 0 {
-		out = append(out, style.Render(strings.Repeat(" ", 14)+fmt.Sprintf("↑ %d more", start)))
+		out = append(out, style.Render(strings.Repeat(" ", indent)+fmt.Sprintf("↑ %d more", start)))
 	}
 	out = append(out, lines[start:end]...)
 	if end < len(lines) {
-		out = append(out, style.Render(strings.Repeat(" ", 14)+fmt.Sprintf("↓ %d more", len(lines)-end)))
+		out = append(out, style.Render(strings.Repeat(" ", indent)+fmt.Sprintf("↓ %d more", len(lines)-end)))
 	}
 	return out
 }

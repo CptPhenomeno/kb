@@ -1,0 +1,24 @@
+ kb  api╭──────────────────────────────────────────────────────────────╮ 1 stale
+╭───────│                                                              │───────╮
+│ Backlo│  Theme                                           esc cancel  │     1 │
+│ ╭─────│  the board behind previews the selected theme                │─────╮ │
+│ │ KB-1│                                                              │17 · │ │
+│ │ Load│      ↑ 1 more                                                │lth  │ │
+│ │ test│      dark-1 (current)                               ■■■■■■   │ck … │ │
+│ ╰─────│      dark-2                                         ■■■■■■   │     │ │
+│       │      dark-3                                         ■■■■■■   │─────╯ │
+│       │      dark-4                                         ■■■■■■   │       │
+│       │      dark-5                                         ■■■■■■   │       │
+│       │      dark-6                                         ■■■■■■   │       │
+│       │      dark-7                                         ■■■■■■   │       │
+│       │      dark-8                                         ■■■■■■   │       │
+│       │      dark-9                                         ■■■■■■   │       │
+│       │                                                              │       │
+│       │  Light                                                       │       │
+│       │      light-1                                        ■■■■■■   │       │
+│       │    › light-2                                        ■■■■■■   │       │
+│       │      ↓ 7 more                                                │       │
+│       │                                                              │       │
+╰───────│  enter saves the choice for your user                        │───────╯
+14:04  a│                                                              │        
+↑ ↓ prev╰──────────────────────────────────────────────────────────────╯        
