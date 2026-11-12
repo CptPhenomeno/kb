@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var kbDark = []string{"kb-neon-noir", "kb-synth-dusk"}
+var kbDark = []string{"kb-neon-rain", "kb-synth-sunset"}
 var kbLight = []string{"kb-chrome-haze", "kb-holo-dawn"}
 
 func kbPalette(t *testing.T, name string) Palette {
@@ -72,7 +72,7 @@ func TestPickerListsKbThemesFirstInEachGroup(t *testing.T) {
 			dark = append(dark, Themes[i].Name)
 		}
 	}
-	if len(dark) < 2 || dark[0] != "kb-neon-noir" || dark[1] != "kb-synth-dusk" {
+	if len(dark) < 2 || dark[0] != "kb-neon-rain" || dark[1] != "kb-synth-sunset" {
 		t.Errorf("dark group: %v", dark)
 	}
 	if len(light) < 2 || light[0] != "kb-chrome-haze" || light[1] != "kb-holo-dawn" {
