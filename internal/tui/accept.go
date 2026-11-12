@@ -111,7 +111,7 @@ func (m *Model) acceptTestsKey(it *core.Item, key string) tea.Cmd {
 		sel, next, item, actor := strconv.Itoa(a.testCursor+1), nextTestState(it.Tests[a.testCursor].State), *it, m.opts.Actor
 		return func() tea.Msg {
 			if _, err := m.be.SetTestState(m.ctx, actor, item.ID, sel, next, item.Version); err != nil {
-				return writeMsg{alert: m.failure(item, "TEST FAILED", err)}
+				return writeMsg{alert: m.failure(item, "TEST UPDATE FAILED", err)}
 			}
 			return writeMsg{}
 		}
