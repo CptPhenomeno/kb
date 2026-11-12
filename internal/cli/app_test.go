@@ -109,3 +109,59 @@ func TestTextErrorToStderr(t *testing.T) {
 		t.Fatalf("usage error without usage: %q", errOut)
 	}
 }
+
+func TestUnknownCommandSuggestsClosestCommand(t *testing.T) {
+	e := newEnv(t)
+	_, errOut := e.fail(1, "lsit")
+	if !strings.Contains(errOut, `unknown command "lsit" for "kb"`) || !strings.Contains(errOut, `did you mean "list"?`) {
+		t.Fatalf("stderr = %q, want the unknown command with the list suggestion", errOut)
+	}
+	if strings.Contains(errOut, "wrong number of arguments") {
+		t.Fatalf("stderr = %q, still an arity error", errOut)
+	}
+}
+
+func TestUnknownCommandWithoutCloseMatchHasNoSuggestion(t *testing.T) {
+	e := newEnv(t)
+	_, errOut := e.fail(1, "xyzzy")
+	if !strings.Contains(errOut, `unknown command "xyzzy" for "kb"`) || strings.Contains(errOut, "did you mean") {
+		t.Fatalf("stderr = %q, want the unknown command without a suggestion", errOut)
+	}
+}
+
+func TestUnknownCommandExitsWithUsageErrorCode(t *testing.T) {
+	e := newEnv(t)
+	_, errOut, code := e.run("", "lsit", "KB-1")
+	if code != 1 {
+		t.Fatalf("exit %d, want 1 (usage error)", code)
+	}
+	if !strings.Contains(errOut, `unknown command "lsit" for "kb"`) || !strings.Contains(errOut, "usage: ") {
+		t.Fatalf("stderr = %q, want the unknown command with the usage line", errOut)
+	}
+}
+
+func TestUnknownCommandJSONError(t *testing.T) {
+	e := newEnv(t)
+	out, errOut := e.fail(1, "--json", "lsit")
+	if errOut != "" {
+		t.Fatalf("stderr = %q, want nothing with --json", errOut)
+	}
+	var v map[string]any
+	if err := json.Unmarshal([]byte(out), &v); err != nil {
+		t.Fatalf("stdout is not JSON: %q", out)
+	}
+	if v["error"] != "error" || v["message"] != `unknown command "lsit" for "kb"; did you mean "list"?` || len(v) != 2 {
+		t.Fatalf("error JSON = %v", v)
+	}
+}
+
+func TestNoArgsStillLaunchesTUIWithGlobalFlags(t *testing.T) {
+	e := newEnv(t)
+	launched := 0
+	e.tui = func(context.Context, *Session) error { launched++; return nil }
+	e.ok()
+	e.ok("--as", "agent-1")
+	if launched != 2 {
+		t.Fatalf("TUI launched %d times, want 2", launched)
+	}
+}
