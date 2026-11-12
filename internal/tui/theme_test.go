@@ -33,8 +33,19 @@ func TestPickerPreviewsWhileMoving(t *testing.T) {
 	if m.th.p.Name != Themes[1].Name {
 		t.Fatalf("moving down previews %s, want %s", m.th.p.Name, Themes[1].Name)
 	}
-	press(t, m, "up", "up")
-	if last := pickerOrder()[len(Themes)-1]; m.th.p.Name != Themes[last].Name {
+	// The picker starts on the current theme: climb to the top of the list
+	// and one more step to wrap around to the last theme.
+	order := pickerOrder()
+	pos := 0
+	for i, idx := range order {
+		if idx == 1 {
+			pos = i
+		}
+	}
+	for i := 0; i <= pos; i++ {
+		press(t, m, "up")
+	}
+	if last := order[len(Themes)-1]; m.th.p.Name != Themes[last].Name {
 		t.Fatalf("moving up from the first theme previews %s, want the last one", m.th.p.Name)
 	}
 }
@@ -238,8 +249,13 @@ func TestPickerGroupsDarkBeforeLight(t *testing.T) {
 func TestPickerKbThemesFirstInEachGroup(t *testing.T) {
 	saved := Themes
 	defer func() { Themes = saved }()
-	Themes = append(append([]Palette{}, saved...),
-		withName(saved[0], "kb-test-dark"), withName(saved[2], "kb-test-light"))
+	var others []Palette
+	for _, p := range saved {
+		if !strings.HasPrefix(p.Name, "kb-") {
+			others = append(others, p)
+		}
+	}
+	Themes = append(others, withName(saved[0], "kb-test-dark"), withName(saved[2], "kb-test-light"))
 	order := pickerOrder()
 	var dark, light []string
 	for _, i := range order {
