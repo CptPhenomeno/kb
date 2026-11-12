@@ -44,6 +44,10 @@ func hex(s string) color.Color { return lipgloss.Color(s) }
 //   - solarized-dark Human #dd3d8c: magenta #d33682 lightened
 //   - nord Warn #dba06f: Aurora orange #d08770 lightened
 var Themes = []Palette{
+	{Name: "kb-neon-rain", Base: hex("#0a0f14"), Surface: hex("#121a22"), Overlay: hex("#2a3a4a"),
+		Text: hex("#e0ecf5"), Bright: hex("#ffffff"), Muted: hex("#8aa0b4"), Accent: hex("#ff6a3d"),
+		Human: hex("#c3f73a"), Agent: hex("#5eb3ff"), Warn: hex("#ffb347"), Red: hex("#ff3355"),
+		Green: hex("#3dffa8"), Purple: hex("#b58cff"), Cyan: hex("#2de2e6")},
 	{Name: "tokyo-night", Base: hex("#1a1b26"), Surface: hex("#24283b"), Overlay: hex("#414868"),
 		Text: hex("#c0caf5"), Bright: hex("#ffffff"), Muted: hex("#a9b1d6"), Accent: hex("#e0af68"),
 		Human: hex("#73daca"), Agent: hex("#7aa2f7"), Warn: hex("#ff9e64"), Red: hex("#f7768e"),
@@ -76,10 +80,6 @@ var Themes = []Palette{
 		Text: hex("#eee8d5"), Bright: hex("#fdf6e3"), Muted: hex("#93a1a1"), Accent: hex("#b58900"),
 		Human: hex("#dd3d8c"), Agent: hex("#268bd2"), Warn: hex("#d44e17"), Red: hex("#de3f3c"),
 		Green: hex("#859900"), Purple: hex("#6e73c5"), Cyan: hex("#2aa198")},
-	{Name: "kb-neon-rain", Base: hex("#0a0f14"), Surface: hex("#121a22"), Overlay: hex("#2a3a4a"),
-		Text: hex("#e0ecf5"), Bright: hex("#ffffff"), Muted: hex("#8aa0b4"), Accent: hex("#ff6a3d"),
-		Human: hex("#c3f73a"), Agent: hex("#5eb3ff"), Warn: hex("#ffb347"), Red: hex("#ff3355"),
-		Green: hex("#3dffa8"), Purple: hex("#b58cff"), Cyan: hex("#2de2e6")},
 	{Name: "kb-synth-sunset", Base: hex("#1f0f2a"), Surface: hex("#2c1840"), Overlay: hex("#553072"),
 		Text: hex("#ffe8f3"), Bright: hex("#ffffff"), Muted: hex("#c4a3cf"), Accent: hex("#ff5fa2"),
 		Human: hex("#ffd36e"), Agent: hex("#8fa8ff"), Warn: hex("#ff8f3c"), Red: hex("#ff3d5a"),

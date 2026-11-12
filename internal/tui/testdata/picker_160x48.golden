@@ -16,10 +16,10 @@
 │                              │ │ │ KB-7 task  │  the board behind previews the selected theme                │               │ │                             │
 │                              │ │ │ Key storage│                                                              │               │ │                             │
 │                              │ │ ╰────────────│  Dark                                                        │               │ │                             │
-│                              │ │ ╭────────────│      kb-neon-rain                                   ■■■■■■   │               │ │                             │
-│                              │ │ │ KB-8 task  │      kb-synth-sunset                                ■■■■■■   │               │ │                             │
-│                              │ │ │ Key rotatio│      tokyo-night (current)                          ■■■■■■   │               │ │                             │
-│                              │ │ │  BLOCKED by│    › catppuccin-mocha                               ■■■■■■   │               │ │                             │
+│                              │ │ ╭────────────│      kb-neon-rain (current)                         ■■■■■■   │               │ │                             │
+│                              │ │ │ KB-8 task  │    › kb-synth-sunset                                ■■■■■■   │               │ │                             │
+│                              │ │ │ Key rotatio│      tokyo-night                                    ■■■■■■   │               │ │                             │
+│                              │ │ │  BLOCKED by│      catppuccin-mocha                               ■■■■■■   │               │ │                             │
 │                              │ │ ╰────────────│      gruvbox-dark                                   ■■■■■■   │               │ │                             │
 │                              │ │              │      dracula                                        ■■■■■■   │               │ │                             │
 │                              │ │              │      nord                                           ■■■■■■   │               │ │                             │

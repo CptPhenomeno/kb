@@ -29,22 +29,13 @@ func TestTOpensThemePicker(t *testing.T) {
 
 func TestPickerPreviewsWhileMoving(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
-	press(t, m, "t", "down")
-	if m.th.p.Name != Themes[1].Name {
-		t.Fatalf("moving down previews %s, want %s", m.th.p.Name, Themes[1].Name)
-	}
-	// The picker starts on the current theme: climb to the top of the list
-	// and one more step to wrap around to the last theme.
 	order := pickerOrder()
-	pos := 0
-	for i, idx := range order {
-		if idx == 1 {
-			pos = i
-		}
+	press(t, m, "t", "down")
+	if want := Themes[order[1]].Name; m.th.p.Name != want {
+		t.Fatalf("moving down previews %s, want %s", m.th.p.Name, want)
 	}
-	for i := 0; i <= pos; i++ {
-		press(t, m, "up")
-	}
+	// Back on the first theme, one more step up wraps around to the last.
+	press(t, m, "up", "up")
 	if last := order[len(Themes)-1]; m.th.p.Name != Themes[last].Name {
 		t.Fatalf("moving up from the first theme previews %s, want the last one", m.th.p.Name)
 	}
@@ -53,7 +44,7 @@ func TestPickerPreviewsWhileMoving(t *testing.T) {
 func TestPickerEscRestoresPreviousTheme(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
 	press(t, m, "t", "down", "down", "esc")
-	if m.picker != nil || m.th.p.Name != "tokyo-night" {
+	if m.picker != nil || m.th.p.Name != "kb-neon-rain" {
 		t.Fatalf("after esc: picker %v, theme %s", m.picker, m.th.p.Name)
 	}
 }
@@ -63,8 +54,9 @@ func TestPickerEnterAppliesAndSavesTheme(t *testing.T) {
 	var saved string
 	m.opts.SaveTheme = func(name string) error { saved = name; return nil }
 	press(t, m, "t", "down", "enter")
-	if m.picker != nil || m.th.p.Name != Themes[1].Name || saved != Themes[1].Name {
-		t.Fatalf("after enter: picker %v, theme %s, saved %q", m.picker, m.th.p.Name, saved)
+	want := Themes[pickerOrder()[1]].Name
+	if m.picker != nil || m.th.p.Name != want || saved != want {
+		t.Fatalf("after enter: picker %v, theme %s, saved %q, want %s", m.picker, m.th.p.Name, saved, want)
 	}
 	if !strings.Contains(lastLines(screen(m), 3), "saved") {
 		t.Fatalf("status line does not confirm the saved theme:\n%s", lastLines(screen(m), 3))
@@ -99,7 +91,7 @@ func TestConfiguredTheme(t *testing.T) {
 
 func TestUnknownThemeFallsBack(t *testing.T) {
 	m := New(context.Background(), sampleBoard(), Options{Theme: "solarized-neon"})
-	if m.th.p.Name != "tokyo-night" || !strings.Contains(m.notice, `unknown theme "solarized-neon"`) ||
+	if m.th.p.Name != "kb-neon-rain" || !strings.Contains(m.notice, `unknown theme "solarized-neon"`) ||
 		!strings.Contains(m.notice, "catppuccin-mocha") {
 		t.Fatalf("theme = %s, notice = %q", m.th.p.Name, m.notice)
 	}
@@ -255,7 +247,8 @@ func TestPickerKbThemesFirstInEachGroup(t *testing.T) {
 			others = append(others, p)
 		}
 	}
-	Themes = append(others, withName(saved[0], "kb-test-dark"), withName(saved[2], "kb-test-light"))
+	Themes = append(others, withName(saved[themeIndex("kb-neon-rain")], "kb-test-dark"),
+		withName(saved[themeIndex("kb-chrome-haze")], "kb-test-light"))
 	order := pickerOrder()
 	var dark, light []string
 	for _, i := range order {
