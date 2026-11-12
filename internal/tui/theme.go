@@ -47,7 +47,7 @@ var Themes = []Palette{
 	{Name: "catppuccin-latte", Light: true, Base: hex("#eff1f5"), Surface: hex("#e6e9ef"), Overlay: hex("#bcc0cc"),
 		Text: hex("#4c4f69"), Bright: hex("#4c4f69"), Muted: hex("#5c5f77"), Accent: hex("#8839ef"),
 		Human: hex("#e64553"), Agent: hex("#1e66f5"), Warn: hex("#d20f39"), Red: hex("#d20f39"),
-		Green: hex("#40a02b"), Purple: hex("#7287fd"), Cyan: hex("#179299")},
+		Green: hex("#3d9829"), Purple: hex("#637afd"), Cyan: hex("#179299")},
 	{Name: "gruvbox-dark", Base: hex("#282828"), Surface: hex("#3c3836"), Overlay: hex("#665c54"),
 		Text: hex("#ebdbb2"), Bright: hex("#fbf1c7"), Muted: hex("#bdae93"), Accent: hex("#fabd2f"),
 		Human: hex("#fabd2f"), Agent: hex("#83a598"), Warn: hex("#fe8019"), Red: hex("#fb4934"),
@@ -62,12 +62,12 @@ var Themes = []Palette{
 		Green: hex("#50fa7b"), Purple: hex("#bd93f9"), Cyan: hex("#8be9fd")},
 	{Name: "nord", Base: hex("#2e3440"), Surface: hex("#3b4252"), Overlay: hex("#4c566a"),
 		Text: hex("#e5e9f0"), Bright: hex("#eceff4"), Muted: hex("#c0c8d6"), Accent: hex("#88c0d0"),
-		Human: hex("#ebcb8b"), Agent: hex("#81a1c1"), Warn: hex("#d08770"), Red: hex("#bf616a"),
+		Human: hex("#ebcb8b"), Agent: hex("#81a1c1"), Warn: hex("#d08770"), Red: hex("#c7757d"),
 		Green: hex("#a3be8c"), Purple: hex("#b48ead"), Cyan: hex("#8fbcbb")},
 	{Name: "solarized-dark", Base: hex("#002b36"), Surface: hex("#073642"), Overlay: hex("#586e75"),
 		Text: hex("#eee8d5"), Bright: hex("#fdf6e3"), Muted: hex("#93a1a1"), Accent: hex("#b58900"),
-		Human: hex("#b58900"), Agent: hex("#268bd2"), Warn: hex("#cb4b16"), Red: hex("#dc322f"),
-		Green: hex("#859900"), Purple: hex("#6c71c4"), Cyan: hex("#2aa198")},
+		Human: hex("#b58900"), Agent: hex("#268bd2"), Warn: hex("#d44e17"), Red: hex("#de3f3c"),
+		Green: hex("#859900"), Purple: hex("#6e73c5"), Cyan: hex("#2aa198")},
 }
 
 // ThemeNames returns the names of the built-in themes, default first.
