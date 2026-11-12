@@ -235,17 +235,29 @@ func TestTreeItemDoneDuringSessionStaysOpen(t *testing.T) {
 	}
 }
 
-func TestTreeSearchRowsUnchangedByStartupCollapse(t *testing.T) {
+func TestTreeStartupClosedBranchFollowsArrowsLikeHandClosed(t *testing.T) {
 	m := doneTreeModel(t)
-	press(t, m, "/", "r", "e", "f", "r", "e", "s", "h", "enter")
-	if got := rowIDs(m); got != "KB-1 KB-2 KB-4" {
-		t.Fatalf("search rows = %s", got)
+	for i, r := range m.tree.rows(m) {
+		if r.it.ID == "KB-20" {
+			m.tree.cursor = i
+		}
 	}
-	// A match inside a done branch shows, as it did before the startup collapse.
-	m = doneTreeModel(t)
+	press(t, m, "right")
+	if !strings.Contains(rowIDs(m), "KB-21") {
+		t.Fatalf("right did not open KB-20: %s", rowIDs(m))
+	}
+	press(t, m, "left")
+	if got := rowIDs(m); strings.Contains(got, "KB-21") || !m.tree.collapsed["KB-20"] {
+		t.Fatalf("left did not close KB-20: %s", got)
+	}
+}
+
+func TestTreeSearchSeesStartupClosedBranchesLikeHandClosed(t *testing.T) {
+	m := doneTreeModel(t)
 	press(t, m, "/", "F", "i", "n", "i", "s", "h", "e", "d", " ", "t", "a", "s", "k", "enter")
-	if got := rowIDs(m); got != "KB-20 KB-21 KB-22" {
-		t.Fatalf("search rows = %s, want the match under its open ancestors", got)
+	// One state only: the match is hidden under the closed KB-20.
+	if got := rowIDs(m); got != "KB-20" {
+		t.Fatalf("search rows = %s, want the closed ancestor only", got)
 	}
 }
 
