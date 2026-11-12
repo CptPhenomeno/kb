@@ -1,0 +1,24 @@
+ kb  api-gateway   Board  Tree  Activity   sh… 12 items  1 agent active  1 stale
+╭───────╭──────────────────────────────────────────────────────────────╮───────╮
+│ Backlo│                                                              │     1 │
+│ ╭─────│  Theme                                           esc cancel  │─────╮ │
+│ │ KB-1│  the board behind previews the selected theme                │17 · │ │
+│ │ Load│                                                              │lth  │ │
+│ │ test│      ↑ 3 more                                                │ck … │ │
+│ ╰─────│      catppuccin-mocha                               ■■■■■■   │     │ │
+│       │      gruvbox-dark                                   ■■■■■■   │─────╯ │
+│       │      dracula                                        ■■■■■■   │       │
+│       │      nord                                           ■■■■■■   │       │
+│       │      solarized-dark                                 ■■■■■■   │       │
+│       │      rose-pine                                      ■■■■■■   │       │
+│       │                                                              │       │
+│       │  Light                                                       │       │
+│       │      kb-chrome-haze                                 ■■■■■■   │       │
+│       │    › kb-holo-dawn                                   ■■■■■■   │       │
+│       │      ↓ 7 more                                                │       │
+│       │                                                              │       │
+│       │  enter saves the choice for your user                        │       │
+│       │                                                              │       │
+╰───────╰──────────────────────────────────────────────────────────────╯───────╯
+14:04  agent-auth  KB-4  test "refresh rotates the token" → failing             
+↑ ↓ preview   enter apply   esc cancel                                          
