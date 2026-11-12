@@ -22,6 +22,7 @@ func main() {
 			Project: filepath.Base(s.Root), Actor: s.Actor, Now: s.Service.Now, Theme: theme,
 			SaveTheme: store.SaveUserTheme, ShowParents: prefs.ShowParents, SaveShowParents: store.SaveUserShowParents,
 			BoardSort: prefs.BoardSort, SaveBoardSort: store.SaveUserBoardSort,
+			CommandBar: prefs.CommandBar, SaveCommandBar: store.SaveUserCommandBar,
 		})
 	}
 	code := cli.Run(ctx, os.Args[1:], app)

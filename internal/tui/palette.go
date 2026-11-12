@@ -48,10 +48,39 @@ var actions = []action{
 	{"Open the actor's item", "o", activityOnly},
 	{"Release the actor's claim", "a", activityOnly},
 	{"Choose theme", "t", nil},
+	{actionCommandBar, "", nil}, // no key: the palette runs it itself
 	{"Next view", "tab", nil},
 	{"Previous view", "shift+tab", nil},
 	{"Help", "?", nil},
 	{"Quit", "q", nil},
+}
+
+// actionCommandBar is the palette entry that switches the command bar mode;
+// matches renames it after the mode it switches to.
+const actionCommandBar = "Show full command bar"
+
+// barModeName is the value saved as command_bar for a mode.
+func barModeName(b barMode) string {
+	if b == barFull {
+		return "full"
+	}
+	return "compact"
+}
+
+// toggleBarMode switches between the compact and the full command bar and
+// saves the choice for the user.
+func (m *Model) toggleBarMode() {
+	if m.barMode == barFull {
+		m.barMode = barCompact
+	} else {
+		m.barMode = barFull
+	}
+	m.notice = barModeName(m.barMode) + " command bar"
+	if m.opts.SaveCommandBar != nil {
+		if err := m.opts.SaveCommandBar(barModeName(m.barMode)); err != nil {
+			m.notice += " (could not save: " + err.Error() + ")"
+		}
+	}
 }
 
 // paletteState is the open command palette.
@@ -88,6 +117,9 @@ func (p *paletteState) matches(m *Model) []action {
 		if a.views != nil && !slices.Contains(a.views, m.view) {
 			continue
 		}
+		if a.name == actionCommandBar && m.barMode == barFull {
+			a.name = "Show compact command bar"
+		}
 		if s, ok := fuzzyScore(a.name, p.query); ok {
 			found = append(found, scored{a, s})
 		}
@@ -112,7 +144,9 @@ func (m *Model) paletteKey(key, text string) tea.Cmd {
 		p.cursor = min(max(0, len(list)-1), p.cursor+1)
 	case "enter":
 		m.palette = nil
-		if p.cursor < len(list) {
+		if p.cursor < len(list) && list[p.cursor].key == "" {
+			m.toggleBarMode()
+		} else if p.cursor < len(list) {
 			return m.dispatch(list[p.cursor].key, "")
 		}
 	case "backspace":
@@ -146,7 +180,11 @@ func (m *Model) renderPalette() string {
 		if i == p.cursor {
 			marker, name = m.th.fg(m.th.p.Accent).Render("› "), m.th.fg(m.th.p.Accent).Bold(true).Render(a.name)
 		}
-		lines = append(lines, spread(marker+name, m.th.chip.Render(" "+keyLabel(a.key)+" "), iw))
+		chip := ""
+		if a.key != "" {
+			chip = m.th.chip.Render(" " + keyLabel(a.key) + " ")
+		}
+		lines = append(lines, spread(marker+name, chip, iw))
 	}
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }

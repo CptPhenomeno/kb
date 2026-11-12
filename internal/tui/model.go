@@ -58,6 +58,12 @@ type Options struct {
 	// SaveBoardSort stores the order chosen in the sort popup or set by a
 	// manual reorder; nil disables saving.
 	SaveBoardSort func(order string) error
+	// CommandBar is the saved command bar mode, "compact" or "full"; any
+	// other value means compact.
+	CommandBar string
+	// SaveCommandBar stores the mode chosen from the palette; nil disables
+	// saving.
+	SaveCommandBar func(mode string) error
 }
 
 type viewKind int
@@ -173,6 +179,9 @@ func New(ctx context.Context, be Backend, opts Options) *Model {
 	m.th = newTheme(Themes[m.themeIdx])
 	m.board.types = defaultTypes()
 	m.board.sort = parseBoardSort(opts.BoardSort)
+	if opts.CommandBar == "full" {
+		m.barMode = barFull
+	}
 	if opts.ShowParents != nil && !*opts.ShowParents {
 		m.board.types[core.TypeEpic], m.board.types[core.TypeStory] = false, false
 	}
