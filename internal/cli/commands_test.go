@@ -298,3 +298,50 @@ func TestAcceptRmWrongArgumentsIsUsageError(t *testing.T) {
 	e.fail(1, "accept", "KB-1", "rm", "1", "2")
 	e.fail(1, "accept", "KB-1", "rm", "one")
 }
+
+func TestTestEditRenamesAndSetsPending(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--test", "a", "--test", "b")
+	e.ok("test", "KB-1", "pass", "2")
+	item := e.jsonOf("test", "KB-1", "edit", "b", "better b")
+	tests := item["tests"].([]any)
+	second := tests[1].(map[string]any)
+	if item["id"] != "KB-1" || second["name"] != "better b" || second["state"] != "pending" {
+		t.Fatalf("item = %v", item)
+	}
+}
+
+func TestTestRmRemovesAndKeepsOrder(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--test", "a", "--test", "b", "--test", "c")
+	item := e.jsonOf("test", "KB-1", "rm", "1")
+	tests := item["tests"].([]any)
+	if len(tests) != 2 || tests[0].(map[string]any)["name"] != "b" || tests[1].(map[string]any)["name"] != "c" {
+		t.Fatalf("item = %v", item)
+	}
+	out := e.ok("test", "KB-1", "rm", "c")
+	if !strings.Contains(out, "tests 0/1 passing") {
+		t.Fatalf("output = %q", out)
+	}
+}
+
+func TestTestEditAndRmExitCodes(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--test", "a", "--test", "b")
+	e.fail(2, "test", "KB-1", "edit", "3", "x")
+	e.fail(2, "test", "KB-1", "rm", "nope")
+	e.fail(3, "test", "KB-1", "edit", "1", "   ")
+	e.fail(3, "test", "KB-1", "edit", "1", "b")
+	e.fail(4, "test", "KB-1", "edit", "1", "x", "--if-version", "99")
+	e.fail(4, "test", "KB-1", "rm", "1", "--if-version", "99")
+	e.ok("test", "KB-1", "edit", "1", "x", "--if-version", "1")
+	e.ok("test", "KB-1", "rm", "1", "--if-version", "2")
+}
+
+func TestTestEditAndRmWrongArgumentsIsUsageError(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--test", "a", "--test", "b")
+	e.fail(1, "test", "KB-1", "edit", "1")
+	e.fail(1, "test", "KB-1", "edit", "1", "x", "y")
+	e.fail(1, "test", "KB-1", "rm", "1", "2")
+}

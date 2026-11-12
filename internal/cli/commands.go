@@ -655,8 +655,8 @@ func (c *cli) phaseCmd() *cobra.Command {
 func (c *cli) testCmd() *cobra.Command {
 	var ifVersion int
 	cmd := &cobra.Command{
-		Use:   "test <id> add <name> | test <id> pass|fail|pending <n|name>...",
-		Short: "Add tests or record their outcome",
+		Use:   "test <id> add <name> | test <id> pass|fail|pending <n|name>... | test <id> edit <n|name> <name> | test <id> rm <n|name>",
+		Short: "Add, edit or remove tests, or record their outcome",
 		Args:  args(3, -1),
 		RunE: func(cmd *cobra.Command, a []string) error {
 			return c.with(func(s *Session) error {
@@ -680,6 +680,20 @@ func (c *cli) testCmd() *cobra.Command {
 							return err
 						}
 						ifVersion = 0
+					}
+				case "edit":
+					if len(a) != 4 {
+						return &usageError{msg: "edit takes one test (number or name) and one new name", usage: cmd.UseLine()}
+					}
+					if it, err = s.Service.EditTest(c.ctx, s.Actor, id, a[2], a[3], ifVersion); err != nil {
+						return err
+					}
+				case "rm":
+					if len(a) != 3 {
+						return &usageError{msg: "rm takes one test (number or name)", usage: cmd.UseLine()}
+					}
+					if it, err = s.Service.RemoveTest(c.ctx, s.Actor, id, a[2], ifVersion); err != nil {
+						return err
 					}
 				default:
 					return &usageError{msg: fmt.Sprintf("unknown test action %q", a[1]), usage: cmd.UseLine()}
