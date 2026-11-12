@@ -104,7 +104,7 @@ releases, `l` manages links, `/` searches, `f` filters, `t` picks a theme,
 | `.kanban/config.toml` | `prefix`, `claim_ttl` (default `15m`) and the project's default `theme`; versioned with the project. |
 | `$XDG_CONFIG_HOME/kb/config.toml` | Your own preferences, saved by the TUI: `theme`, `show_parents`, `board_sort`, `command_bar` (`compact` or `full`, chosen from the palette; the default is compact). |
 | `KB_ACTOR` | Who you are; defaults to `@<git user>`. Names starting with `@` are people, any other name is an agent. |
-| `KB_THEME` | Theme for this run, over the saved one: `tokyo-night`, `catppuccin-mocha`, `catppuccin-latte`, `gruvbox-dark`, `gruvbox-light`, `dracula`, `nord`, `solarized-dark`. |
+| `KB_THEME` | Theme for this run, over the saved one. The default is `kb-neon-rain`; the others are `kb-synth-sunset`, `kb-chrome-haze`, `kb-holo-dawn`, `tokyo-night`, `catppuccin-mocha`, `catppuccin-latte`, `gruvbox-dark`, `gruvbox-light`, `dracula`, `nord`, `solarized-dark`. |
 | `KB_DIR` | Use the board in this directory instead of looking for the project root. |
 
 ## Development
