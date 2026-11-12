@@ -14,7 +14,7 @@ Board view
   n             create an item                                                  
   e             edit the selected item                                          
   d             delete the selected item                                        
-  c             manage the acceptance criteria of the selected item             
+  c             manage the acceptance criteria and tests of the selected item   
   ctrl+e        edit the description of the selected item in $EDITOR            
                             ↓ 12 more lines · pgdown                            
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing             

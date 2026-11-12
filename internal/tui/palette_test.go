@@ -60,7 +60,7 @@ func TestPaletteListsContextActions(t *testing.T) {
 			t.Errorf("board palette lacks %q: %v", want, board)
 		}
 	}
-	for _, want := range []string{"Create item", "Edit item", "Delete item", "Manage links", "Manage acceptance criteria"} {
+	for _, want := range []string{"Create item", "Edit item", "Delete item", "Manage links", "Manage criteria and tests"} {
 		if !contains(board, want) {
 			t.Errorf("board palette lacks %q", want)
 		}

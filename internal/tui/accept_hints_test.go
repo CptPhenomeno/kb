@@ -67,11 +67,11 @@ func TestHelpListsThePopupKeys(t *testing.T) {
 	}
 }
 
-func TestPaletteOffersManageAcceptanceCriteria(t *testing.T) {
+func TestPaletteOffersManageCriteriaAndTests(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
 	press(t, m, "ctrl+p")
 	got := names(m.palette.matches(m))
-	if !contains(got, "Manage acceptance criteria") || contains(got, "Check acceptance criteria") {
+	if !contains(got, "Manage criteria and tests") || contains(got, "Check acceptance criteria") {
 		t.Fatalf("palette actions: %v", got)
 	}
 }
@@ -91,4 +91,36 @@ func TestAcceptancePopupGolden(t *testing.T) {
 	selectID(t, m, "KB-4")
 	press(t, m, "c", "down")
 	golden(t, "accept_160x48", screen(m))
+}
+
+func TestCommandBarShowsTheTestsKeysOnTheTestsTab(t *testing.T) {
+	m, _ := newTestsModel(t)
+	press(t, m, "c")
+	bar := lastLines(screen(m), 2)
+	for _, want := range []string{"tab switch", "space check", "n new", "e edit", "d delete"} {
+		if !strings.Contains(bar, want) {
+			t.Errorf("criteria bar lacks %q:\n%s", want, bar)
+		}
+	}
+	press(t, m, "tab")
+	bar = lastLines(screen(m), 2)
+	for _, want := range []string{"tab switch", "↑ ↓ choose", "space cycle", "n new", "e edit", "d delete", "esc close"} {
+		if !strings.Contains(bar, want) {
+			t.Errorf("tests bar lacks %q:\n%s", want, bar)
+		}
+	}
+	if strings.Contains(bar, "space check") {
+		t.Errorf("tests bar still says check:\n%s", bar)
+	}
+}
+
+func TestHelpPopupTabDescribesCriteriaAndTests(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "?", "tab", "tab")
+	help := screen(m)
+	for _, want := range []string{"Criteria and tests popup", "add a criterion or a test", "cycle the state of a test", "pending", "passing", "failing", "Criteria and Tests tabs"} {
+		if !strings.Contains(help, want) {
+			t.Errorf("help lacks %q:\n%s", want, help)
+		}
+	}
 }

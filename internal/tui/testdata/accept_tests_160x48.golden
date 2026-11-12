@@ -45,4 +45,4 @@
 │                              │ │                             │ │                             │ │                             │ │                             │
 ╰──────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯
 14:04  @dev  KB-3  test "rejects an expired token" → failing                                                                                                    
-tab switch tab   ↑ ↓ choose   space check   n new   e edit   d delete   esc close                                                                               
+tab switch   ↑ ↓ choose   space cycle   n new   e edit   d delete   esc close                                                                                   

@@ -379,23 +379,37 @@ func (m *Model) renderAcceptConfirm(kind string, n int, text string, w int) []st
 }
 
 var acceptKeys = []keyHint{
-	{"tab", "switch tab", "switch between Criteria and Tests (shift+tab: back)", false},
-	{"↑ ↓", "choose", "choose a criterion", false},
-	{"space", "check", "check or uncheck the criterion, or cycle the state of a test (saved at once)", false},
-	{"n", "new", "add a criterion", false},
-	{"e", "edit", "edit the selected criterion (its check is cleared)", false},
-	{"d", "delete", "delete the selected criterion, after confirmation", false},
+	{"tab", "switch", "switch between the Criteria and Tests tabs (shift+tab: back)", false},
+	{"↑ ↓", "choose", "choose a criterion or a test", false},
+	{"space", "check", "Criteria: check or uncheck the criterion (saved at once)", false},
+	{"space", "cycle", "Tests: cycle the state of a test, pending, passing, failing (saved at once)", false},
+	{"n", "new", "add a criterion or a test", false},
+	{"e", "edit", "edit the selected criterion (its check is cleared) or test (back to pending)", false},
+	{"d", "delete", "delete the selected criterion or test, after confirmation", false},
 	{"esc", "close", "close the popup", false},
 }
 
+// acceptBarKeys are the keys of the command bar on the active tab: the
+// meaning of space depends on it.
+func acceptBarKeys(tab acceptTab) []keyHint {
+	out := make([]keyHint, 0, len(acceptKeys))
+	for _, h := range acceptKeys {
+		if h.key == "space" && (h.label == "check") != (tab == tabCriteria) {
+			continue
+		}
+		out = append(out, h)
+	}
+	return out
+}
+
 var acceptInputKeys = []keyHint{
-	{"enter", "save", "save the criterion", false},
+	{"enter", "save", "save the criterion or test", false},
 	{"esc", "cancel", "cancel without saving", false},
 }
 
 var acceptConfirmKeys = []keyHint{
-	{"y/enter", "delete", "confirm: delete the criterion", false},
-	{"n/esc", "keep", "keep the criterion", false},
+	{"y/enter", "delete", "confirm: delete the criterion or test", false},
+	{"n/esc", "keep", "keep the criterion or test", false},
 }
 
 // hints returns the keys that work in the current state of the popup.
@@ -406,5 +420,5 @@ func (a *acceptState) hints() []keyHint {
 	case a.confirmDelete:
 		return acceptConfirmKeys
 	}
-	return acceptKeys
+	return acceptBarKeys(a.tab)
 }

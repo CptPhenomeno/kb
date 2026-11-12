@@ -612,7 +612,7 @@ var detailKeys = []keyHint{
 	{"pgup pgdn", "page", "scroll the detail by one page", false},
 	{"e", "edit", "edit the item shown", false},
 	{"ctrl+e", "describe", "edit its description in $EDITOR", false},
-	{"c", "criteria", "manage its acceptance criteria", false},
+	{"c", "criteria", "manage its acceptance criteria and tests", false},
 	{"a", "assign", "claim or release it", false},
 	{"l", "link", "manage its relations", false},
 	{"esc/enter", "close", "close the detail popup (a click outside closes it too)", false},
@@ -636,7 +636,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"n", "new", "create an item", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
-		{"c", "criteria", "manage the acceptance criteria of the selected item", false},
+		{"c", "criteria", "manage the acceptance criteria and tests of the selected item", false},
 		{"ctrl+e", "describe", "edit the description of the selected item in $EDITOR", false},
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
@@ -651,7 +651,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"n", "new child", "create a child of the selected item, with the type the hierarchy suggests", false},
 		{"e", "edit", "edit the selected item", false},
 		{"d", "delete", "delete the selected item", false},
-		{"c", "criteria", "manage the acceptance criteria of the selected item", false},
+		{"c", "criteria", "manage the acceptance criteria and tests of the selected item", false},
 		{"ctrl+e", "describe", "edit the description of the selected item in $EDITOR", false},
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
@@ -772,7 +772,7 @@ func (m *Model) helpHints(tab int) (title, opens string, hints []keyHint) {
 	case 1:
 		return "Detail popup", "enter", detailKeys
 	case 2:
-		return "Criteria popup", "c", append(append(append([]keyHint{}, acceptKeys...), acceptInputKeys...), acceptConfirmKeys...)
+		return "Criteria and tests popup", "c", append(append(append([]keyHint{}, acceptKeys...), acceptInputKeys...), acceptConfirmKeys...)
 	}
 	return "Create and edit form", "n, e", formKeys
 }
