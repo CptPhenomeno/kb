@@ -35,10 +35,18 @@ func hex(s string) color.Color { return lipgloss.Color(s) }
 
 // Themes are the built-in palettes, built from the official colors of each
 // theme. The first one is the default.
+//
+// Derived (not official) colors, kept near the original hue so that a role
+// reaches 3:1 contrast and stays 30 apart from its neighbor role:
+//   - catppuccin-latte Warn #e05a00: Peach #fe640b darkened
+//   - gruvbox-light Human #946011: Yellow #b57614 darkened
+//   - dracula Agent #8ea0f0: periwinkle between Cyan and Purple, Dracula has no blue
+//   - solarized-dark Human #dd3d8c: magenta #d33682 lightened
+//   - nord Warn #dba06f: Aurora orange #d08770 lightened
 var Themes = []Palette{
 	{Name: "tokyo-night", Base: hex("#1a1b26"), Surface: hex("#24283b"), Overlay: hex("#414868"),
 		Text: hex("#c0caf5"), Bright: hex("#ffffff"), Muted: hex("#a9b1d6"), Accent: hex("#e0af68"),
-		Human: hex("#e0af68"), Agent: hex("#7aa2f7"), Warn: hex("#ff9e64"), Red: hex("#f7768e"),
+		Human: hex("#73daca"), Agent: hex("#7aa2f7"), Warn: hex("#ff9e64"), Red: hex("#f7768e"),
 		Green: hex("#9ece6a"), Purple: hex("#bb9af7"), Cyan: hex("#7dcfff")},
 	{Name: "catppuccin-mocha", Base: hex("#1e1e2e"), Surface: hex("#313244"), Overlay: hex("#585b70"),
 		Text: hex("#cdd6f4"), Bright: hex("#f5e0dc"), Muted: hex("#a6adc8"), Accent: hex("#b4befe"),
@@ -46,27 +54,27 @@ var Themes = []Palette{
 		Green: hex("#a6e3a1"), Purple: hex("#cba6f7"), Cyan: hex("#89dceb")},
 	{Name: "catppuccin-latte", Light: true, Base: hex("#eff1f5"), Surface: hex("#e6e9ef"), Overlay: hex("#bcc0cc"),
 		Text: hex("#4c4f69"), Bright: hex("#4c4f69"), Muted: hex("#5c5f77"), Accent: hex("#8839ef"),
-		Human: hex("#e64553"), Agent: hex("#1e66f5"), Warn: hex("#d20f39"), Red: hex("#d20f39"),
+		Human: hex("#e64553"), Agent: hex("#1e66f5"), Warn: hex("#e05a00"), Red: hex("#d20f39"),
 		Green: hex("#3d9829"), Purple: hex("#637afd"), Cyan: hex("#179299")},
 	{Name: "gruvbox-dark", Base: hex("#282828"), Surface: hex("#3c3836"), Overlay: hex("#665c54"),
 		Text: hex("#ebdbb2"), Bright: hex("#fbf1c7"), Muted: hex("#bdae93"), Accent: hex("#fabd2f"),
-		Human: hex("#fabd2f"), Agent: hex("#83a598"), Warn: hex("#fe8019"), Red: hex("#fb4934"),
+		Human: hex("#d79921"), Agent: hex("#83a598"), Warn: hex("#fe8019"), Red: hex("#fb4934"),
 		Green: hex("#b8bb26"), Purple: hex("#d3869b"), Cyan: hex("#8ec07c")},
 	{Name: "gruvbox-light", Light: true, Base: hex("#fbf1c7"), Surface: hex("#f2e5bc"), Overlay: hex("#d5c4a1"),
 		Text: hex("#3c3836"), Bright: hex("#282828"), Muted: hex("#665c54"), Accent: hex("#b57614"),
-		Human: hex("#b57614"), Agent: hex("#076678"), Warn: hex("#af3a03"), Red: hex("#9d0006"),
+		Human: hex("#946011"), Agent: hex("#076678"), Warn: hex("#af3a03"), Red: hex("#9d0006"),
 		Green: hex("#79740e"), Purple: hex("#8f3f71"), Cyan: hex("#427b58")},
 	{Name: "dracula", Base: hex("#282a36"), Surface: hex("#343746"), Overlay: hex("#6272a4"),
 		Text: hex("#f8f8f2"), Bright: hex("#ffffff"), Muted: hex("#bdc3d9"), Accent: hex("#ff79c6"),
-		Human: hex("#f1fa8c"), Agent: hex("#8be9fd"), Warn: hex("#ffb86c"), Red: hex("#ff5555"),
+		Human: hex("#f1fa8c"), Agent: hex("#8ea0f0"), Warn: hex("#ffb86c"), Red: hex("#ff5555"),
 		Green: hex("#50fa7b"), Purple: hex("#bd93f9"), Cyan: hex("#8be9fd")},
 	{Name: "nord", Base: hex("#2e3440"), Surface: hex("#3b4252"), Overlay: hex("#4c566a"),
 		Text: hex("#e5e9f0"), Bright: hex("#eceff4"), Muted: hex("#c0c8d6"), Accent: hex("#88c0d0"),
-		Human: hex("#ebcb8b"), Agent: hex("#81a1c1"), Warn: hex("#d08770"), Red: hex("#c7757d"),
+		Human: hex("#ebcb8b"), Agent: hex("#81a1c1"), Warn: hex("#dba06f"), Red: hex("#c7757d"),
 		Green: hex("#a3be8c"), Purple: hex("#b48ead"), Cyan: hex("#8fbcbb")},
 	{Name: "solarized-dark", Base: hex("#002b36"), Surface: hex("#073642"), Overlay: hex("#586e75"),
 		Text: hex("#eee8d5"), Bright: hex("#fdf6e3"), Muted: hex("#93a1a1"), Accent: hex("#b58900"),
-		Human: hex("#b58900"), Agent: hex("#268bd2"), Warn: hex("#d44e17"), Red: hex("#de3f3c"),
+		Human: hex("#dd3d8c"), Agent: hex("#268bd2"), Warn: hex("#d44e17"), Red: hex("#de3f3c"),
 		Green: hex("#859900"), Purple: hex("#6e73c5"), Cyan: hex("#2aa198")},
 }
 
