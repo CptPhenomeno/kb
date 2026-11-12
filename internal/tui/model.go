@@ -278,6 +278,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.notice = msg.notice
 		}
 		return m, m.load()
+	case testSavedMsg:
+		if m.accept != nil && msg.err != "" {
+			m.accept.err = msg.err
+			return m, nil
+		}
+		if m.accept != nil {
+			m.accept.mode, m.accept.err = inputNone, ""
+		}
+		m.alert = msg.alert
+		return m, m.load()
 	case formDoneMsg:
 		if m.form == nil {
 			return m, nil

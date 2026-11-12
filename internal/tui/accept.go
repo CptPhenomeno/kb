@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -21,6 +22,9 @@ type acceptState struct {
 	// confirmDelete is set while asking to delete the selected criterion.
 	confirmDelete bool
 	input         string // text typed in the input line
+	// err is the reason the last test save was refused; the input stays open
+	// while it is shown.
+	err string
 }
 
 // acceptTab is the tab of the acceptance popup.
@@ -48,6 +52,7 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 		return nil
 	}
 	a.cursor = clampCursor(a.cursor, len(it.Acceptance))
+	a.testCursor = clampCursor(a.testCursor, len(it.Tests))
 	if a.mode != inputNone {
 		return m.acceptInputKey(it, key, text)
 	}
@@ -100,6 +105,14 @@ func (m *Model) acceptTestsKey(it *core.Item, key string) tea.Cmd {
 	a := m.accept
 	a.testCursor = clampCursor(a.testCursor, len(it.Tests))
 	switch key {
+	case "n":
+		a.mode, a.input, a.err = inputAdd, "", ""
+	case "e":
+		if a.testCursor < len(it.Tests) {
+			a.mode, a.editAt, a.input, a.err = inputEdit, a.testCursor, it.Tests[a.testCursor].Name, ""
+		}
+	case "d":
+		a.confirmDelete = a.testCursor < len(it.Tests)
 	case "up":
 		a.testCursor = max(0, a.testCursor-1)
 	case "down":
@@ -146,6 +159,15 @@ func (m *Model) acceptDeleteKey(it *core.Item, key string) tea.Cmd {
 	case "y", "enter":
 		a.confirmDelete = false
 		n, item, actor := a.cursor+1, *it, m.opts.Actor
+		if a.tab == tabTests {
+			sel := strconv.Itoa(a.testCursor + 1)
+			return func() tea.Msg {
+				if _, err := m.be.RemoveTest(m.ctx, actor, item.ID, sel, item.Version); err != nil {
+					return writeMsg{alert: m.failure(item, "DELETE FAILED", err)}
+				}
+				return writeMsg{}
+			}
+		}
 		return func() tea.Msg {
 			if _, err := m.be.RemoveCriterion(m.ctx, actor, item.ID, n, item.Version); err != nil {
 				return writeMsg{alert: m.failure(item, "DELETE FAILED", err)}
@@ -162,13 +184,17 @@ func (m *Model) acceptInputKey(it *core.Item, key, text string) tea.Cmd {
 	a := m.accept
 	switch key {
 	case "esc":
-		a.mode = inputNone
+		a.mode, a.err = inputNone, ""
 	case "backspace":
+		a.err = ""
 		if r := []rune(a.input); len(r) > 0 {
 			a.input = string(r[:len(r)-1])
 		}
 	case "enter":
 		crit := strings.TrimSpace(a.input)
+		if a.tab == tabTests {
+			return m.saveTestInput(it, crit)
+		}
 		if crit == "" {
 			return nil
 		}
@@ -189,9 +215,42 @@ func (m *Model) acceptInputKey(it *core.Item, key, text string) tea.Cmd {
 			return writeMsg{}
 		}
 	default:
+		a.err = ""
 		a.input += text
 	}
 	return nil
+}
+
+// saveTestInput saves the test typed in the input line, as a new test or as
+// the new name of the selected one. The input stays open until the core accepts
+// the name; a refused name (empty, duplicate) is shown in the popup, while a
+// version conflict or another failure closes the input and raises the alert.
+func (m *Model) saveTestInput(it *core.Item, name string) tea.Cmd {
+	a := m.accept
+	mode, sel, item, actor := a.mode, strconv.Itoa(a.editAt+1), *it, m.opts.Actor
+	return func() tea.Msg {
+		title, err := "ADD FAILED", error(nil)
+		if mode == inputEdit {
+			title = "EDIT FAILED"
+			_, err = m.be.EditTest(m.ctx, actor, item.ID, sel, name, item.Version)
+		} else {
+			_, err = m.be.AddTest(m.ctx, actor, item.ID, name, item.Version)
+		}
+		var re *core.RuleError
+		switch {
+		case err == nil:
+			return testSavedMsg{}
+		case !errors.Is(err, core.ErrConflict) && asRule(err, &re):
+			return testSavedMsg{err: re.Msg}
+		}
+		return testSavedMsg{alert: m.failure(item, title, err)}
+	}
+}
+
+// testSavedMsg is the outcome of saving the input line of the Tests tab.
+type testSavedMsg struct {
+	alert *alertState
+	err   string // why the core refused the name; empty when saved or alerted
 }
 
 // renderAccept shows the criteria of the item with their checks.
@@ -230,7 +289,7 @@ func (m *Model) renderAccept() string {
 	lines = append(lines, m.renderAcceptInput(iw)...)
 	if m.accept.confirmDelete {
 		lines = append(lines, "")
-		lines = append(lines, m.renderAcceptConfirm(cursor+1, it.Acceptance[cursor].Text, iw)...)
+		lines = append(lines, m.renderAcceptConfirm("criterion", cursor+1, it.Acceptance[cursor].Text, iw)...)
 	}
 	lines = append(lines, "", m.th.muted.Render(fmt.Sprintf("%d/%d checked · status %s · every change is saved at once",
 		it.CheckedCriteria(), len(it.Acceptance), it.Status.Label())))
@@ -254,7 +313,9 @@ func (m *Model) renderAcceptTabs() string {
 // renderAcceptTests completes the popup lines with the Tests tab.
 func (m *Model) renderAcceptTests(it *core.Item, lines []string, iw, width int) string {
 	if len(it.Tests) == 0 {
-		lines = append(lines, m.th.muted.Render(it.ID+" has no tests."))
+		lines = append(lines, m.th.muted.Render(it.ID+" has no tests."),
+			m.th.muted.Render("Press n to add one."))
+		lines = append(lines, m.renderAcceptInput(iw)...)
 		return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 	}
 	cursor := clampCursor(m.accept.testCursor, len(it.Tests))
@@ -271,6 +332,11 @@ func (m *Model) renderAcceptTests(it *core.Item, lines []string, iw, width int) 
 			row, marker = m.th.fg(m.th.p.Accent).Bold(true), m.th.fg(m.th.p.Accent).Render("› ")
 		}
 		lines = append(lines, hang(marker+style.Render(sym+" "), 6, t.Name+" ("+t.State.String()+")", row, iw, 6)...)
+	}
+	lines = append(lines, m.renderAcceptInput(iw)...)
+	if m.accept.confirmDelete {
+		lines = append(lines, "")
+		lines = append(lines, m.renderAcceptConfirm("test", cursor+1, it.Tests[cursor].Name, iw)...)
 	}
 	lines = append(lines, "", m.th.muted.Render(fmt.Sprintf("%d/%d passing · status %s · every change is saved at once",
 		it.PassingTests(), len(it.Tests), it.Status.Label())))
@@ -297,13 +363,16 @@ func (m *Model) renderAcceptInput(w int) []string {
 		}
 		lines[i] = lead + m.th.text.Render(l)
 	}
+	if m.accept.err != "" {
+		lines = append(lines, m.th.warn.Render(truncate(m.accept.err, w)))
+	}
 	return lines
 }
 
-// renderAcceptConfirm asks to delete the criterion n (1-based) with the given
-// text, truncated to fit the width w.
-func (m *Model) renderAcceptConfirm(n int, text string, w int) []string {
-	head := fmt.Sprintf("Delete criterion %d ", n)
+// renderAcceptConfirm asks to delete the row n (1-based) of the given kind
+// ("criterion" or "test") with the given text, truncated to fit the width w.
+func (m *Model) renderAcceptConfirm(kind string, n int, text string, w int) []string {
+	head := fmt.Sprintf("Delete %s %d ", kind, n)
 	q := head + `"` + truncate(text, max(1, w-len([]rune(head))-3)) + `"?`
 	return []string{m.th.warn.Bold(true).Render(q),
 		m.th.warn.Render("y/enter delete") + m.th.muted.Render(" · n/esc keep")}
