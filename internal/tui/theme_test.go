@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"image/color"
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -316,4 +317,37 @@ func TestPickerKeepsSamplesAndCurrent(t *testing.T) {
 	if strings.Count(s, "(current)") != 1 {
 		t.Errorf("want exactly one (current) marker")
 	}
+}
+
+// rgbDistance is the euclidean distance between two colors over 0-255
+// channels.
+func rgbDistance(a, b color.Color) float64 {
+	ar, ag, ab, _ := a.RGBA()
+	br, bg, bb, _ := b.RGBA()
+	d := func(x, y uint32) float64 { return (float64(x) - float64(y)) / 257 }
+	return math.Sqrt(d(ar, br)*d(ar, br) + d(ag, bg)*d(ag, bg) + d(ab, bb)*d(ab, bb))
+}
+
+// requireDistinctRoles fails for every theme where the two roles are closer
+// than 30 apart.
+func requireDistinctRoles(t *testing.T, nameA, nameB string, pick func(Palette) (color.Color, color.Color)) {
+	t.Helper()
+	for _, p := range Themes {
+		a, b := pick(p)
+		if d := rgbDistance(a, b); d < 30 {
+			t.Errorf("%s: %s and %s are %.1f apart, want at least 30", p.Name, nameA, nameB, d)
+		}
+	}
+}
+
+func TestHumanAndAccentAreDistinctOnEveryTheme(t *testing.T) {
+	requireDistinctRoles(t, "Human", "Accent", func(p Palette) (color.Color, color.Color) { return p.Human, p.Accent })
+}
+
+func TestAgentAndCyanAreDistinctOnEveryTheme(t *testing.T) {
+	requireDistinctRoles(t, "Agent", "Cyan", func(p Palette) (color.Color, color.Color) { return p.Agent, p.Cyan })
+}
+
+func TestWarnAndRedAreDistinctOnEveryTheme(t *testing.T) {
+	requireDistinctRoles(t, "Warn", "Red", func(p Palette) (color.Color, color.Color) { return p.Warn, p.Red })
 }
