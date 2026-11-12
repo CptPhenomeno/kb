@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 // treeModel opens the Tree view of the sample board.
@@ -432,5 +434,51 @@ func TestXWithFilterActsOnHiddenBranches(t *testing.T) {
 	press(t, m, "x") // visible all closed: open all
 	if len(m.tree.collapsed) != 0 {
 		t.Fatalf("collapsed = %v, want all open", m.tree.collapsed)
+	}
+}
+
+func TestTreeCommandBarShowsX(t *testing.T) {
+	m := doneTreeModel(t)
+	bar := strings.Join(m.commandBar(), "\n")
+	if !strings.Contains(ansi.Strip(bar), "x expand/collapse all") {
+		t.Fatalf("tree command bar lacks the x hint:\n%s", ansi.Strip(bar))
+	}
+	b := newModel(t, sampleBoard(), 160, 48)
+	if strings.Contains(ansi.Strip(strings.Join(b.commandBar(), "\n")), "expand/collapse all") {
+		t.Fatal("the Board command bar shows the Tree x hint")
+	}
+}
+
+func TestTreeHelpTabListsX(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "tab", "?")
+	s := screen(m)
+	if !strings.Contains(s, "close every branch when one is open") {
+		t.Fatalf("tree help tab lacks x:\n%s", s)
+	}
+}
+
+func TestPaletteExpandOrCollapseAllTogglesTheTree(t *testing.T) {
+	ref := doneTreeModel(t)
+	press(t, ref, "x")
+	closed := rowIDs(ref)
+	press(t, ref, "x")
+	opened := rowIDs(ref)
+	if closed == opened {
+		t.Fatalf("x changed nothing: %s", closed)
+	}
+	m := doneTreeModel(t)
+	run := []string{"ctrl+p", "c", "o", "l", "l", "a", "p", "s", "e", " ", "a", "l", "l", "enter"}
+	press(t, m, run...)
+	if got := rowIDs(m); got != closed {
+		t.Fatalf("after the palette action rows = %s, want %s", got, closed)
+	}
+	press(t, m, run...)
+	if got := rowIDs(m); got != opened {
+		t.Fatalf("after the second palette action rows = %s, want %s", got, opened)
+	}
+	press(t, m, "tab", "ctrl+p")
+	if contains(names(m.palette.matches(m)), "Expand or collapse all") {
+		t.Fatal("Activity palette offers the Tree action")
 	}
 }

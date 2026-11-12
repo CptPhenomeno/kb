@@ -37,6 +37,7 @@ var actions = []action{
 	{"Create child item", "n", treeOnly},
 	{"Collapse branch", "left", treeOnly},
 	{"Expand branch", "right", treeOnly},
+	{"Expand or collapse all", "x", treeOnly},
 	{"Edit item", "e", itemViews},
 	{"Edit description in $EDITOR", "ctrl+e", itemViews},
 	{"Delete item", "d", itemViews},

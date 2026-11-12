@@ -670,6 +670,7 @@ var viewKeys = map[viewKind][]keyHint{
 	viewTree: {
 		{"↑ ↓", "navigate", "move between rows", false},
 		{"← →", "collapse / expand", "collapse or expand a branch (on a leaf, ← goes to the parent)", false},
+		{"x", "expand/collapse all", "close every branch when one is open, otherwise open them all", false},
 		{"enter", "details", "open the detail popup", false},
 		{"n", "new child", "create a child of the selected item, with the type the hierarchy suggests", false},
 		{"e", "edit", "edit the selected item", false},
