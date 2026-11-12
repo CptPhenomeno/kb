@@ -643,18 +643,55 @@ func (s *Service) AddTest(ctx context.Context, actor, id, name string, ifVersion
 	})
 }
 
+// findTest returns the index of the test selected by its 1-based position or
+// by its name, or ErrNotFound.
+func findTest(it *Item, selector string) (int, error) {
+	if n, err := strconv.Atoi(selector); err == nil && n >= 1 && n <= len(it.Tests) {
+		return n - 1, nil
+	}
+	if i := slices.IndexFunc(it.Tests, func(t Test) bool { return t.Name == selector }); i >= 0 {
+		return i, nil
+	}
+	return -1, wrapf(ErrNotFound, "test %q of %s", selector, it.ID)
+}
+
+// EditTest renames the test selected by its 1-based position or by its name
+// and sets it back to pending: the changed test has to be run again. An empty
+// name, or one used by another test of the item, is a rule error.
+func (s *Service) EditTest(ctx context.Context, actor, id, selector, name string, ifVersion int) (*Item, error) {
+	return s.update(ctx, actor, id, ifVersion, func(it *Item) (EventKind, map[string]any, error) {
+		i, err := findTest(it, selector)
+		if err != nil {
+			return "", nil, err
+		}
+		name = strings.TrimSpace(name)
+		old := it.Tests[i].Name
+		it.Tests[i] = Test{Name: name}
+		return EventTest, map[string]any{"name": name, "state": TestPending.String(), "edited": true, "old": old}, nil
+	})
+}
+
+// RemoveTest drops the test selected by its 1-based position or by its name,
+// keeping the order of the others.
+func (s *Service) RemoveTest(ctx context.Context, actor, id, selector string, ifVersion int) (*Item, error) {
+	return s.update(ctx, actor, id, ifVersion, func(it *Item) (EventKind, map[string]any, error) {
+		i, err := findTest(it, selector)
+		if err != nil {
+			return "", nil, err
+		}
+		removed := it.Tests[i]
+		it.Tests = slices.Delete(it.Tests, i, i+1)
+		return EventTest, map[string]any{"name": removed.Name, "state": removed.State.String(), "removed": true}, nil
+	})
+}
+
 // SetTestState sets the state of the test selected by its 1-based index or
 // by its name.
 func (s *Service) SetTestState(ctx context.Context, actor, id, selector string, state TestState, ifVersion int) (*Item, error) {
 	return s.update(ctx, actor, id, ifVersion, func(it *Item) (EventKind, map[string]any, error) {
-		i := -1
-		if n, err := strconv.Atoi(selector); err == nil && n >= 1 && n <= len(it.Tests) {
-			i = n - 1
-		} else {
-			i = slices.IndexFunc(it.Tests, func(t Test) bool { return t.Name == selector })
-		}
-		if i < 0 {
-			return "", nil, wrapf(ErrNotFound, "test %q of %s", selector, id)
+		i, err := findTest(it, selector)
+		if err != nil {
+			return "", nil, err
 		}
 		it.Tests[i].State = state
 		return EventTest, map[string]any{"name": it.Tests[i].Name, "state": state.String()}, nil
