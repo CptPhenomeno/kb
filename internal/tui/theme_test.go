@@ -186,3 +186,31 @@ func TestPickerSnapshot(t *testing.T) {
 	press(t, m, "t", "down")
 	golden(t, "picker_160x48", screen(m))
 }
+
+// TestEveryRoleReadableOnBaseAndSurface requires, on every theme, Text at
+// 4.5:1 and every other text or indicator role at 3:1 against both the
+// screen background and the cards.
+func TestEveryRoleReadableOnBaseAndSurface(t *testing.T) {
+	for _, p := range Themes {
+		roles := []struct {
+			name string
+			c    color.Color
+			min  float64
+		}{
+			{"Text", p.Text, 4.5},
+			{"Muted", p.Muted, 3}, {"Accent", p.Accent, 3}, {"Human", p.Human, 3},
+			{"Agent", p.Agent, 3}, {"Warn", p.Warn, 3}, {"Red", p.Red, 3},
+			{"Green", p.Green, 3}, {"Purple", p.Purple, 3}, {"Cyan", p.Cyan, 3},
+		}
+		for _, r := range roles {
+			for _, bg := range []struct {
+				name string
+				c    color.Color
+			}{{"Base", p.Base}, {"Surface", p.Surface}} {
+				if got := contrastRatio(r.c, bg.c); got < r.min {
+					t.Errorf("%s: %s on %s contrast %.2f, want at least %.1f", p.Name, r.name, bg.name, got, r.min)
+				}
+			}
+		}
+	}
+}
