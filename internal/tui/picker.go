@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"image/color"
 	"strings"
 
@@ -102,8 +103,9 @@ func (m *Model) renderPicker() string {
 		"",
 	}
 	var rows []string
-	sel := 0 // line of the selected theme in rows
-	top := 0 // first line to keep visible: its group heading when it leads the group
+	isTheme := map[int]bool{} // rows that are themes, not headings or blanks
+	sel := 0                  // line of the selected theme in rows
+	top := 0                  // first line to keep visible: its group heading when it leads the group
 	groupOf := func(i int) bool { return Themes[i].Light }
 	for k, i := range pickerOrder() {
 		if k == 0 || groupOf(i) != groupOf(pickerOrder()[k-1]) {
@@ -129,14 +131,61 @@ func (m *Model) renderPicker() string {
 		if i == m.picker.original {
 			name += m.th.muted.Render(" (current)")
 		}
+		isTheme[len(rows)] = true
 		rows = append(rows, spread("  "+marker+name, swatches(p), iw))
 	}
 	// The popup adds a border and padding (4 rows) around header, list and
 	// footer; the list scrolls with the selection when the rest does not fit.
-	avail := max(3, m.height-4-len(lines)-2)
-	lines = append(lines, scrollWindowAt(rows, top, sel, avail, m.th.muted, 4)...)
+	avail := max(3, m.bodyHeight()-4-len(lines)-2)
+	lines = append(lines, m.pickerWindow(rows, isTheme, top, sel, avail)...)
 	lines = append(lines, "", m.th.muted.Render("enter saves the choice for your user"))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
+}
+
+// pickerWindow cuts rows to avail lines keeping rows top..sel visible, with
+// "↑ N more" and "↓ N more" markers counting the hidden themes. A marker never
+// stands for headings alone: when no theme is hidden on a side, that side is
+// shown in full.
+func (m *Model) pickerWindow(rows []string, isTheme map[int]bool, top, sel, avail int) []string {
+	if len(rows) <= avail {
+		return rows
+	}
+	themes := func(from, to int) (n int) {
+		for i := from; i < to; i++ {
+			if isTheme[i] {
+				n++
+			}
+		}
+		return n
+	}
+	for start := 0; start <= top; start++ {
+		if themes(0, start) == 0 && start > 0 {
+			continue // only headings above: show them rather than a marker
+		}
+		room := avail
+		if start > 0 {
+			room--
+		}
+		end := min(len(rows), start+room)
+		if end < len(rows) && themes(end, len(rows)) > 0 {
+			end = min(len(rows), start+room-1)
+		} else {
+			end = min(len(rows), start+room)
+		}
+		if sel >= end && end < len(rows) {
+			continue
+		}
+		var out []string
+		if start > 0 {
+			out = append(out, m.th.muted.Render(fmt.Sprintf("    ↑ %d more", themes(0, start))))
+		}
+		out = append(out, rows[start:end]...)
+		if end < len(rows) {
+			out = append(out, m.th.muted.Render(fmt.Sprintf("    ↓ %d more", themes(end, len(rows)))))
+		}
+		return out
+	}
+	return rows
 }
 
 // swatches shows a theme's main colors on its own background.

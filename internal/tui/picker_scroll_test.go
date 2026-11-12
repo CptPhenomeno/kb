@@ -95,3 +95,41 @@ func TestPickerGoldenWithEighteenThemesAt80By24(t *testing.T) {
 	press(t, m, "down", "down", "down", "down", "down", "down", "down", "down", "down", "down")
 	golden(t, "picker_scroll_80x24", screen(m))
 }
+
+func TestPickerLeavesHeaderAndCommandBarVisibleAt80By24(t *testing.T) {
+	m := pickerModel(t, 80, 24)
+	for _, i := range pickerOrder() {
+		m.picker.cursor = i
+		m.setTheme(i)
+		rows := strings.Split(screen(m), "\n")
+		if !strings.HasPrefix(rows[0], " kb  api") || !strings.Contains(rows[0], "1 stale") {
+			t.Fatalf("header row covered: %q", rows[0])
+		}
+		bar := strings.Join(rows[len(rows)-2:], "\n")
+		if !strings.Contains(bar, "↑ ↓ preview") || !strings.Contains(bar, "enter apply") {
+			t.Fatalf("picker keys covered at %s:\n%s", Themes[i].Name, screen(m))
+		}
+	}
+}
+
+func TestPickerMarkerNeverStandsForAHeadingAlone(t *testing.T) {
+	m := pickerModel(t, 80, 24)
+	order := pickerOrder()
+	m.picker.cursor = order[0]
+	m.setTheme(order[0])
+	// Scroll down until the first theme is the only hidden row above.
+	for k := 1; k < len(order); k++ {
+		m.picker.cursor = order[k]
+		m.setTheme(order[k])
+		s := screen(m)
+		if strings.Contains(s, "↑ 0 more") || strings.Contains(s, "↓ 0 more") {
+			t.Fatalf("empty marker:\n%s", s)
+		}
+		if strings.Contains(s, "dark-1") && !strings.Contains(s, "Dark") {
+			t.Fatalf("heading hidden while its first theme shows:\n%s", s)
+		}
+		if strings.Contains(s, "↑ 1 more") && strings.Contains(s, "dark-2") && !strings.Contains(s, "dark-1") && strings.Contains(s, "Dark") {
+			t.Fatalf("heading and marker both shown:\n%s", s)
+		}
+	}
+}

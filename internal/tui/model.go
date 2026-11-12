@@ -487,7 +487,7 @@ func (m *Model) View() tea.View {
 		case m.alert != nil:
 			popup = m.renderAlert()
 		case m.picker != nil:
-			popup = m.renderPicker()
+			popup, isForm = m.renderPicker(), true // placed between header and bar
 		case m.filterOpen:
 			popup = m.renderFilter()
 		case m.palette != nil:
