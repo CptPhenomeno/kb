@@ -1,0 +1,24 @@
+ kb  api-gateway   Board  Tree  Activity   sh… 12 items  1 agent active  1 stale
+╭──────────────╮ ╭─────────────╮ ╭─────────────╮ ╭─────────────╮ ╭─────────────╮
+│ Backlog    1 │ │ To do     4 │ │ In progr… 4 │ │ Review    1 │ │ Done      1 │
+│ ╭──────────╮ │ │ ╭─────────╮ │ │ ╭─────────╮ │ │ ╭─────────╮ │ │ ╭─────────╮ │
+│ │ KB-15  ▲ │ │ │ │ KB-5 ▲▲ │ │ │ │ KB-1  ▲ │ │ │ │ KB-3 ▲▲ │ │ │ │ KB-17 · │ │
+│ │ Load     │ │ │ │ Expired │ │ │ │ Authent │ │ │ │ Validat │ │ │ │ Health  │ │
+│ ╭──────────────────────────────────────────────────────────────────────────╮ │
+│ │                                                                          │ │
+│ │  New item                                                    esc cancel  │ │
+│ │   Details   Criteria  [Tests]                       ctrl+← → switch tab  │ │
+│ │                                                                          │ │
+│ │  › tests       ▌                                                         │ │
+│ │                • first test                                              │ │
+│ │                                                                          │ │
+│ │  enter adds · ctrl+s saves · backspace removes last · tab moves          │ │
+│ │                                                                          │ │
+│ ╰──────────────────────────────────────────────────────────────────────────╯ │
+│              │ │             │ │             │ │             │ │             │
+│              │ │             │ │             │ │             │ │             │
+│              │ │             │ │             │ │             │ │             │
+╰──────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯
+14:04  agent-auth  KB-4  test "refresh rotates the token" → failing             
+↑ ↓ field   ← → choice   ctrl+e editor   ctrl+← ctrl+→ tab   ctrl+s save        
+enter save · $EDITOR · add   esc cancel                                         

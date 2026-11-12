@@ -1,0 +1,24 @@
+ kb  api-gateway   Board  Tree  Activity   sh… 12 items  1 agent active  1 stale
+╭─╭──────────────────────────────────────────────────────────────────────────╮─╮
+│ │                                                                          │ │
+│ │  New item                                                    esc cancel  │ │
+│ │   Details   Criteria  [Tests]                       ctrl+← → switch tab  │ │
+│ │                                                                          │ │
+│ │  › tests       typing now▌                                               │ │
+│ │                ↑ 29 earlier                                              │ │
+│ │                • test 30                                                 │ │
+│ │                • test 31                                                 │ │
+│ │                • test 32                                                 │ │
+│ │                • test 33                                                 │ │
+│ │                • test 34                                                 │ │
+│ │                • test 35                                                 │ │
+│ │                • test 36                                                 │ │
+│ │                • test 37                                                 │ │
+│ │                • test 38                                                 │ │
+│ │                • test 39                                                 │ │
+│ │                • test 40                                                 │ │
+│ │                                                                          │ │
+╰─│  enter adds · ctrl+s saves · backspace removes last · tab moves          │─╯
+14│                                                                          │  
+↑ ╰──────────────────────────────────────────────────────────────────────────╯  
+enter save · $EDITOR · add   esc cancel                                         

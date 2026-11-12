@@ -24,7 +24,7 @@
 │                              │ │        │                                                                          │         │ │                             │
 │                              │ │        │  › tests       ▌                                                         │         │ │                             │
 │                              │ │        │                                                                          │         │ │                             │
-│                              │ │        │  enter adds · ctrl+s saves · backspace on empty removes the last · tab…  │         │ │                             │
+│                              │ │        │  enter adds · ctrl+s saves · backspace removes last · tab moves          │         │ │                             │
 │                              │ │        │                                                                          │         │ │                             │
 │                              │ │        ╰──────────────────────────────────────────────────────────────────────────╯         │ │                             │
 │                              │ │                             │ │                             │ │                             │ │                             │

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/CptPhenomeno/kb/internal/core"
 )
@@ -358,11 +359,43 @@ func (m *Model) renderForm() string {
 	if f.editID != "" {
 		title = "Edit " + f.editID
 	}
-	lines := []string{spread(m.th.bright.Render(title), m.th.muted.Render("esc cancel"), iw)}
+	head := []string{spread(m.th.bright.Render(title), m.th.muted.Render("esc cancel"), iw)}
 	if f.editID == "" {
-		lines = append(lines, spread(m.renderFormTabs(), m.th.muted.Render("ctrl+← → switch tab"), iw))
+		head = append(head, spread(m.renderFormTabs(), m.th.muted.Render("ctrl+← → switch tab"), iw))
 	}
-	lines = append(lines, "")
+	head = append(head, "")
+	var foot []string
+	if f.general != "" {
+		foot = append(foot, "", m.th.warn.Render("✗ ")+m.th.warn.Render(f.general))
+	}
+	if f.info != "" {
+		foot = append(foot, "", m.th.fg(m.th.p.Green).Render("✓ "+f.info))
+	}
+	status := "enter or ctrl+s saves · tab or ↑ ↓ move · ← → change a choice"
+	switch {
+	case f.saving:
+		status = "saving… · tab or ↑ ↓ move · ← → change a choice"
+	case f.focus == fDescription:
+		status = "enter $EDITOR · ctrl+s saves · tab or ↑ ↓ move"
+	case f.focus == fAcceptance || f.focus == fTests:
+		status = "enter adds · ctrl+s saves · backspace removes last · tab moves"
+	}
+	foot = append(foot, "", m.th.muted.Render(status))
+	// The popup never grows past the screen: the box takes four rows and the
+	// body scrolls in what is left.
+	avail := max(3, m.height-6-len(head)-len(foot))
+	body := m.formBody(iw, avail)
+	lines := append(append(head, body...), foot...)
+	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
+}
+
+// formBody renders the fields of the active tab in at most avail lines. A
+// list tab keeps its input at the top and shows the end of the list; the
+// Details tab scrolls to keep the focused field visible.
+func (m *Model) formBody(iw, avail int) []string {
+	f := m.form
+	var lines, items []string
+	lo, hi := 0, 0
 	for i, fld := range f.fields {
 		if f.editID == "" && tabOf(i) != f.tab {
 			continue
@@ -386,37 +419,68 @@ func (m *Model) renderForm() string {
 		if focused {
 			marker = m.th.fg(m.th.p.Accent).Render("› ")
 		}
+		start := len(lines)
 		if i == fTitle || i == fDescription || i == fAcceptance || i == fTests {
 			lines = append(lines, m.renderWrappedField(marker+label, fld.value, i == fDescription, focused, iw)...)
 		} else {
 			lines = append(lines, truncate(marker+label+value, iw))
 		}
-		if list := f.listOf(i); list != nil {
-			for _, c := range *list {
-				lines = append(lines, hang(strings.Repeat(" ", 14)+m.th.muted.Render("• "), 16, c, m.th.text, iw, 16)...)
-			}
+		if focused {
+			lo, hi = start, len(lines)-1
 		}
 		if e, ok := f.errs[i]; ok {
 			lines = append(lines, hang(strings.Repeat(" ", 14)+m.th.warn.Render("✗ "), 16, e, m.th.warn, iw, 16)...)
 		}
+		if list := f.listOf(i); list != nil {
+			for _, c := range *list {
+				items = append(items, hang(strings.Repeat(" ", 14)+m.th.muted.Render("• "), 16, c, m.th.text, iw, 16)...)
+			}
+		}
 	}
-	if f.general != "" {
-		lines = append(lines, "", m.th.warn.Render("✗ ")+m.th.warn.Render(f.general))
+	if f.editID == "" && f.tab != formDetails {
+		return tailWindow(lines, items, avail, m.th.muted)
 	}
-	if f.info != "" {
-		lines = append(lines, "", m.th.fg(m.th.p.Green).Render("✓ "+f.info))
+	return scrollWindow(lines, lo, hi, avail, m.th.muted)
+}
+
+// tailWindow shows head then the last of items, in at most avail lines; a
+// first line says how many item lines are hidden above.
+func tailWindow(head, items []string, avail int, style lipgloss.Style) []string {
+	room := avail - len(head)
+	if len(items) <= room {
+		return append(head, items...)
 	}
-	status := "enter or ctrl+s saves · tab or ↑ ↓ move · ← → change a choice"
-	switch {
-	case f.saving:
-		status = "saving… · tab or ↑ ↓ move · ← → change a choice"
-	case f.focus == fDescription:
-		status = "enter $EDITOR · ctrl+s saves · tab or ↑ ↓ move"
-	case f.focus == fAcceptance || f.focus == fTests:
-		status = "enter adds · ctrl+s saves · backspace on empty removes the last · tab or ↑ ↓ move"
+	room = max(room, 1)
+	hidden := len(items) - (room - 1)
+	out := append(head, style.Render(strings.Repeat(" ", 14)+fmt.Sprintf("↑ %d earlier", hidden)))
+	return append(out, items[hidden:]...)
+}
+
+// scrollWindow cuts lines to avail, keeping lines lo..hi visible, with "more"
+// markers where lines are hidden.
+func scrollWindow(lines []string, lo, hi, avail int, style lipgloss.Style) []string {
+	if len(lines) <= avail {
+		return lines
 	}
-	lines = append(lines, "", m.th.muted.Render(status))
-	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
+	inner := max(1, avail-2)
+	start := max(0, min(hi+1-inner, len(lines)-inner))
+	start = min(start, lo)
+	end := min(len(lines), start+inner)
+	if start == 0 {
+		end = min(len(lines), end+1)
+	}
+	if end == len(lines) && start > 0 {
+		start--
+	}
+	var out []string
+	if start > 0 {
+		out = append(out, style.Render(strings.Repeat(" ", 14)+fmt.Sprintf("↑ %d more", start)))
+	}
+	out = append(out, lines[start:end]...)
+	if end < len(lines) {
+		out = append(out, style.Render(strings.Repeat(" ", 14)+fmt.Sprintf("↓ %d more", len(lines)-end)))
+	}
+	return out
 }
 
 // renderFormTabs shows the tab labels, the active one highlighted.
