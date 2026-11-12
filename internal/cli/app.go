@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"strconv"
 	"strings"
 	"time"
 
@@ -213,6 +214,74 @@ func args(min, max int) cobra.PositionalArgs {
 	}
 }
 
+// unknownCommand reports a positional argument of the root as an unknown
+// command, with Cobra's suggestions when a command is close enough.
+func unknownCommand(cmd *cobra.Command, a []string) error {
+	if len(a) == 0 {
+		return nil
+	}
+	msg := fmt.Sprintf("unknown command %q for %q", a[0], cmd.CommandPath())
+	if s := closest(a[0], cmd.SuggestionsFor(a[0])); len(s) > 0 {
+		q := make([]string, len(s))
+		for i, name := range s {
+			q[i] = strconv.Quote(name)
+		}
+		alt := q[len(q)-1]
+		if len(q) > 1 {
+			alt = strings.Join(q[:len(q)-1], ", ") + " or " + alt
+		}
+		msg += fmt.Sprintf("; did you mean %s?", alt)
+	}
+	return &usageError{msg: msg, usage: cmd.CommandPath() + " [command]"}
+}
+
+// closest keeps the names nearest to typed, counting a swap of two adjacent
+// letters as one edit, so "lsit" suggests "list" and not every 4-letter
+// command; names that start with typed come first, as Cobra suggests them too.
+func closest(typed string, names []string) []string {
+	typed = strings.ToLower(typed)
+	best, out := -1, []string(nil)
+	for _, n := range names {
+		d := 0
+		if !strings.HasPrefix(strings.ToLower(n), typed) {
+			d = editDistance(typed, strings.ToLower(n))
+		}
+		switch {
+		case best < 0 || d < best:
+			best, out = d, []string{n}
+		case d == best:
+			out = append(out, n)
+		}
+	}
+	return out
+}
+
+// editDistance is the optimal string alignment distance between a and b.
+func editDistance(a, b string) int {
+	s, t := []rune(a), []rune(b)
+	d := make([][]int, len(s)+1)
+	for i := range d {
+		d[i] = make([]int, len(t)+1)
+		d[i][0] = i
+	}
+	for j := range d[0] {
+		d[0][j] = j
+	}
+	for i := 1; i <= len(s); i++ {
+		for j := 1; j <= len(t); j++ {
+			cost := 1
+			if s[i-1] == t[j-1] {
+				cost = 0
+			}
+			d[i][j] = min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+cost)
+			if i > 1 && j > 1 && s[i-1] == t[j-2] && s[i-2] == t[j-1] {
+				d[i][j] = min(d[i][j], d[i-2][j-2]+1)
+			}
+		}
+	}
+	return d[len(s)][len(t)]
+}
+
 func (c *cli) rootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "kb",
@@ -220,7 +289,7 @@ func (c *cli) rootCmd() *cobra.Command {
 		Long:          "kb tracks the work of a project on a kanban board shared by the developer (TUI)\nand coding agents (CLI). Run `kb guide` for the agent workflow.",
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		Args:          args(0, 0),
+		Args:          unknownCommand,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return c.with(func(s *Session) error {
 				if c.app.LaunchTUI == nil {
@@ -230,6 +299,8 @@ func (c *cli) rootCmd() *cobra.Command {
 			})
 		},
 	}
+	// Cobra applies its default distance only to its own error message.
+	root.SuggestionsMinimumDistance = 2
 	root.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error {
 		return &usageError{msg: err.Error(), usage: cmd.UseLine()}
 	})

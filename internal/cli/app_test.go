@@ -165,3 +165,11 @@ func TestNoArgsStillLaunchesTUIWithGlobalFlags(t *testing.T) {
 		t.Fatalf("TUI launched %d times, want 2", launched)
 	}
 }
+
+func TestUnknownCommandListsTiedSuggestions(t *testing.T) {
+	e := newEnv(t)
+	_, errOut := e.fail(1, "li")
+	if !strings.Contains(errOut, `did you mean "list" or "link"?`) {
+		t.Fatalf("stderr = %q, want the commands that start with li", errOut)
+	}
+}
