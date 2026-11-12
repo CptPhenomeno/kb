@@ -265,3 +265,89 @@ func TestTreeDoneBranchesClosedSnapshot(t *testing.T) {
 	m := doneTreeModel(t)
 	golden(t, "tree_done_closed", screen(m))
 }
+
+func TestXClosesEveryBranchWhenOneIsOpen(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "left") // KB-1 closed, KB-2, KB-6, KB-12 still open
+	press(t, m, "x")
+	for _, id := range []string{"KB-1", "KB-2", "KB-6", "KB-12"} {
+		if !m.tree.collapsed[id] {
+			t.Fatalf("%s still open after x: %v", id, m.tree.collapsed)
+		}
+	}
+}
+
+func TestXOpensEveryBranchWhenAllAreClosed(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "x", "x")
+	if len(m.tree.collapsed) != 0 {
+		t.Fatalf("collapsed = %v, want everything open", m.tree.collapsed)
+	}
+	if len(treeIDs(m)) != 12 {
+		t.Fatalf("rows = %v, want all 12", treeIDs(m))
+	}
+}
+
+func TestXKeepsTopLevelItemsVisible(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "x")
+	if got := rowIDs(m); got != "KB-1 KB-6 KB-12 KB-15 KB-17" {
+		t.Fatalf("rows = %s, want only the top level", got)
+	}
+}
+
+func TestXMovesCursorToVisibleAncestor(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "down", "down", "down") // KB-4
+	if id := m.selectedID(); id != "KB-4" {
+		t.Fatalf("selected %s, want KB-4", id)
+	}
+	press(t, m, "x")
+	if id := m.selectedID(); id != "KB-1" {
+		t.Fatalf("selected %s after x, want KB-1", id)
+	}
+}
+
+func TestXDoesNothingOnBoardAndActivity(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "x")
+	if len(m.tree.collapsed) != 0 {
+		t.Fatalf("x on the board changed the tree: %v", m.tree.collapsed)
+	}
+	press(t, m, "tab", "tab")
+	if m.view != viewActivity {
+		t.Fatalf("view = %v, want Activity", m.view)
+	}
+	press(t, m, "x")
+	if len(m.tree.collapsed) != 0 || m.view != viewActivity {
+		t.Fatalf("x on the activity changed state: %v", m.tree.collapsed)
+	}
+}
+
+func TestXWithFilterDecidesOnVisibleBranches(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "/", "r", "e", "f", "r", "e", "s", "h", "enter") // KB-1 KB-2 KB-4
+	press(t, m, "left")                                          // KB-1 closed; hidden KB-6, KB-12 open
+	press(t, m, "x")
+	if m.tree.collapsed["KB-1"] || m.tree.collapsed["KB-2"] || m.tree.collapsed["KB-6"] {
+		t.Fatalf("x must open: the only visible branch was closed: %v", m.tree.collapsed)
+	}
+	if got := rowIDs(m); got != "KB-1 KB-2 KB-4" {
+		t.Fatalf("rows = %s", got)
+	}
+}
+
+func TestXWithFilterActsOnHiddenBranches(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "/", "r", "e", "f", "r", "e", "s", "h", "enter")
+	press(t, m, "x") // visible branches open: close all
+	for _, id := range []string{"KB-1", "KB-2", "KB-6", "KB-12"} {
+		if !m.tree.collapsed[id] {
+			t.Fatalf("%s not closed by x: %v", id, m.tree.collapsed)
+		}
+	}
+	press(t, m, "x") // visible all closed: open all
+	if len(m.tree.collapsed) != 0 {
+		t.Fatalf("collapsed = %v, want all open", m.tree.collapsed)
+	}
+}

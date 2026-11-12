@@ -36,6 +36,66 @@ func (t *treeState) foldDone(m *Model) {
 	}
 }
 
+// openAll opens every branch of the Tree, the ones hidden by a search or a
+// filter included.
+func (t *treeState) openAll() { t.collapsed = nil }
+
+// closeAll closes every item that has children, hidden ones included.
+func (t *treeState) closeAll(m *Model) {
+	for _, it := range m.snap.Items() {
+		if len(m.snap.Children(it.ID)) == 0 {
+			continue
+		}
+		if t.collapsed == nil {
+			t.collapsed = map[string]bool{}
+		}
+		t.collapsed[it.ID] = true
+	}
+}
+
+// toggleAll closes every branch when a visible one is open, otherwise opens
+// every branch. The cursor moves to the nearest visible ancestor of a row
+// that disappears.
+func (t *treeState) toggleAll(m *Model, rows []treeRow) {
+	id := ""
+	if t.cursor >= 0 && t.cursor < len(rows) {
+		id = rows[t.cursor].it.ID
+	}
+	anyOpen := false
+	for _, r := range rows {
+		if r.hasKids && !t.collapsed[r.it.ID] {
+			anyOpen = true
+			break
+		}
+	}
+	if anyOpen {
+		t.closeAll(m)
+	} else {
+		t.openAll()
+	}
+	t.restoreOrAncestor(m, id)
+}
+
+// restoreOrAncestor re-selects id, or its nearest visible ancestor.
+func (t *treeState) restoreOrAncestor(m *Model, id string) {
+	visible := map[string]int{}
+	for i, r := range t.rows(m) {
+		visible[r.it.ID] = i
+	}
+	cands := []string{id}
+	for _, a := range m.snap.Ancestors(id) {
+		cands = append(cands, a.ID)
+	}
+	for _, c := range cands {
+		if i, ok := visible[c]; ok && c != "" {
+			t.cursor = i
+			t.ensureVisible(m)
+			return
+		}
+	}
+	t.restore(m, id)
+}
+
 // treeRow is a line of the tree.
 type treeRow struct {
 	it      *core.Item
@@ -200,6 +260,9 @@ func (t *treeState) key(m *Model, key string) tea.Cmd {
 		case row.hasKids:
 			t.cursor++
 		}
+	case "x":
+		t.toggleAll(m, rows)
+		return nil
 	case "n":
 		ct, ok := childType[row.it.Type]
 		if !ok {
