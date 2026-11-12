@@ -382,8 +382,8 @@ func (m *Model) renderForm() string {
 	}
 	foot = append(foot, "", m.th.muted.Render(status))
 	// The popup never grows past the screen: the box takes four rows and the
-	// body scrolls in what is left.
-	avail := max(3, m.height-6-len(head)-len(foot))
+	// body scrolls in what the header and the bottom bar leave.
+	avail := max(3, m.bodyHeight()-4-len(head)-len(foot))
 	body := m.formBody(iw, avail)
 	lines := append(append(head, body...), foot...)
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))

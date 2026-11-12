@@ -20,6 +20,18 @@ func overlay(base, popup string, width, height int) string {
 	).Render()
 }
 
+// overlayBody draws popup centered on the screen, moved up when needed to stay
+// between the header and the bottom area, so it never covers the activity line or the command bar.
+func (m *Model) overlayBody(base, popup string) string {
+	pw, ph := lipgloss.Width(popup), lipgloss.Height(popup)
+	x := max(0, (m.width-pw)/2)
+	y := max(1, min((m.height-ph)/2, 1+m.bodyHeight()-ph))
+	return lipgloss.NewCompositor(
+		lipgloss.NewLayer(base),
+		lipgloss.NewLayer(popup).X(x).Y(y).Z(1),
+	).Render()
+}
+
 // detailSize is the outer size of the detail popup: 75% of the screen, at
 // least 60x16, never more than the screen minus one cell per side.
 func (m *Model) detailSize() (w, h int) {

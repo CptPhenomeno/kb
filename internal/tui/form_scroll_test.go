@@ -60,6 +60,22 @@ func TestLongTestsListScrollsKeepingTheInputVisible(t *testing.T) {
 	golden(t, "form_tabs_tests_long_80x24", s)
 }
 
+func TestLongListFormLeavesTheBottomBarVisible(t *testing.T) {
+	for _, tab := range []formTab{formCriteria, formTests} {
+		m := openForm80(t)
+		m.form.show(tab)
+		*m.form.listOf(tab.fields()[0]) = numbered("item", 40)
+		lines := strings.Split(screen(m), "\n")
+		bar := strings.Join(lines[len(lines)-3:], "\n")
+		if !strings.Contains(bar, "ctrl+← ctrl+→") {
+			t.Fatalf("tab %d: command bar hidden:\n%s", tab, screen(m))
+		}
+		if strings.Contains(screen(m), "14│") {
+			t.Fatalf("tab %d: popup leaks into the activity line:\n%s", tab, screen(m))
+		}
+	}
+}
+
 func TestLongCriteriaListScrollsKeepingTheInputVisible(t *testing.T) {
 	m := openForm80(t)
 	press(t, m, "ctrl+right")

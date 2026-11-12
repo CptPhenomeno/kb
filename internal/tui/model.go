@@ -457,7 +457,7 @@ func (m *Model) View() tea.View {
 			w, h := m.detailSize()
 			content = paint(overlay(content, m.renderDetail(w, h), m.width, m.height), m.th.p.Base, m.width, m.height)
 		}
-		popup := ""
+		popup, isForm := "", false
 		switch {
 		case m.alert != nil:
 			popup = m.renderAlert()
@@ -474,11 +474,13 @@ func (m *Model) View() tea.View {
 		case m.links != nil && m.snap.Get(m.links.id) != nil:
 			popup = m.renderLinks()
 		case m.form != nil:
-			popup = m.renderForm()
+			popup, isForm = m.renderForm(), true
 		case m.sort != nil:
 			popup = m.renderSort()
 		}
-		if popup != "" {
+		if popup != "" && isForm {
+			content = paint(m.overlayBody(content, popup), m.th.p.Base, m.width, m.height)
+		} else if popup != "" {
 			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
 		}
 	}
