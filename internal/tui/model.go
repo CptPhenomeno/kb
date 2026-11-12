@@ -362,7 +362,21 @@ func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 }
 
 // dispatch handles a key given by name; the palette runs actions through it.
+//
+// A search or a filter that becomes active from none opens every Tree branch
+// (TREE-3). Search and filters are shared by the views, so the transition is
+// detected here, once, whichever view the key came from: a filter turned on in
+// the Board has already opened the branches when the Tree is shown.
 func (m *Model) dispatch(key, text string) tea.Cmd {
+	wasFiltering := filtering(m)
+	cmd := m.route(key, text)
+	if !wasFiltering && filtering(m) {
+		m.tree.openAll()
+	}
+	return cmd
+}
+
+func (m *Model) route(key, text string) tea.Cmd {
 	if key == "ctrl+c" {
 		return tea.Quit
 	}

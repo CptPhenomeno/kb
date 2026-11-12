@@ -255,9 +255,92 @@ func TestTreeStartupClosedBranchFollowsArrowsLikeHandClosed(t *testing.T) {
 func TestTreeSearchSeesStartupClosedBranchesLikeHandClosed(t *testing.T) {
 	m := doneTreeModel(t)
 	press(t, m, "/", "F", "i", "n", "i", "s", "h", "e", "d", " ", "t", "a", "s", "k", "enter")
-	// One state only: the match is hidden under the closed KB-20.
-	if got := rowIDs(m); got != "KB-20" {
-		t.Fatalf("search rows = %s, want the closed ancestor only", got)
+	// The search opened every branch, so the match inside the startup-closed KB-20 shows.
+	if got := rowIDs(m); got != "KB-20 KB-21 KB-22" {
+		t.Fatalf("search rows = %s, want the match under the opened KB-20", got)
+	}
+}
+
+func TestTreeSearchOpensEveryBranch(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "x")
+	press(t, m, "/", "t")
+	if len(m.tree.collapsed) != 0 {
+		t.Fatalf("collapsed = %v, want every branch open", m.tree.collapsed)
+	}
+}
+
+func TestTreeFilterOpensEveryBranch(t *testing.T) {
+	m := treeModel(t)
+	press(t, m, "x")
+	press(t, m, "f", "down", "down", "down", "down", "down", "space", "esc") // only blocked
+	if len(m.tree.collapsed) != 0 {
+		t.Fatalf("collapsed = %v, want every branch open", m.tree.collapsed)
+	}
+}
+
+func TestTreeMoreLettersDoNotReopen(t *testing.T) {
+	m := doneTreeModel(t)
+	press(t, m, "/", "F")
+	press(t, m, "x") // typed into the search, not the fold key
+	m.tree.collapsed = map[string]bool{"KB-21": true}
+	press(t, m, "i")
+	if !m.tree.collapsed["KB-21"] {
+		t.Fatalf("collapsed = %v, KB-21 reopened by a keystroke", m.tree.collapsed)
+	}
+}
+
+func TestTreeFilterChangeWhileNarrowedDoesNotReopen(t *testing.T) {
+	m := doneTreeModel(t)
+	press(t, m, "/", "F", "i", "n", "enter", "x")
+	if len(m.tree.collapsed) == 0 {
+		t.Fatal("x did not close the branches")
+	}
+	closed := len(m.tree.collapsed)
+	press(t, m, "f", "down", "down", "down", "down", "down", "space", "esc") // only blocked
+	if len(m.tree.collapsed) != closed {
+		t.Fatalf("collapsed = %v, want %d branches still closed", m.tree.collapsed, closed)
+	}
+}
+
+func TestTreeArrowsWorkOnNarrowedView(t *testing.T) {
+	m := doneTreeModel(t)
+	press(t, m, "/", "F", "i", "n", "i", "s", "h", "e", "d", "enter")
+	if got := rowIDs(m); got != "KB-20 KB-21 KB-22 KB-23" {
+		t.Fatalf("rows = %s", got)
+	}
+	press(t, m, "left")
+	if got := rowIDs(m); got != "KB-20 KB-23" {
+		t.Fatalf("after left rows = %s", got)
+	}
+	press(t, m, "right")
+	if got := rowIDs(m); got != "KB-20 KB-21 KB-22 KB-23" {
+		t.Fatalf("after right rows = %s", got)
+	}
+}
+
+func TestTreeXWorksOnNarrowedView(t *testing.T) {
+	m := doneTreeModel(t)
+	press(t, m, "/", "F", "i", "n", "i", "s", "h", "e", "d", "enter")
+	press(t, m, "x")
+	if got := rowIDs(m); got != "KB-20 KB-23" {
+		t.Fatalf("after x rows = %s, want the top level", got)
+	}
+	press(t, m, "x")
+	if got := rowIDs(m); got != "KB-20 KB-21 KB-22 KB-23" {
+		t.Fatalf("after second x rows = %s, want all open", got)
+	}
+}
+
+func TestTreeClosingSearchKeepsBranchesAsLeft(t *testing.T) {
+	m := doneTreeModel(t)
+	press(t, m, "/", "F", "enter", "x")
+	press(t, m, "/", "esc") // clears the search
+	if filtering(m) {
+		t.Fatal("search still active")
+	}
+	if !m.tree.collapsed["KB-20"] || !m.tree.collapsed["KB-1"] {
+		t.Fatalf("collapsed = %v, branches restored or reopened", m.tree.collapsed)
 	}
 }
 
