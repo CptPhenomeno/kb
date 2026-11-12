@@ -34,7 +34,7 @@ func acceptForm(t *testing.T) (*Model, *core.Service, func(id string) []string) 
 
 func TestCreateFormHasAnAcceptanceFieldAfterTheDescription(t *testing.T) {
 	m := openForm(t)
-	if fAcceptance != fDescription+1 || len(m.form.fields) != fAcceptance+1 {
+	if fAcceptance != fDescription+1 || len(m.form.fields) != fTests+1 {
 		t.Fatalf("fields = %d", len(m.form.fields))
 	}
 	if m.form.fields[fAcceptance].label != "acceptance" {

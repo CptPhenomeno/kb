@@ -22,9 +22,9 @@
 │                              │ │ │  BLOC│  New item                                                    esc cancel  │         │ │                             │
 │                              │ │ ╰──────│   Details   Criteria  [Tests]                       ctrl+← → switch tab  │         │ │                             │
 │                              │ │        │                                                                          │         │ │                             │
-│                              │ │        │  No tests yet.                                                           │         │ │                             │
+│                              │ │        │  › tests       ▌                                                         │         │ │                             │
 │                              │ │        │                                                                          │         │ │                             │
-│                              │ │        │  enter or ctrl+s saves · tab or ↑ ↓ move · ← → change a choice           │         │ │                             │
+│                              │ │        │  enter adds · ctrl+s saves · backspace on empty removes the last · tab…  │         │ │                             │
 │                              │ │        │                                                                          │         │ │                             │
 │                              │ │        ╰──────────────────────────────────────────────────────────────────────────╯         │ │                             │
 │                              │ │                             │ │                             │ │                             │ │                             │

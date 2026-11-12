@@ -33,6 +33,7 @@ type formState struct {
 	info     string         // a confirmation, e.g. after the editor
 	saving   bool
 	criteria []string // criteria added so far in the create form
+	tests    []string // tests added so far in the create form
 	tab      formTab  // active tab of the create form
 }
 
@@ -47,7 +48,7 @@ const (
 
 var formTabLabels = []string{"Details", "Criteria", "Tests"}
 
-// fTests is the focus value on the Tests tab, which has no field yet.
+// fTests is the tests input of the create form.
 const fTests = fAcceptance + 1
 
 // tabFields lists the field indexes the tab moves among.
@@ -72,7 +73,7 @@ func tabOf(field int) formTab {
 	switch {
 	case field == fAcceptance:
 		return formCriteria
-	case field >= fTests:
+	case field == fTests:
 		return formTests
 	}
 	return formDetails
@@ -116,7 +117,7 @@ func newForm(it *core.Item) *formState {
 		{label: "description"},
 	}}
 	if it == nil {
-		f.fields = append(f.fields, formField{label: "acceptance"})
+		f.fields = append(f.fields, formField{label: "acceptance"}, formField{label: "tests"})
 	} else {
 		f.editID, f.version = it.ID, it.Version
 		f.fields[fTitle].value = it.Title
@@ -177,9 +178,6 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 		f.step(-1)
 		return nil
 	}
-	if f.focus >= len(f.fields) { // the Tests tab has no input yet
-		return nil
-	}
 	fld := &f.fields[f.focus]
 	switch key {
 	case "left", "right":
@@ -193,9 +191,9 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 			fld.value = fld.choices[i]
 		}
 	case "backspace":
-		if f.focus == fAcceptance && fld.value == "" {
-			if n := len(f.criteria); n > 0 {
-				f.criteria = f.criteria[:n-1]
+		if list := f.listOf(f.focus); list != nil && fld.value == "" {
+			if n := len(*list); n > 0 {
+				*list = (*list)[:n-1]
 			}
 		} else if fld.choices == nil {
 			if r := []rune(fld.value); len(r) > 0 {
@@ -208,8 +206,8 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 		switch f.focus {
 		case fDescription:
 			return m.editDescription(fld.value, "", 0)
-		case fAcceptance:
-			f.addPendingCriterion()
+		case fAcceptance, fTests:
+			f.addPending(f.focus)
 			return nil
 		}
 		f.saving = true
@@ -222,15 +220,27 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 	return nil
 }
 
-// addPendingCriterion moves the text typed in the acceptance input, if not
-// blank, to the list of criteria.
-func (f *formState) addPendingCriterion() {
-	if len(f.fields) <= fAcceptance {
+// listOf is the list an input of the create form adds to, or nil for the
+// other fields.
+func (f *formState) listOf(field int) *[]string {
+	switch field {
+	case fAcceptance:
+		return &f.criteria
+	case fTests:
+		return &f.tests
+	}
+	return nil
+}
+
+// addPending moves the text typed in a list input, if not blank, to its list.
+func (f *formState) addPending(field int) {
+	list := f.listOf(field)
+	if list == nil || len(f.fields) <= field {
 		return
 	}
-	in := &f.fields[fAcceptance]
+	in := &f.fields[field]
 	if text := strings.TrimSpace(in.value); text != "" {
-		f.criteria = append(f.criteria, text)
+		*list = append(*list, text)
 		in.value = ""
 	}
 }
@@ -266,7 +276,8 @@ func (m *Model) editDescription(initial, target string, version int) tea.Cmd {
 // back next to the field they concern.
 func (m *Model) submitForm() tea.Cmd {
 	f := m.form
-	f.addPendingCriterion()
+	f.addPending(fAcceptance)
+	f.addPending(fTests)
 	val := func(i int) string { return strings.TrimSpace(f.fields[i].value) }
 	prio, _ := core.ParsePriority(val(fPriority))
 	points, _ := strconv.Atoi(val(fPoints))
@@ -284,6 +295,9 @@ func (m *Model) submitForm() tea.Cmd {
 			Labels: labels, Spec: val(fSpec), Description: desc}
 		for _, text := range f.criteria {
 			it.Acceptance = append(it.Acceptance, core.Criterion{Text: text})
+		}
+		for _, name := range f.tests {
+			it.Tests = append(it.Tests, core.Test{Name: name})
 		}
 		return func() tea.Msg {
 			created, err := m.be.Create(m.ctx, actor, it)
@@ -325,6 +339,8 @@ func formError(err error) formDoneMsg {
 		field = fPoints
 	case strings.Contains(lower, "acceptance criterion"):
 		field = fAcceptance
+	case strings.HasPrefix(lower, "test "):
+		field = fTests
 	case strings.Contains(lower, "tdd phase"), strings.Contains(lower, "tests are not allowed"):
 		field = fType
 	}
@@ -347,9 +363,6 @@ func (m *Model) renderForm() string {
 		lines = append(lines, spread(m.renderFormTabs(), m.th.muted.Render("ctrl+← → switch tab"), iw))
 	}
 	lines = append(lines, "")
-	if f.tab == formTests {
-		lines = append(lines, m.th.muted.Render("No tests yet."))
-	}
 	for i, fld := range f.fields {
 		if f.editID == "" && tabOf(i) != f.tab {
 			continue
@@ -373,13 +386,13 @@ func (m *Model) renderForm() string {
 		if focused {
 			marker = m.th.fg(m.th.p.Accent).Render("› ")
 		}
-		if i == fTitle || i == fDescription || i == fAcceptance {
+		if i == fTitle || i == fDescription || i == fAcceptance || i == fTests {
 			lines = append(lines, m.renderWrappedField(marker+label, fld.value, i == fDescription, focused, iw)...)
 		} else {
 			lines = append(lines, truncate(marker+label+value, iw))
 		}
-		if i == fAcceptance {
-			for _, c := range f.criteria {
+		if list := f.listOf(i); list != nil {
+			for _, c := range *list {
 				lines = append(lines, hang(strings.Repeat(" ", 14)+m.th.muted.Render("• "), 16, c, m.th.text, iw, 16)...)
 			}
 		}
@@ -399,7 +412,7 @@ func (m *Model) renderForm() string {
 		status = "saving… · tab or ↑ ↓ move · ← → change a choice"
 	case f.focus == fDescription:
 		status = "enter $EDITOR · ctrl+s saves · tab or ↑ ↓ move"
-	case f.focus == fAcceptance:
+	case f.focus == fAcceptance || f.focus == fTests:
 		status = "enter adds · ctrl+s saves · backspace on empty removes the last · tab or ↑ ↓ move"
 	}
 	lines = append(lines, "", m.th.muted.Render(status))
