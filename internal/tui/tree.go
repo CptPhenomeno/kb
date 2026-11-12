@@ -14,6 +14,32 @@ type treeState struct {
 	cursor    int
 	scroll    int
 	collapsed map[string]bool // items whose children are hidden
+	startup   map[string]bool // collapsed at startup; a search or filter shows them open
+	folded    bool            // the startup collapse already ran
+}
+
+// closed reports whether the children of id are hidden.
+func (t *treeState) closed(m *Model, id string) bool {
+	return t.collapsed[id] && !(t.startup[id] && filtering(m))
+}
+
+// foldDone closes every done item with children, once per session: the first
+// time the Tree is built. Later refreshes and items that become done are
+// left alone.
+func (t *treeState) foldDone(m *Model) {
+	if t.folded || m.snap == nil {
+		return
+	}
+	t.folded = true
+	for _, it := range m.snap.Items() {
+		if it.Status != core.StatusDone || len(m.snap.Children(it.ID)) == 0 {
+			continue
+		}
+		if t.collapsed == nil {
+			t.collapsed, t.startup = map[string]bool{}, map[string]bool{}
+		}
+		t.collapsed[it.ID], t.startup[it.ID] = true, true
+	}
 }
 
 // treeRow is a line of the tree.
@@ -40,7 +66,7 @@ func (t *treeState) rows(m *Model) []treeRow {
 			}
 		}
 		out = append(out, treeRow{it: it, depth: depth, hasKids: len(kids) > 0})
-		if t.collapsed[it.ID] {
+		if t.closed(m, it.ID) {
 			return
 		}
 		for _, c := range kids {
@@ -158,7 +184,7 @@ func (t *treeState) key(m *Model, key string) tea.Cmd {
 	case "down":
 		t.cursor = min(len(rows)-1, t.cursor+1)
 	case "left":
-		if row.hasKids && !t.collapsed[row.it.ID] {
+		if row.hasKids && !t.closed(m, row.it.ID) {
 			if t.collapsed == nil {
 				t.collapsed = map[string]bool{}
 			}
@@ -174,7 +200,7 @@ func (t *treeState) key(m *Model, key string) tea.Cmd {
 		}
 	case "right":
 		switch {
-		case t.collapsed[row.it.ID]:
+		case t.closed(m, row.it.ID):
 			delete(t.collapsed, row.it.ID)
 			return nil
 		case row.hasKids:
@@ -325,7 +351,7 @@ func (t *treeState) renderRow(m *Model, r treeRow, c treeCols, titleW, w int, se
 	}
 	glyph := "·"
 	switch {
-	case r.hasKids && t.collapsed[it.ID]:
+	case r.hasKids && t.closed(m, it.ID):
 		glyph = "▸"
 	case r.hasKids:
 		glyph = "▾"

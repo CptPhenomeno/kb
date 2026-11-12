@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/CptPhenomeno/kb/internal/core"
 	"regexp"
 	"strings"
 	"testing"
@@ -148,4 +149,107 @@ func TestTreeSearchKeepsAncestors(t *testing.T) {
 	if got := strings.Join(treeIDs(m), " "); got != "KB-1 KB-2 KB-4" {
 		t.Fatalf("search rows = %s, want the match and its ancestors", got)
 	}
+}
+
+// doneBoard has a finished epic with a nested story, a finished task without
+// children, and an epic still in progress.
+func doneBoard() *fakeBackend {
+	be := sampleBoard()
+	items := append(be.snap.Items(),
+		item("KB-20", core.TypeEpic, core.StatusDone, "", "Finished epic"),
+		item("KB-21", core.TypeStory, core.StatusDone, "KB-20", "Finished story"),
+		item("KB-22", core.TypeTask, core.StatusDone, "KB-21", "Finished task"),
+		item("KB-23", core.TypeTask, core.StatusDone, "", "Finished loner"),
+	)
+	be.snap = core.NewSnapshot(items, nil)
+	return be
+}
+
+func doneTreeModel(t *testing.T) *Model {
+	t.Helper()
+	m := newModel(t, doneBoard(), 160, 48)
+	press(t, m, "tab")
+	return m
+}
+
+// refreshTree makes the model poll and load the backend's current snapshot.
+func refreshTree(t *testing.T, m *Model) {
+	t.Helper()
+	m.be.(*fakeBackend).version++
+	send(t, m, tickMsg{})
+	runCmd(t, m, m.checkVersion(), 0)
+}
+
+func rowIDs(m *Model) string { return strings.Join(treeIDs(m), " ") }
+
+func TestTreeStartsWithDoneBranchesClosed(t *testing.T) {
+	m := doneTreeModel(t)
+	got := rowIDs(m)
+	if !strings.Contains(got, "KB-20 ") || strings.Contains(got, "KB-21") || strings.Contains(got, "KB-22") {
+		t.Fatalf("rows = %s, want KB-20 closed", got)
+	}
+	if !strings.Contains(got, "KB-1 KB-2 KB-3") {
+		t.Fatalf("rows = %s, the open work must stay open", got)
+	}
+}
+
+func TestTreeDoneItemsWithoutChildrenUnaffected(t *testing.T) {
+	m := doneTreeModel(t)
+	if !strings.Contains(rowIDs(m), "KB-23") || m.tree.collapsed["KB-23"] || m.tree.collapsed["KB-17"] {
+		t.Fatalf("leaf done items must not be collapsed: %v", m.tree.collapsed)
+	}
+}
+
+func TestTreeReopenedDoneBranchSurvivesRefresh(t *testing.T) {
+	m := doneTreeModel(t)
+	for i, r := range m.tree.rows(m) {
+		if r.it.ID == "KB-20" {
+			m.tree.cursor = i
+		}
+	}
+	press(t, m, "right")
+	if !strings.Contains(rowIDs(m), "KB-21") {
+		t.Fatalf("right did not open KB-20: %s", rowIDs(m))
+	}
+	refreshTree(t, m)
+	if !strings.Contains(rowIDs(m), "KB-21") {
+		t.Fatalf("refresh closed the reopened branch: %s", rowIDs(m))
+	}
+}
+
+func TestTreeItemDoneDuringSessionStaysOpen(t *testing.T) {
+	m := doneTreeModel(t)
+	be := m.be.(*fakeBackend)
+	var items []*core.Item
+	for _, it := range be.snap.Items() {
+		c := *it
+		if c.ID == "KB-6" || c.ID == "KB-7" || c.ID == "KB-8" {
+			c.Status = core.StatusDone
+		}
+		items = append(items, &c)
+	}
+	be.snap = core.NewSnapshot(items, nil)
+	refreshTree(t, m)
+	if got := rowIDs(m); !strings.Contains(got, "KB-6 KB-7 KB-8") {
+		t.Fatalf("an item done during the session was closed: %s", got)
+	}
+}
+
+func TestTreeSearchRowsUnchangedByStartupCollapse(t *testing.T) {
+	m := doneTreeModel(t)
+	press(t, m, "/", "r", "e", "f", "r", "e", "s", "h", "enter")
+	if got := rowIDs(m); got != "KB-1 KB-2 KB-4" {
+		t.Fatalf("search rows = %s", got)
+	}
+	// A match inside a done branch shows, as it did before the startup collapse.
+	m = doneTreeModel(t)
+	press(t, m, "/", "F", "i", "n", "i", "s", "h", "e", "d", " ", "t", "a", "s", "k", "enter")
+	if got := rowIDs(m); got != "KB-20 KB-21 KB-22" {
+		t.Fatalf("search rows = %s, want the match under its open ancestors", got)
+	}
+}
+
+func TestTreeDoneBranchesClosedSnapshot(t *testing.T) {
+	m := doneTreeModel(t)
+	golden(t, "tree_done_closed", screen(m))
 }

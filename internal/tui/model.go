@@ -269,6 +269,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.history = msg.history
 			}
 		}
+		m.tree.foldDone(m)
 		m.tree.reveal(m, prevTree)
 		m.board.restore(m, prevBoard)
 		m.tree.restore(m, prevTree)
