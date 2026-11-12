@@ -17,6 +17,7 @@ type UserPrefs struct {
 	Theme       string `toml:"theme,omitempty"`
 	ShowParents *bool  `toml:"show_parents,omitempty"` // epics and stories on the board
 	BoardSort   string `toml:"board_sort,omitempty"`   // "recent" or "manual"
+	CommandBar  string `toml:"command_bar,omitempty"`  // "compact" or "full"
 }
 
 func userConfigPath() (string, error) {
@@ -77,5 +78,13 @@ func SaveUserShowParents(show bool) error {
 func SaveUserBoardSort(order string) error {
 	p := LoadUserPrefs()
 	p.BoardSort = order
+	return SaveUserPrefs(p)
+}
+
+// SaveUserCommandBar stores the command bar mode ("compact" or "full"),
+// keeping the other preferences.
+func SaveUserCommandBar(mode string) error {
+	p := LoadUserPrefs()
+	p.CommandBar = mode
 	return SaveUserPrefs(p)
 }

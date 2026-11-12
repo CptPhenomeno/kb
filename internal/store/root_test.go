@@ -218,3 +218,21 @@ func TestUserBoardSortSaved(t *testing.T) {
 		t.Fatalf("prefs = %+v, want board_sort manual and the theme kept", p)
 	}
 }
+
+func TestUserCommandBarRoundTrips(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	if err := SaveUserTheme("nord"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveUserCommandBar("full"); err != nil {
+		t.Fatal(err)
+	}
+	if p := LoadUserPrefs(); p.CommandBar != "full" || p.Theme != "nord" {
+		t.Fatalf("prefs = %+v, want command_bar full and the theme kept", p)
+	}
+	path, _ := userConfigPath()
+	raw, err := os.ReadFile(path)
+	if err != nil || !strings.Contains(string(raw), `command_bar = "full"`) {
+		t.Fatalf("config file = %q, %v; want command_bar = \"full\"", raw, err)
+	}
+}
