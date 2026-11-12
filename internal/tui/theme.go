@@ -43,6 +43,17 @@ func hex(s string) color.Color { return lipgloss.Color(s) }
 //   - dracula Agent #8ea0f0: periwinkle between Cyan and Purple, Dracula has no blue
 //   - solarized-dark Human #dd3d8c: magenta #d33682 lightened
 //   - nord Warn #dba06f: Aurora orange #d08770 lightened
+//   - rose-pine Warn #f0956b: orange between Gold #f6c177 and Love #eb6f92, Rose Pine has no orange
+//   - rose-pine Green #8fd0a8: Foam #9ccfd8 turned toward green, Rose Pine has no green
+//   - rose-pine-dawn Accent #d16f6b: Rose #d7827e darkened (2.6:1 on Base)
+//   - rose-pine-dawn Human #c27914: Gold #ea9d34 darkened (2.1:1 on Base)
+//   - rose-pine-dawn Warn #d07125: orange between Gold and Love, darkened to 3:1
+//   - rose-pine-dawn Green #3a9a6e: Foam #56949f turned toward green, Rose Pine has no green
+//
+// The external themes (rose-pine, rose-pine-dawn) come after the kb themes
+// and use the official colors by meaning: Love is Red, Iris is Purple,
+// Foam is Cyan, Pine is Agent, Rose is Accent, Gold is Human (dark) and
+// Subtle is Muted.
 var Themes = []Palette{
 	{Name: "kb-neon-rain", Base: hex("#0a0f14"), Surface: hex("#121a22"), Overlay: hex("#2a3a4a"),
 		Text: hex("#e0ecf5"), Bright: hex("#ffffff"), Muted: hex("#8aa0b4"), Accent: hex("#ff6a3d"),
@@ -92,6 +103,20 @@ var Themes = []Palette{
 		Text: hex("#2a1838"), Bright: hex("#14081f"), Muted: hex("#5e4a70"), Accent: hex("#d1007a"),
 		Human: hex("#8a5a00"), Agent: hex("#2b4fd6"), Warn: hex("#c43d00"), Red: hex("#b8002a"),
 		Green: hex("#0a7d55"), Purple: hex("#7a2ad1"), Cyan: hex("#006f9e")},
+	// rose-pine (main): Base base, Surface surface, Overlay highlight med,
+	// Text and Bright text, Muted subtle, Accent rose, Human gold, Agent pine,
+	// Red love, Purple iris, Cyan foam. Warn and Green are derived.
+	{Name: "rose-pine", Base: hex("#191724"), Surface: hex("#1f1d2e"), Overlay: hex("#403d52"),
+		Text: hex("#e0def4"), Bright: hex("#e0def4"), Muted: hex("#908caa"), Accent: hex("#ebbcba"),
+		Human: hex("#f6c177"), Agent: hex("#31748f"), Warn: hex("#f0956b"), Red: hex("#eb6f92"),
+		Green: hex("#8fd0a8"), Purple: hex("#c4a7e7"), Cyan: hex("#9ccfd8")},
+	// rose-pine-dawn: Base base, Surface surface, Overlay highlight med,
+	// Text and Bright text, Muted subtle, Agent pine, Red love, Purple iris,
+	// Cyan foam. Accent, Human, Warn and Green are derived.
+	{Name: "rose-pine-dawn", Light: true, Base: hex("#faf4ed"), Surface: hex("#fffaf3"), Overlay: hex("#dfdad9"),
+		Text: hex("#575279"), Bright: hex("#575279"), Muted: hex("#797593"), Accent: hex("#d16f6b"),
+		Human: hex("#c27914"), Agent: hex("#286983"), Warn: hex("#d07125"), Red: hex("#b4637a"),
+		Green: hex("#3a9a6e"), Purple: hex("#907aa9"), Cyan: hex("#56949f")},
 }
 
 // ThemeNames returns the names of the built-in themes, default first.
