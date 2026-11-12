@@ -144,3 +144,22 @@ func TestCLIJSONDocumentsAcceptanceEvents(t *testing.T) {
 		}
 	}
 }
+
+// The guide lists the test edit and rm commands, and docs/cli-json.md the
+// test event fields.
+func TestGuideAndDocsDocumentTestEditAndRm(t *testing.T) {
+	e := newEnv(t)
+	out := e.ok("guide")
+	for _, want := range []string{`kb test <id> edit <n> "<name>"`, "kb test <id> rm <n>"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("guide does not list %q", want)
+		}
+	}
+	data, err := os.ReadFile("../../docs/cli-json.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), "`test <id> edit`") || !strings.Contains(string(data), "`test <id> rm`") {
+		t.Error("docs/cli-json.md does not document the test event fields")
+	}
+}

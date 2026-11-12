@@ -35,6 +35,12 @@ func DescribeEvent(e Event) string {
 		if e.Data["added"] == true {
 			return fmt.Sprintf("test added: %q", str("name"))
 		}
+		if e.Data["edited"] == true {
+			return fmt.Sprintf("test renamed: %q → %q", str("old"), str("name"))
+		}
+		if e.Data["removed"] == true {
+			return fmt.Sprintf("test removed: %q", str("name"))
+		}
 		return fmt.Sprintf("test %q → %s", str("name"), str("state"))
 	case EventAcceptance:
 		if e.Data["added"] == true {

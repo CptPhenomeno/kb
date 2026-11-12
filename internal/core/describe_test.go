@@ -25,3 +25,23 @@ func TestDescribeCriterionRemovedShowsItsText(t *testing.T) {
 		t.Fatalf("DescribeEvent = %q, want %q", got, want)
 	}
 }
+
+func TestDescribeTestEditedIsARename(t *testing.T) {
+	ev := core.Event{Kind: core.EventTest, Data: map[string]any{
+		"name": "bee", "state": "pending", "edited": true, "old": "b",
+	}}
+	want := `test renamed: "b" → "bee"`
+	if got := core.DescribeEvent(ev); got != want {
+		t.Fatalf("DescribeEvent = %q, want %q", got, want)
+	}
+}
+
+func TestDescribeTestRemovedIsARemoval(t *testing.T) {
+	ev := core.Event{Kind: core.EventTest, Data: map[string]any{
+		"name": "a", "state": "passing", "removed": true,
+	}}
+	want := `test removed: "a"`
+	if got := core.DescribeEvent(ev); got != want {
+		t.Fatalf("DescribeEvent = %q, want %q", got, want)
+	}
+}

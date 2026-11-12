@@ -87,6 +87,15 @@ Timestamps are RFC 3339 in UTC. Lists are never `null`.
 `claim_expired`, `linked`, `unlinked`, `phase`, `test`, `acceptance`,
 `note`, `deleted`. Moves made by propagation carry `"derived": true`.
 
+The `data` of a `test` event describes one test:
+
+| Fields | Meaning |
+|--------|---------|
+| `name`, `state` | the test after an outcome is recorded |
+| `"added": true` | `test <id> add`: the test was appended |
+| `"edited": true`, `"old"` | `test <id> edit`: `name` is the new name, `old` the previous one; `state` is `pending` because a rename resets the outcome |
+| `"removed": true` | `test <id> rm`: `name` and `state` are those of the removed test; later tests shift up |
+
 The `data` of an `acceptance` event describes one criterion (`n` is its
 1-based position):
 
