@@ -43,6 +43,6 @@ ACTORS                                                 3 EVENTS · all actors   
                                                                                                                                                                 
                                                                                                                                                                 
                                                                                                                                                                 
+                                                                                                                                                                
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
-↑ ↓ select actor   enter only this actor   esc all actors   o open item   a release claim   pgup pgdn scroll events   tab next view   ctrl+p commands   t theme 
-? help   q quit                                                                                                                                                 
+↑ ↓ select actor   enter only this actor   o open item   tab next view   ctrl+p commands   ? help   q quit                                                      

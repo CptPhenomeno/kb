@@ -43,6 +43,6 @@ Create and edit form  (n, e)
                                                                                                                                                                 
                                                                                                                                                                 
                                                                                                                                                                 
+                                                                                                                                                                
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
 tab → next tab   shift+tab ← previous tab   ↑ ↓ scroll   pgup pgdn page   ?/esc close                                                                           
-                                                                                                                                                                

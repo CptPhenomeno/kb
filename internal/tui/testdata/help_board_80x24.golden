@@ -16,9 +16,9 @@ Board view
   d             delete the selected item                                        
   c             manage the acceptance criteria and tests of the selected item   
   ctrl+e        edit the description of the selected item in $EDITOR            
-                            ↓ 12 more lines · pgdown                            
+  a             claim or release the selected item                              
+  l             manage relations                                                
+                            ↓ 10 more lines · pgdown                            
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing             
 tab → next tab   shift+tab ← previous tab   ↑ ↓ scroll   pgup pgdn page         
 ?/esc close                                                                     
-                                                                                
-                                                                                

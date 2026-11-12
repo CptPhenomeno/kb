@@ -115,6 +115,7 @@ type Model struct {
 	help          bool
 	helpScroll    int // first help line shown
 	helpTab       int // active help tab: 0 is the current view, then helpTabNames
+	barMode       barMode
 
 	snap    *core.Snapshot
 	recent  []core.Event
@@ -649,6 +650,14 @@ var helpKeys = []keyHint{
 	{"?/esc", "close", "close the help", false},
 }
 
+// barMode is how much of the view's keys the command bar shows.
+type barMode int
+
+const (
+	barCompact barMode = iota // the essential keys (the default)
+	barFull                   // every key of the view
+)
+
 var viewKeys = map[viewKind][]keyHint{
 	viewBoard: {
 		{"← → ↑ ↓", "navigate", "move between columns and cards", false},
@@ -692,9 +701,35 @@ var viewKeys = map[viewKind][]keyHint{
 	},
 }
 
+// compactKeys are the keys the compact command bar shows for each view.
+var compactKeys = map[viewKind][]keyHint{
+	viewBoard: {
+		{key: "← → ↑ ↓", label: "navigate"}, {key: "enter", label: "details"}, {key: "n", label: "new"},
+		{key: "/", label: "search"}, {key: "tab", label: "next view"}, {key: "ctrl+p", label: "commands"},
+		{key: "?", label: "help"}, {key: "q", label: "quit"},
+	},
+	viewTree: {
+		{key: "← → ↑ ↓", label: "navigate"}, {key: "x", label: "expand/collapse all"}, {key: "enter", label: "details"},
+		{key: "n", label: "new"}, {key: "/", label: "search"}, {key: "tab", label: "next view"},
+		{key: "ctrl+p", label: "commands"}, {key: "?", label: "help"}, {key: "q", label: "quit"},
+	},
+	viewActivity: {
+		{key: "↑ ↓", label: "select actor"}, {key: "enter", label: "only this actor"}, {key: "o", label: "open item"},
+		{key: "tab", label: "next view"}, {key: "ctrl+p", label: "commands"}, {key: "?", label: "help"}, {key: "q", label: "quit"},
+	},
+}
+
+// viewBar returns the hints of the view bar for the current bar mode.
+func (m *Model) viewBar() []keyHint {
+	if m.barMode == barCompact {
+		return compactKeys[m.view]
+	}
+	return ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...))
+}
+
 // commandBar renders the key hints of the current view, wrapped to width.
 func (m *Model) commandBar() []string {
-	viewHints := ready(append(append([]keyHint{}, viewKeys[m.view]...), globalKeys...))
+	viewHints := m.viewBar()
 	hints := viewHints
 	if m.picker != nil {
 		hints = pickerKeys

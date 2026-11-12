@@ -1,0 +1,24 @@
+ kb  api-gateway   Board  Tree  Activity   sh… 12 items  1 agent active  1 stale
+╭──────────────╮ ╭─────────────╮ ╭─────────────╮ ╭─────────────╮ ╭─────────────╮
+│ Backlog    1 │ │ To do     4 │ │ In progr… 4 │ │ Review    1 │ │ Done      1 │
+│ ╭──────────╮ │ │ ╭─────────╮ │ │ ╭─────────╮ │ │ ╭─────────╮ │ │ ╭─────────╮ │
+│ │ KB-15  ▲ │ │ │ │ KB-5 ▲▲ │ │ │ │ KB-1  ▲ │ │ │ │ KB-3 ▲▲ │ │ │ │ KB-17 · │ │
+│ │ Load     │ │ │ │ Expired │ │ │ │ Authent │ │ │ │ Validat │ │ │ │ Health  │ │
+│ │ test th… │ │ │ │ token … │ │ │ │ ication │ │ │ │ e toke… │ │ │ │ check … │ │
+│ ╰──────────╯ │ │ │ 0/1     │ │ │ │ 0/1 d…  │ │ │ │ ●       │ │ │ │ 2/2     │ │
+│              │ │ ╰─────────╯ │ │ ╰─────────╯ │ │ │ REFACTO │ │ │ ╰─────────╯ │
+│              │ │ ╭─────────╮ │ │ ╭─────────╮ │ │ │ R 3/3   │ │ │             │
+│              │ │ │ KB-6  ▲ │ │ │ │ KB-2  ▲ │ │ │ │ agent-… │ │ │             │
+│              │ │ │ API     │ │ │ │ Token   │ │ │ ╰─────────╯ │ │             │
+│              │ │ │ keys …  │ │ │ │ login   │ │ │             │ │             │
+│              │ │ │ 0/2 d…  │ │ │ │ 0/3 d…  │ │ │             │ │             │
+│              │ │ ╰─────────╯ │ │ ╰─────────╯ │ │             │ │             │
+│              │ │  ↓ 2 more   │ │  ↓ 2 more   │ │             │ │             │
+│              │ │             │ │             │ │             │ │             │
+│              │ │             │ │             │ │             │ │             │
+│              │ │             │ │             │ │             │ │             │
+│              │ │             │ │             │ │             │ │             │
+╰──────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯
+14:04  agent-auth  KB-4  test "refresh rotates the token" → failing             
+← → ↑ ↓ navigate   enter details   n new   / search   tab next view             
+ctrl+p commands   ? help   q quit                                               

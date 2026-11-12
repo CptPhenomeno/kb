@@ -59,6 +59,7 @@ func TestHelpToggle(t *testing.T) {
 
 func TestCommandBarShowsViewKeys(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
+	m.barMode = barFull // the keys below are the complete bar
 	cases := []struct {
 		view viewKind
 		want []string
