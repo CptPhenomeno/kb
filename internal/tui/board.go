@@ -246,9 +246,13 @@ func (b *boardState) geometry(m *Model) geometry {
 // cardHeight is the height of a card of column width w, borders included.
 func cardHeight(m *Model, it *core.Item, w int) int { return len(cardLines(m, it, w-6)) + 2 }
 
-// visible returns the range of cards shown in a column and the markers
-// for hidden cards above and below.
-func (b *boardState) visible(m *Model, items []*core.Item, scroll, w, avail int) (end int, above, below bool) {
+// visible returns the whole cards shown in a column (items[scroll:end]), the
+// number of rows left under them for the top of the next card cut at the
+// bottom edge, and the markers for hidden cards above and below. The cut
+// card counts as hidden: below is true whenever end < len(items). cut is 0
+// when no card is hidden or no row is left. Even a single row is filled, with
+// the top border of the card: an empty row would be worse than a card edge.
+func (b *boardState) visible(m *Model, items []*core.Item, scroll, w, avail int) (end, cut int, above, below bool) {
 	above = scroll > 0
 	used := 0
 	if above {
@@ -267,7 +271,13 @@ func (b *boardState) visible(m *Model, items []*core.Item, scroll, w, avail int)
 		used += h
 		end++
 	}
-	return end, above, end < len(items)
+	below = end < len(items)
+	if below {
+		if left := avail - used - 1; left > 0 { // 1 row for the marker
+			cut = min(left, cardHeight(m, items[end], w)-1) // never the whole card
+		}
+	}
+	return end, cut, above, below
 }
 
 // cardsArea is the number of rows inside a column available for cards.
@@ -285,7 +295,7 @@ func (b *boardState) ensureVisible(m *Model) {
 		b.scroll[b.col] = b.row
 	}
 	for b.scroll[b.col] < b.row {
-		end, _, _ := b.visible(m, items, b.scroll[b.col], g.colW[b.col], cardsArea(g))
+		end, _, _, _ := b.visible(m, items, b.scroll[b.col], g.colW[b.col], cardsArea(g))
 		if b.row < end {
 			break
 		}
@@ -317,12 +327,16 @@ func (b *boardState) renderColumn(m *Model, st core.Status, items []*core.Item, 
 	title := spread(m.th.fg(m.th.statusColor[st]).Bold(true).Render(st.Label()), m.th.muted.Render(fmt.Sprint(len(items))), inner)
 	lines := []string{title}
 	avail := height - 3
-	end, above, below := b.visible(m, items, scroll, w, avail)
+	end, cut, above, below := b.visible(m, items, scroll, w, avail)
 	if above {
 		lines = append(lines, m.th.muted.Render(center(fmt.Sprintf("↑ %d more", scroll), inner)))
 	}
 	for _, it := range items[scroll:end] {
 		lines = append(lines, strings.Split(renderCard(m, it, inner, it.ID == sel), "\n")...)
+	}
+	if cut > 0 {
+		card := strings.Split(renderCard(m, items[end], inner, false), "\n")
+		lines = append(lines, card[:cut]...)
 	}
 	if below {
 		lines = append(lines, m.th.muted.Render(center(fmt.Sprintf("↓ %d more", len(items)-end), inner)))
@@ -431,7 +445,7 @@ func (b *boardState) cardAt(m *Model, x, y int) (col, row int, ok bool) {
 		}
 		cy := g.top + 2 // column border and title
 		scroll := b.scroll[c]
-		end, above, _ := b.visible(m, cols[c], scroll, g.colW[c], cardsArea(g))
+		end, _, above, _ := b.visible(m, cols[c], scroll, g.colW[c], cardsArea(g))
 		if above {
 			cy++
 		}

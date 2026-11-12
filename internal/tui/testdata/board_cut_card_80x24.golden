@@ -1,0 +1,24 @@
+ kb  api-gateway   Board  Tree  Activity   showing epic · story · task… 12 items
+╭──────────────╮ ╭─────────────╮ ╭─────────────╮ ╭─────────────╮ ╭─────────────╮
+│ Backlog    0 │ │ To do    12 │ │ In progr… 0 │ │ Review    0 │ │ Done      0 │
+│    empty     │ │ ╭─────────╮ │ │    empty    │ │    empty    │ │    empty    │
+│              │ │ │ KB-1  ▲ │ │ │             │ │             │ │             │
+│              │ │ │ Task    │ │ │             │ │             │ │             │
+│              │ │ │ number… │ │ │             │ │             │ │             │
+│              │ │ ╰─────────╯ │ │             │ │             │ │             │
+│              │ │ ╭─────────╮ │ │             │ │             │ │             │
+│              │ │ │ KB-2  ▲ │ │ │             │ │             │ │             │
+│              │ │ │ Task    │ │ │             │ │             │ │             │
+│              │ │ │ number… │ │ │             │ │             │ │             │
+│              │ │ ╰─────────╯ │ │             │ │             │ │             │
+│              │ │ ╭─────────╮ │ │             │ │             │ │             │
+│              │ │ │ KB-3  ▲ │ │ │             │ │             │ │             │
+│              │ │ │ Task    │ │ │             │ │             │ │             │
+│              │ │ │ number… │ │ │             │ │             │ │             │
+│              │ │ ╰─────────╯ │ │             │ │             │ │             │
+│              │ │ ╭─────────╮ │ │             │ │             │ │             │
+│              │ │  ↓ 9 more   │ │             │ │             │ │             │
+╰──────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯
+no activity yet                                                                 
+← → ↑ ↓ navigate   enter details   n new   / search   tab next view             
+ctrl+p commands   ? help   q quit                                               

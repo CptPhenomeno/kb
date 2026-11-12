@@ -15,9 +15,9 @@
 │ │  enter adds · ctrl+s saves · backspace removes last · tab moves          │ │
 │ │                                                                          │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
-│              │ │             │ │             │ │             │ │             │
-│              │ │             │ │             │ │             │ │             │
-│              │ │             │ │             │ │             │ │             │
+│              │ │ │ Key     │ │ │ │ Token   │ │ │             │ │             │
+│              │ │ │ storag… │ │ │ │ refresh │ │ │             │ │             │
+│              │ │  ↓ 2 more   │ │  ↓ 2 more   │ │             │ │             │
 ╰──────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing             
 ↑ ↓ field   ← → choice   ctrl+e editor   ctrl+← ctrl+→ tab   ctrl+s save        
