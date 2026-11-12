@@ -6,10 +6,10 @@ Create and edit form  (n, e)
   ↑ ↓           move between fields (also tab)                                                                                                                  
   ← →           change a choice field                                                                                                                           
   ctrl+e        edit the description in $EDITOR                                                                                                                 
+  ctrl+← ctrl+→  switch between the Details, Criteria and Tests tabs (create form)                                                                              
   ctrl+s        create or save the item from any field                                                                                                          
   enter         save the item, or open $EDITOR on the description, or add a criterion on acceptance                                                             
   esc           close without saving                                                                                                                            
-                                                                                                                                                                
                                                                                                                                                                 
                                                                                                                                                                 
                                                                                                                                                                 

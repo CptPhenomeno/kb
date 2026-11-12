@@ -13,14 +13,15 @@
 │                              │ │ │ 0/2 d╭──────────────────────────────────────────────────────────────────────────╮         │ │                             │
 │                              │ │ ╰──────│                                                                          │         │ │                             │
 │                              │ │ ╭──────│  New item                                                    esc cancel  │         │ │                             │
-│                              │ │ │ KB-7 │                                                                          │         │ │                             │
-│                              │ │ │ Key s│    title       Rotate the refresh token when the session is renewed      │         │ │                             │
-│                              │ │ ╰──────│                from a second device                                      │         │ │                             │
-│                              │ │ ╭──────│    type        task                                                      │         │ │                             │
-│                              │ │ │ KB-8 │    parent                                                                │         │ │                             │
-│                              │ │ │ Key r│    priority    medium                                                    │         │ │                             │
-│                              │ │ │  BLOC│    points      -                                                         │         │ │                             │
-│                              │ │ ╰──────│    labels                                                                │         │ │                             │
+│                              │ │ │ KB-7 │  [Details]  Criteria   Tests                        ctrl+← → switch tab  │         │ │                             │
+│                              │ │ │ Key s│                                                                          │         │ │                             │
+│                              │ │ ╰──────│    title       Rotate the refresh token when the session is renewed      │         │ │                             │
+│                              │ │ ╭──────│                from a second device                                      │         │ │                             │
+│                              │ │ │ KB-8 │    type        task                                                      │         │ │                             │
+│                              │ │ │ Key r│    parent                                                                │         │ │                             │
+│                              │ │ │  BLOC│    priority    medium                                                    │         │ │                             │
+│                              │ │ ╰──────│    points      -                                                         │         │ │                             │
+│                              │ │        │    labels                                                                │         │ │                             │
 │                              │ │        │    spec                                                                  │         │ │                             │
 │                              │ │        │  › description …the old one stops working at once. The refresh token     │         │ │                             │
 │                              │ │        │                must rotate on every renewal and the old one stops        │         │ │                             │
@@ -28,7 +29,6 @@
 │                              │ │        │                renewal and the old one stops working at once. The        │         │ │                             │
 │                              │ │        │                refresh token must rotate on every renewal and the old    │         │ │                             │
 │                              │ │        │                one stops working at once. ▌                              │         │ │                             │
-│                              │ │        │    acceptance                                                            │         │ │                             │
 │                              │ │        │                                                                          │         │ │                             │
 │                              │ │        │  enter $EDITOR · ctrl+s saves · tab or ↑ ↓ move                          │         │ │                             │
 │                              │ │        │                                                                          │         │ │                             │
@@ -45,4 +45,4 @@
 │                              │ │                             │ │                             │ │                             │ │                             │
 ╰──────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
-↑ ↓ field   ← → choice   ctrl+e editor   ctrl+s save   enter save · $EDITOR · add   esc cancel                                                                  
+↑ ↓ field   ← → choice   ctrl+e editor   ctrl+← ctrl+→ tab   ctrl+s save   enter save · $EDITOR · add   esc cancel                                              

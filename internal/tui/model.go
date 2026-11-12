@@ -298,6 +298,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.form.errs == nil {
 				m.form.errs = map[int]string{}
 			}
+			for field := range m.form.errs { // show the tab holding the error
+				if m.form.editID == "" && tabOf(field) != m.form.tab {
+					m.form.show(tabOf(field))
+				}
+				break
+			}
 			return m, nil
 		}
 		m.form, m.pendingSel = nil, msg.id

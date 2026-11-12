@@ -15,7 +15,7 @@ func acceptForm(t *testing.T) (*Model, *core.Service, func(id string) []string) 
 	m, svc := newLiveModel(t)
 	press(t, m, "n")
 	typeText(t, m, "Delta task")
-	m.form.focus = fAcceptance
+	m.form.show(formCriteria)
 	return m, svc, func(id string) []string {
 		it, err := svc.Get(context.Background(), id)
 		if err != nil {
@@ -40,15 +40,7 @@ func TestCreateFormHasAnAcceptanceFieldAfterTheDescription(t *testing.T) {
 	if m.form.fields[fAcceptance].label != "acceptance" {
 		t.Fatalf("label = %q", m.form.fields[fAcceptance].label)
 	}
-	m.form.focus = fDescription
-	press(t, m, "tab")
-	if m.form.focus != fAcceptance {
-		t.Fatal("tab from the description did not reach acceptance")
-	}
-	press(t, m, "tab")
-	if m.form.focus != fTitle {
-		t.Fatal("tab from acceptance did not wrap to the title")
-	}
+	press(t, m, "ctrl+right")
 	if !strings.Contains(screen(m), "acceptance") {
 		t.Fatalf("field not rendered:\n%s", screen(m))
 	}
@@ -93,7 +85,7 @@ func TestEnterOnABlankAcceptanceInputDoesNothing(t *testing.T) {
 	m, svc := newLiveModel(t)
 	press(t, m, "n")
 	typeText(t, m, "Delta task")
-	m.form.focus = fAcceptance
+	m.form.show(formCriteria)
 	before := boardSize(t, svc)
 	press(t, m, "enter")
 	typeText(t, m, "  ")
@@ -129,7 +121,7 @@ func TestBackspaceOnAnEmptyInputRemovesTheLastCriterion(t *testing.T) {
 
 func TestLongCriteriaWrapLikeInThePopup(t *testing.T) {
 	m := openForm(t)
-	m.form.focus = fAcceptance
+	m.form.show(formCriteria)
 	m.form.criteria = []string{"the first criterion is long enough that it has to wrap over several lines of the form popup"}
 	rows := fieldRows(t, m, "acceptance", "zzz")
 	var list []string

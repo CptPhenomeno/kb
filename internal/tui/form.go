@@ -33,6 +33,56 @@ type formState struct {
 	info     string         // a confirmation, e.g. after the editor
 	saving   bool
 	criteria []string // criteria added so far in the create form
+	tab      formTab  // active tab of the create form
+}
+
+// formTab is a tab of the create form; the edit form has no tabs.
+type formTab int
+
+const (
+	formDetails formTab = iota
+	formCriteria
+	formTests
+)
+
+var formTabLabels = []string{"Details", "Criteria", "Tests"}
+
+// fTests is the focus value on the Tests tab, which has no field yet.
+const fTests = fAcceptance + 1
+
+// tabFields lists the field indexes the tab moves among.
+func (t formTab) fields() []int {
+	switch t {
+	case formCriteria:
+		return []int{fAcceptance}
+	case formTests:
+		return []int{fTests}
+	}
+	return []int{fTitle, fType, fParent, fPriority, fPoints, fLabels, fSpec, fDescription}
+}
+
+// show makes tab t active and focuses its first field.
+func (f *formState) show(t formTab) {
+	f.tab = t
+	f.focus = t.fields()[0]
+}
+
+// tabOf is the tab a field lives on.
+func tabOf(field int) formTab {
+	switch {
+	case field == fAcceptance:
+		return formCriteria
+	case field >= fTests:
+		return formTests
+	}
+	return formDetails
+}
+
+// step moves the focus by delta among the fields of the active tab.
+func (f *formState) step(delta int) {
+	fs := f.tab.fields()
+	i := slices.Index(fs, f.focus)
+	f.focus = fs[(i+delta+len(fs))%len(fs)]
 }
 
 // Field indexes.
@@ -104,14 +154,34 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 	if f.saving {
 		return nil
 	}
-	fld := &f.fields[f.focus]
 	switch key {
 	case "esc":
 		m.form = nil
+		return nil
+	case "ctrl+s":
+		f.saving = true
+		return m.submitForm()
+	case "ctrl+right", "ctrl+left":
+		if f.editID == "" {
+			d := 1
+			if key == "ctrl+left" {
+				d = len(formTabLabels) - 1
+			}
+			f.show((f.tab + formTab(d)) % formTab(len(formTabLabels)))
+		}
+		return nil
 	case "tab", "down":
-		f.focus = (f.focus + 1) % len(f.fields)
+		f.step(1)
+		return nil
 	case "shift+tab", "up":
-		f.focus = (f.focus + len(f.fields) - 1) % len(f.fields)
+		f.step(-1)
+		return nil
+	}
+	if f.focus >= len(f.fields) { // the Tests tab has no input yet
+		return nil
+	}
+	fld := &f.fields[f.focus]
+	switch key {
 	case "left", "right":
 		if fld.choices != nil && !fld.locked {
 			i := slices.Index(fld.choices, fld.value)
@@ -134,9 +204,6 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 		}
 	case "ctrl+e":
 		return m.editDescription(f.fields[fDescription].value, "", 0)
-	case "ctrl+s":
-		f.saving = true
-		return m.submitForm()
 	case "enter":
 		switch f.focus {
 		case fDescription:
@@ -275,8 +342,18 @@ func (m *Model) renderForm() string {
 	if f.editID != "" {
 		title = "Edit " + f.editID
 	}
-	lines := []string{spread(m.th.bright.Render(title), m.th.muted.Render("esc cancel"), iw), ""}
+	lines := []string{spread(m.th.bright.Render(title), m.th.muted.Render("esc cancel"), iw)}
+	if f.editID == "" {
+		lines = append(lines, spread(m.renderFormTabs(), m.th.muted.Render("ctrl+← → switch tab"), iw))
+	}
+	lines = append(lines, "")
+	if f.tab == formTests {
+		lines = append(lines, m.th.muted.Render("No tests yet."))
+	}
 	for i, fld := range f.fields {
+		if f.editID == "" && tabOf(i) != f.tab {
+			continue
+		}
 		label := m.th.muted.Render(fmt.Sprintf("%-12s", fld.label))
 		value := fld.value
 		focused := i == f.focus
@@ -329,6 +406,19 @@ func (m *Model) renderForm() string {
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
+// renderFormTabs shows the tab labels, the active one highlighted.
+func (m *Model) renderFormTabs() string {
+	out := make([]string, len(formTabLabels))
+	for i, l := range formTabLabels {
+		if formTab(i) == m.form.tab {
+			out[i] = m.th.fg(m.th.p.Accent).Bold(true).Render("[" + l + "]")
+		} else {
+			out[i] = m.th.muted.Render(" " + l + " ")
+		}
+	}
+	return strings.Join(out, " ")
+}
+
 // descriptionLines is the most lines of the description the form shows.
 const descriptionLines = 6
 
@@ -367,6 +457,7 @@ var formKeys = []keyHint{
 	{"↑ ↓", "field", "move between fields (also tab)", false},
 	{"← →", "choice", "change a choice field", false},
 	{"ctrl+e", "editor", "edit the description in $EDITOR", false},
+	{"ctrl+← ctrl+→", "tab", "switch between the Details, Criteria and Tests tabs (create form)", false},
 	{"ctrl+s", "save", "create or save the item from any field", false},
 	{"enter", "save · $EDITOR · add", "save the item, or open $EDITOR on the description, or add a criterion on acceptance", false},
 	{"esc", "cancel", "close without saving", false},
