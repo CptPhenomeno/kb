@@ -78,7 +78,7 @@ func TestEscCancelsTheInputAndKeepsThePopupOpen(t *testing.T) {
 	typeText(t, m, "draft")
 	press(t, m, "esc")
 	s := screen(m)
-	if m.accept == nil || !strings.Contains(s, "Acceptance") {
+	if m.accept == nil || !strings.Contains(s, "Criteria and tests") {
 		t.Fatal("the popup must stay open")
 	}
 	if strings.Contains(s, "▌") || strings.Contains(s, "draft") || len(be.adds) != 0 {

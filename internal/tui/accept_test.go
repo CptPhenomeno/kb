@@ -59,7 +59,7 @@ func TestCOpensAcceptancePopup(t *testing.T) {
 	selectID(t, m, "KB-1")
 	press(t, m, "c")
 	s := screen(m)
-	for _, want := range []string{"Acceptance", "KB-1 Login", "[ ] opens the board", "[ ] shows writes within a second"} {
+	for _, want := range []string{"Criteria and tests", "KB-1 Login", "[ ] opens the board", "[ ] shows writes within a second"} {
 		if !strings.Contains(s, want) {
 			t.Errorf("popup lacks %q", want)
 		}

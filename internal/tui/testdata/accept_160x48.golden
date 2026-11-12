@@ -17,7 +17,7 @@
 │                              │ │ │ Key storage schema      │ │ │ │ ● RED 0/2    agent-auth │ │ │                             │ │                             │
 │                              │ │ ╰────────╭──────────────────────────────────────────────────────────────────────╮           │ │                             │
 │                              │ │ ╭────────│                                                                      │           │ │                             │
-│                              │ │ │ KB-8 ta│  Acceptance                                               esc close  │           │ │                             │
+│                              │ │ │ KB-8 ta│  Criteria and tests                                       esc close  │           │ │                             │
 │                              │ │ │ Key rot│  KB-4 Token refresh                                                  │           │ │                             │
 │                              │ │ │  BLOCKE│  [Criteria]  Tests                                                   │           │ │                             │
 │                              │ │ ╰────────│                                                                      │           │ │                             │

@@ -89,7 +89,7 @@ func TestCOpensTheCriteriaPopupOverTheDetail(t *testing.T) {
 	openDetail(t, m, "KB-1")
 	press(t, m, "c")
 	s := screen(m)
-	if m.accept == nil || !m.detailOpen || !strings.Contains(s, "Acceptance") || !strings.Contains(s, "[ ] opens the board") {
+	if m.accept == nil || !m.detailOpen || !strings.Contains(s, "Criteria and tests") || !strings.Contains(s, "[ ] opens the board") {
 		t.Fatalf("accept %v, open %v:\n%s", m.accept != nil, m.detailOpen, s)
 	}
 	press(t, m, "esc")

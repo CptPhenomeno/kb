@@ -17,7 +17,7 @@
 │                   │ tdd phase ● RED                                                                                                      │                   │
 │                   │                       ╭──────────────────────────────────────────────────────────────────────╮                       │                   │
 │                   │ Exchange a valid refre│                                                                      │                       │                   │
-│                   │                       │  Acceptance                                               esc close  │                       │                   │
+│                   │                       │  Criteria and tests                                       esc close  │                       │                   │
 │                   │ The old refresh token │  KB-4 Token refresh                                                  │                       │                   │
 │                   │                       │  [Criteria]  Tests                                                   │                       │                   │
 │                   │ tests 0/2             │                                                                      │                       │                   │

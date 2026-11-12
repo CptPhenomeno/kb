@@ -62,7 +62,7 @@ func TestEscCancelsTheEditWithoutWriting(t *testing.T) {
 	typeText(t, m, "zzz")
 	press(t, m, "esc")
 	s := screen(m)
-	if m.accept == nil || !strings.Contains(s, "Acceptance") {
+	if m.accept == nil || !strings.Contains(s, "Criteria and tests") {
 		t.Fatal("the popup must stay open")
 	}
 	if strings.Contains(s, "▌") || strings.Contains(s, "zzz") || len(be.edits) != 0 {

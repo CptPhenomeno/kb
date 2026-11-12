@@ -253,13 +253,13 @@ type testSavedMsg struct {
 	err   string // why the core refused the name; empty when saved or alerted
 }
 
-// renderAccept shows the criteria of the item with their checks.
+// renderAccept shows the criteria and the tests of the item.
 func (m *Model) renderAccept() string {
 	width := min(72, m.width-4)
 	iw := width - 6
 	it := m.snap.Get(m.accept.id)
 	lines := []string{
-		spread(m.th.bright.Render("Acceptance"), m.th.muted.Render("esc close"), iw),
+		spread(m.th.bright.Render("Criteria and tests"), m.th.muted.Render("esc close"), iw),
 		m.th.text.Render(it.ID + " " + it.Title),
 		m.renderAcceptTabs(),
 		"",
