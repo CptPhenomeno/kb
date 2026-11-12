@@ -62,6 +62,14 @@ func hex(s string) color.Color { return lipgloss.Color(s) }
 //   - tokyo-night-day Purple #954ff1: purple #9854f1 darkened (2.9:1 on Surface)
 //   - dracula-alucard Surface #f5efd6: between Alucard background and Current Line, which is a blue-gray
 //   - dracula-alucard Agent #3a5bc7: blue between Cyan and Purple, Alucard has no blue
+//   - nord-light is derived as a whole: Nord has no official light theme. Backgrounds, Overlay, Text, Bright and Muted are official
+//     Snow Storm and Polar Night colors; Red and Agent are official Aurora and Frost colors that already pass 3:1
+//   - nord-light Accent #418fa5: Frost nord8 #88c0d0 darkened (lightness only)
+//   - nord-light Cyan #568f8e: Frost nord7 #8fbcbb darkened
+//   - nord-light Human #ad7d1e: Aurora nord13 #ebcb8b darkened
+//   - nord-light Warn #ac5438: Aurora nord12 #d08770 darkened further than 3:1 needs, to stay 30 apart from Red
+//   - nord-light Green #6d8f51: Aurora nord14 #a3be8c darkened
+//   - nord-light Purple #a5779d: Aurora nord15 #b48ead darkened
 //
 // The external themes (rose-pine, rose-pine-dawn and the light ones) come after the kb themes
 // and use the official colors by meaning: Love is Red, Iris is Purple,
@@ -154,6 +162,15 @@ var Themes = []Palette{
 		Text: hex("#1f1f1f"), Bright: hex("#1f1f1f"), Muted: hex("#6c664b"), Accent: hex("#a3144d"),
 		Human: hex("#846e15"), Agent: hex("#3a5bc7"), Warn: hex("#a34d14"), Red: hex("#cb3a2a"),
 		Green: hex("#14710a"), Purple: hex("#644ac9"), Cyan: hex("#036a96")},
+	// nord-light (derived, see the list above): Base nord6, Surface nord5,
+	// Overlay nord4, Text and Bright nord0, Muted nord3, Agent nord10, Red
+	// nord11, as in the dark nord by meaning (Accent Frost nord8, Human
+	// Aurora yellow, Warn orange, Green, Purple, Cyan Frost nord7).
+	// Accent, Human, Warn, Green, Purple and Cyan are darkened shades.
+	{Name: "nord-light", Light: true, Base: hex("#eceff4"), Surface: hex("#e5e9f0"), Overlay: hex("#d8dee9"),
+		Text: hex("#2e3440"), Bright: hex("#2e3440"), Muted: hex("#4c566a"), Accent: hex("#418fa5"),
+		Human: hex("#ad7d1e"), Agent: hex("#5e81ac"), Warn: hex("#ac5438"), Red: hex("#bf616a"),
+		Green: hex("#6d8f51"), Purple: hex("#a5779d"), Cyan: hex("#568f8e")},
 }
 
 // ThemeNames returns the names of the built-in themes, default first.
