@@ -7,22 +7,20 @@
 │ │ with k6                  │ │ │ │ 500 instead of 401      │ │ │ │ 0/1 done                │ │ │ │ middleware              │ │ │ │ 2/2                     │ │
 │ ╰──────────────────────────╯ │ │ │ 0/1                     │ │ │ ╰─────────────────────────╯ │ │ │ ● REFACTOR 3/3          │ │ │ ╰─────────────────────────╯ │
 │                              │ │ ╰─────────────────────────╯ │ │ ╭─────────────────────────╮ │ │ │ agent-auth              │ │ │                             │
-│                              │ │ ╭─────────────────────────╮ │ │ │ KB-2 story            ▲ │ │ │ ╰─────────────────────────╯ │ │                             │
-│                              │ │ │ KB-6 story            ▲ │ │ │ │ Token login             │ │ │                             │ │                             │
-│                              │ │ │ API keys pe╭──────────────────────────────────────────────────────────────╮               │ │                             │
-│                              │ │ │ 0/2 done   │                                                              │               │ │                             │
-│                              │ │ ╰────────────│  Theme                                           esc cancel  │               │ │                             │
-│                              │ │ ╭────────────│  the board behind previews the selected theme                │               │ │                             │
-│                              │ │ │ KB-7 task  │                                                              │               │ │                             │
-│                              │ │ │ Key storage│  Dark                                                        │               │ │                             │
-│                              │ │ ╰────────────│      kb-neon-rain (current)                         ■■■■■■   │               │ │                             │
-│                              │ │ ╭────────────│    › kb-synth-sunset                                ■■■■■■   │               │ │                             │
-│                              │ │ │ KB-8 task  │      tokyo-night                                    ■■■■■■   │               │ │                             │
-│                              │ │ │ Key rotatio│      catppuccin-mocha                               ■■■■■■   │               │ │                             │
-│                              │ │ │  BLOCKED by│      gruvbox-dark                                   ■■■■■■   │               │ │                             │
-│                              │ │ ╰────────────│      dracula                                        ■■■■■■   │               │ │                             │
-│                              │ │              │      nord                                           ■■■■■■   │               │ │                             │
-│                              │ │              │      solarized-dark                                 ■■■■■■   │               │ │                             │
+│                              │ │ ╭────────────╭──────────────────────────────────────────────────────────────╮─────────────╯ │ │                             │
+│                              │ │ │ KB-6 story │                                                              │               │ │                             │
+│                              │ │ │ API keys pe│  Theme                                           esc cancel  │               │ │                             │
+│                              │ │ │ 0/2 done   │  the board behind previews the selected theme                │               │ │                             │
+│                              │ │ ╰────────────│                                                              │               │ │                             │
+│                              │ │ ╭────────────│  Dark                                                        │               │ │                             │
+│                              │ │ │ KB-7 task  │      kb-neon-rain (current)                         ■■■■■■   │               │ │                             │
+│                              │ │ │ Key storage│    › kb-synth-sunset                                ■■■■■■   │               │ │                             │
+│                              │ │ ╰────────────│      tokyo-night                                    ■■■■■■   │               │ │                             │
+│                              │ │ ╭────────────│      catppuccin-mocha                               ■■■■■■   │               │ │                             │
+│                              │ │ │ KB-8 task  │      gruvbox-dark                                   ■■■■■■   │               │ │                             │
+│                              │ │ │ Key rotatio│      dracula                                        ■■■■■■   │               │ │                             │
+│                              │ │ │  BLOCKED by│      nord                                           ■■■■■■   │               │ │                             │
+│                              │ │ ╰────────────│      solarized-dark                                 ■■■■■■   │               │ │                             │
 │                              │ │              │      rose-pine                                      ■■■■■■   │               │ │                             │
 │                              │ │              │                                                              │               │ │                             │
 │                              │ │              │  Light                                                       │               │ │                             │
@@ -31,11 +29,13 @@
 │                              │ │              │      catppuccin-latte                               ■■■■■■   │               │ │                             │
 │                              │ │              │      gruvbox-light                                  ■■■■■■   │               │ │                             │
 │                              │ │              │      rose-pine-dawn                                 ■■■■■■   │               │ │                             │
+│                              │ │              │      solarized-light                                ■■■■■■   │               │ │                             │
+│                              │ │              │      tokyo-night-day                                ■■■■■■   │               │ │                             │
+│                              │ │              │      dracula-alucard                                ■■■■■■   │               │ │                             │
 │                              │ │              │                                                              │               │ │                             │
 │                              │ │              │  enter saves the choice for your user                        │               │ │                             │
 │                              │ │              │                                                              │               │ │                             │
 │                              │ │              ╰──────────────────────────────────────────────────────────────╯               │ │                             │
-│                              │ │                             │ │                             │ │                             │ │                             │
 │                              │ │                             │ │                             │ │                             │ │                             │
 │                              │ │                             │ │                             │ │                             │ │                             │
 │                              │ │                             │ │                             │ │                             │ │                             │

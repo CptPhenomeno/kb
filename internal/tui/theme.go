@@ -49,8 +49,21 @@ func hex(s string) color.Color { return lipgloss.Color(s) }
 //   - rose-pine-dawn Human #c27914: Gold #ea9d34 darkened (2.1:1 on Base)
 //   - rose-pine-dawn Warn #d07125: orange between Gold and Love, darkened to 3:1
 //   - rose-pine-dawn Green #3a9a6e: Foam #56949f turned toward green, Rose Pine has no green
+//   - solarized-light Overlay #bcc5c4: base1 #93a1a1 lightened (key hints need 3:1 with Text)
+//   - solarized-light Text #566b72: base01 #586e75 darkened (4.4:1 on Surface)
+//   - solarized-light Accent #a67d00: yellow #b58900 darkened (2.6:1 on Surface)
+//   - solarized-light Agent #2588ce: blue #268bd2 darkened (3.0:1 on Surface)
+//   - solarized-light Green #7a8c00: green #859900 darkened (2.6:1 on Surface)
+//   - solarized-light Cyan #269189: cyan #2aa198 darkened (2.6:1 on Surface)
+//   - tokyo-night-day Text #3257ad: foreground #3760bf darkened (4.0:1 on Surface)
+//   - tokyo-night-day Human #10856e: teal #118c74 darkened (2.9:1 on Surface)
+//   - tokyo-night-day Agent #1e73e7: blue #2e7de9 darkened (2.7:1 on Surface)
+//   - tokyo-night-day Red #eb0b4c: red #f52a65 darkened (2.7:1 on Surface)
+//   - tokyo-night-day Purple #954ff1: purple #9854f1 darkened (2.9:1 on Surface)
+//   - dracula-alucard Surface #f5efd6: between Alucard background and Current Line, which is a blue-gray
+//   - dracula-alucard Agent #3a5bc7: blue between Cyan and Purple, Alucard has no blue
 //
-// The external themes (rose-pine, rose-pine-dawn) come after the kb themes
+// The external themes (rose-pine, rose-pine-dawn and the light ones) come after the kb themes
 // and use the official colors by meaning: Love is Red, Iris is Purple,
 // Foam is Cyan, Pine is Agent, Rose is Accent, Gold is Human (dark) and
 // Subtle is Muted.
@@ -117,6 +130,30 @@ var Themes = []Palette{
 		Text: hex("#575279"), Bright: hex("#575279"), Muted: hex("#797593"), Accent: hex("#d16f6b"),
 		Human: hex("#c27914"), Agent: hex("#286983"), Warn: hex("#d07125"), Red: hex("#b4637a"),
 		Green: hex("#3a9a6e"), Purple: hex("#907aa9"), Cyan: hex("#56949f")},
+	// solarized-light: Base base3, Surface base2, Overlay base1 lightened, Text base01,
+	// Bright base03, Muted base00, Accent yellow, Human magenta, Agent blue,
+	// Warn orange, Red red, Green green, Purple violet, Cyan cyan, as in
+	// solarized-dark. Text, Accent, Agent, Green and Cyan are darkened shades.
+	{Name: "solarized-light", Light: true, Base: hex("#fdf6e3"), Surface: hex("#eee8d5"), Overlay: hex("#bcc5c4"),
+		Text: hex("#566b72"), Bright: hex("#002b36"), Muted: hex("#657b83"), Accent: hex("#a67d00"),
+		Human: hex("#d33682"), Agent: hex("#2588ce"), Warn: hex("#cb4b16"), Red: hex("#dc322f"),
+		Green: hex("#7a8c00"), Purple: hex("#6c71c4"), Cyan: hex("#269189")},
+	// tokyo-night-day (tokyonight_day.conf): Base background, Surface bg_dark,
+	// Overlay selection (#b7c1e3), Text foreground, Bright fg dark (#343b58),
+	// Muted fg_dark, Accent yellow, Human teal, Agent blue, Warn orange,
+	// Red red, Green green, Purple magenta, Cyan cyan. Text, Human, Agent,
+	// Red and Purple are darkened shades.
+	{Name: "tokyo-night-day", Light: true, Base: hex("#e1e2e7"), Surface: hex("#d0d5e3"), Overlay: hex("#b7c1e3"),
+		Text: hex("#3257ad"), Bright: hex("#343b58"), Muted: hex("#6172b0"), Accent: hex("#8c6c3e"),
+		Human: hex("#10856e"), Agent: hex("#1e73e7"), Warn: hex("#b15c00"), Red: hex("#eb0b4c"),
+		Green: hex("#587539"), Purple: hex("#954ff1"), Cyan: hex("#007197")},
+	// dracula-alucard: Base background, Overlay current line, Text and Bright
+	// foreground, Muted comment, Accent pink, Human yellow, Warn orange, Red
+	// red, Green green, Purple purple, Cyan cyan. Surface and Agent are derived.
+	{Name: "dracula-alucard", Light: true, Base: hex("#fffbeb"), Surface: hex("#f5efd6"), Overlay: hex("#cfcfde"),
+		Text: hex("#1f1f1f"), Bright: hex("#1f1f1f"), Muted: hex("#6c664b"), Accent: hex("#a3144d"),
+		Human: hex("#846e15"), Agent: hex("#3a5bc7"), Warn: hex("#a34d14"), Red: hex("#cb3a2a"),
+		Green: hex("#14710a"), Purple: hex("#644ac9"), Cyan: hex("#036a96")},
 }
 
 // ThemeNames returns the names of the built-in themes, default first.
