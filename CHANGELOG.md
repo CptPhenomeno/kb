@@ -4,6 +4,57 @@ All notable changes to kb are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-11-12
+
+Tests become as manageable as criteria from the CLI and the TUI, the create
+form is split into tabs, the Tree opens with done branches closed, the
+command bar is compact by default, and the theme list grows to eighteen
+with a new default.
+
+### Added
+
+- `kb test <id> edit` and `kb test <id> rm` change the text of a test or
+  remove it; `kb log`, `kb show` and the Activity view describe edited and
+  removed tests.
+- The criteria popup (`c`) is now titled "Criteria and tests" and has a
+  Criteria tab and a Tests tab. On the Tests tab `space` cycles the state
+  of the selected test, and `n`, `e` and `d` add, rename and delete tests.
+- The create form is split into Details, Criteria and Tests tabs, so tests
+  can be added when an item is created. Switch tab with `ctrl+←`/`ctrl+→`;
+  `ctrl+s` saves from any tab. Long lists scroll inside the tab and the
+  form fits an 80x24 terminal.
+- In the Tree, `x` opens or closes every branch.
+- The command palette has "Show full command bar" to switch between the
+  compact and the full command bar; the choice is saved as `command_bar` in
+  `config.toml`.
+- Four kb themes: `kb-neon-rain`, `kb-synth-sunset`, `kb-chrome-haze` and
+  `kb-holo-dawn`.
+- Six more themes: `rose-pine`, `rose-pine-dawn`, `solarized-light`,
+  `tokyo-night-day`, `dracula-alucard` and `nord-light`. There are now nine
+  dark and nine light themes.
+
+### Changed
+
+- The default theme is now `kb-neon-rain`. If you have not saved a theme
+  you will see it on first run; a theme saved in `config.toml` or set with
+  `KB_THEME` is still honoured.
+- The Board, the Tree and the Activity view show a compact command bar by
+  default; the full one is one palette entry away.
+- In the Tree, done items with children start closed, and a search or a
+  filter opens every branch as soon as it becomes active.
+- Board columns use the rows left over to show the next card cut off,
+  instead of empty lines under the "more" marker.
+- The theme picker groups themes under Dark and Light headings and scrolls
+  on a small terminal, keeping the selection visible.
+- Every theme now passes contrast checks for text and indicators on its
+  background and surface colors, so some colors were adjusted keeping their
+  hue. The human, agent and warning colors are distinct on every theme.
+
+### Fixed
+
+- An unknown command is reported as unknown, with the closest command as a
+  suggestion, instead of a generic "wrong number of arguments" error.
+
 ## [1.1.0] - 2026-11-11
 
 Acceptance criteria are fully manageable from the CLI and the TUI, the form
