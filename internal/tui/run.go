@@ -69,6 +69,22 @@ func (b *serviceBackend) RemoveCriterion(ctx context.Context, actor, id string, 
 	return b.svc.RemoveCriterion(ctx, actor, id, n, ifVersion)
 }
 
+func (b *serviceBackend) SetTestState(ctx context.Context, actor, id, selector string, state core.TestState, ifVersion int) (*core.Item, error) {
+	return b.svc.SetTestState(ctx, actor, id, selector, state, ifVersion)
+}
+
+func (b *serviceBackend) AddTest(ctx context.Context, actor, id, name string, ifVersion int) (*core.Item, error) {
+	return b.svc.AddTest(ctx, actor, id, name, ifVersion)
+}
+
+func (b *serviceBackend) EditTest(ctx context.Context, actor, id, selector, name string, ifVersion int) (*core.Item, error) {
+	return b.svc.EditTest(ctx, actor, id, selector, name, ifVersion)
+}
+
+func (b *serviceBackend) RemoveTest(ctx context.Context, actor, id, selector string, ifVersion int) (*core.Item, error) {
+	return b.svc.RemoveTest(ctx, actor, id, selector, ifVersion)
+}
+
 func (b *serviceBackend) Remove(ctx context.Context, actor, id string, recursive bool) ([]string, error) {
 	return b.svc.Remove(ctx, actor, id, recursive)
 }

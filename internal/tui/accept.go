@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -11,14 +12,24 @@ import (
 
 // acceptState is the open acceptance popup of an item.
 type acceptState struct {
-	id     string
-	cursor int
-	mode   inputMode
-	editAt int // index of the criterion being edited, in edit mode
+	id         string
+	tab        acceptTab
+	cursor     int // selected criterion
+	testCursor int // selected test
+	mode       inputMode
+	editAt     int // index of the criterion being edited, in edit mode
 	// confirmDelete is set while asking to delete the selected criterion.
 	confirmDelete bool
 	input         string // text typed in the input line
 }
+
+// acceptTab is the tab of the acceptance popup.
+type acceptTab int
+
+const (
+	tabCriteria acceptTab = iota
+	tabTests
+)
 
 // inputMode says what the input line of the popup is doing.
 type inputMode int
@@ -48,6 +59,14 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 		return nil
 	}
 	switch key {
+	case "tab", "shift+tab":
+		a.tab = tabTests - a.tab
+		return nil
+	}
+	if a.tab == tabTests {
+		return m.acceptTestsKey(it, key)
+	}
+	switch key {
 	case "n":
 		a.mode, a.input = inputAdd, ""
 	case "e":
@@ -73,6 +92,43 @@ func (m *Model) acceptKey(key, text string) tea.Cmd {
 		}
 	}
 	return nil
+}
+
+// acceptTestsKey handles a key on the Tests tab: the arrows choose a test and
+// space cycles its state and saves it at once.
+func (m *Model) acceptTestsKey(it *core.Item, key string) tea.Cmd {
+	a := m.accept
+	a.testCursor = clampCursor(a.testCursor, len(it.Tests))
+	switch key {
+	case "up":
+		a.testCursor = max(0, a.testCursor-1)
+	case "down":
+		a.testCursor = min(max(0, len(it.Tests)-1), a.testCursor+1)
+	case "space", "enter":
+		if a.testCursor >= len(it.Tests) {
+			return nil
+		}
+		sel, next, item, actor := strconv.Itoa(a.testCursor+1), nextTestState(it.Tests[a.testCursor].State), *it, m.opts.Actor
+		return func() tea.Msg {
+			if _, err := m.be.SetTestState(m.ctx, actor, item.ID, sel, next, item.Version); err != nil {
+				return writeMsg{alert: m.failure(item, "TEST FAILED", err)}
+			}
+			return writeMsg{}
+		}
+	}
+	return nil
+}
+
+// nextTestState is the state after s in the cycle
+// pending -> passing -> failing -> pending.
+func nextTestState(s core.TestState) core.TestState {
+	switch s {
+	case core.TestPending:
+		return core.TestPassing
+	case core.TestPassing:
+		return core.TestFailing
+	}
+	return core.TestPending
 }
 
 // clampCursor keeps a cursor on a row of a list of n rows, or on 0 when empty.
@@ -146,7 +202,11 @@ func (m *Model) renderAccept() string {
 	lines := []string{
 		spread(m.th.bright.Render("Acceptance"), m.th.muted.Render("esc close"), iw),
 		m.th.text.Render(it.ID + " " + it.Title),
+		m.renderAcceptTabs(),
 		"",
+	}
+	if m.accept.tab == tabTests {
+		return m.renderAcceptTests(it, lines, iw, width)
 	}
 	if len(it.Acceptance) == 0 {
 		lines = append(lines, m.th.muted.Render(it.ID+" has no acceptance criteria."),
@@ -174,6 +234,46 @@ func (m *Model) renderAccept() string {
 	}
 	lines = append(lines, "", m.th.muted.Render(fmt.Sprintf("%d/%d checked · status %s · every change is saved at once",
 		it.CheckedCriteria(), len(it.Acceptance), it.Status.Label())))
+	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
+}
+
+// renderAcceptTabs shows the tab labels, the active one highlighted.
+func (m *Model) renderAcceptTabs() string {
+	labels := []string{"Criteria", "Tests"}
+	out := make([]string, len(labels))
+	for i, l := range labels {
+		if acceptTab(i) == m.accept.tab {
+			out[i] = m.th.fg(m.th.p.Accent).Bold(true).Render("[" + l + "]")
+		} else {
+			out[i] = m.th.muted.Render(" " + l + " ")
+		}
+	}
+	return strings.Join(out, " ")
+}
+
+// renderAcceptTests completes the popup lines with the Tests tab.
+func (m *Model) renderAcceptTests(it *core.Item, lines []string, iw, width int) string {
+	if len(it.Tests) == 0 {
+		lines = append(lines, m.th.muted.Render(it.ID+" has no tests."))
+		return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
+	}
+	cursor := clampCursor(m.accept.testCursor, len(it.Tests))
+	for i, t := range it.Tests {
+		sym, style := "○", m.th.muted
+		switch t.State {
+		case core.TestPassing:
+			sym, style = "●", m.th.fg(m.th.p.Green)
+		case core.TestFailing:
+			sym, style = "✗", m.th.warn
+		}
+		row, marker := m.th.text, "  "
+		if i == cursor {
+			row, marker = m.th.fg(m.th.p.Accent).Bold(true), m.th.fg(m.th.p.Accent).Render("› ")
+		}
+		lines = append(lines, hang(marker+style.Render(sym+" "), 6, t.Name+" ("+t.State.String()+")", row, iw, 6)...)
+	}
+	lines = append(lines, "", m.th.muted.Render(fmt.Sprintf("%d/%d passing · status %s · every change is saved at once",
+		it.PassingTests(), len(it.Tests), it.Status.Label())))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
@@ -210,8 +310,9 @@ func (m *Model) renderAcceptConfirm(n int, text string, w int) []string {
 }
 
 var acceptKeys = []keyHint{
+	{"tab", "switch tab", "switch between Criteria and Tests (shift+tab: back)", false},
 	{"↑ ↓", "choose", "choose a criterion", false},
-	{"space", "check", "check or uncheck the criterion (saved at once)", false},
+	{"space", "check", "check or uncheck the criterion, or cycle the state of a test (saved at once)", false},
 	{"n", "new", "add a criterion", false},
 	{"e", "edit", "edit the selected criterion (its check is cleared)", false},
 	{"d", "delete", "delete the selected criterion, after confirmation", false},

@@ -98,6 +98,22 @@ func (f *fakeBackend) RemoveCriterion(_ context.Context, _, id string, n int, if
 	return nil, f.removeErr
 }
 
+func (f *fakeBackend) SetTestState(context.Context, string, string, string, core.TestState, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) AddTest(context.Context, string, string, string, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) EditTest(context.Context, string, string, string, string, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) RemoveTest(context.Context, string, string, string, int) (*core.Item, error) {
+	return nil, errors.New("read-only fake")
+}
+
 func (f *fakeBackend) Remove(context.Context, string, string, bool) ([]string, error) {
 	return nil, errors.New("read-only fake")
 }

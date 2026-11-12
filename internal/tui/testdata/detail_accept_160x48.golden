@@ -15,11 +15,11 @@
 │                   │ parent    KB-2 Token login                                                                                           │                   │
 │                   │ spec      SPEC.md#token-refresh                                                                                      │                   │
 │                   │ tdd phase ● RED                                                                                                      │                   │
-│                   │                                                                                                                      │                   │
-│                   │ Exchange a valid refre╭──────────────────────────────────────────────────────────────────────╮                       │                   │
-│                   │                       │                                                                      │                       │                   │
-│                   │ The old refresh token │  Acceptance                                               esc close  │                       │                   │
-│                   │                       │  KB-4 Token refresh                                                  │                       │                   │
+│                   │                       ╭──────────────────────────────────────────────────────────────────────╮                       │                   │
+│                   │ Exchange a valid refre│                                                                      │                       │                   │
+│                   │                       │  Acceptance                                               esc close  │                       │                   │
+│                   │ The old refresh token │  KB-4 Token refresh                                                  │                       │                   │
+│                   │                       │  [Criteria]  Tests                                                   │                       │                   │
 │                   │ tests 0/2             │                                                                      │                       │                   │
 │                   │ ✗ test a              │    [x] returns a new access + refresh pair                           │                       │                   │
 │                   │ ○ test b              │  › [ ] reused refresh token → 401                                    │                       │                   │
@@ -45,4 +45,4 @@
 │                              │ │                             │ │                             │ │                             │ │                             │
 ╰──────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯ ╰─────────────────────────────╯
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing                                                                                             
-↑ ↓ choose   space check   n new   e edit   d delete   esc close                                                                                                
+tab switch tab   ↑ ↓ choose   space check   n new   e edit   d delete   esc close                                                                               
