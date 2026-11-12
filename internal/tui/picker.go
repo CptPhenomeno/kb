@@ -29,14 +29,43 @@ func (m *Model) openPicker() {
 	m.picker = &pickerState{cursor: m.themeIdx, original: m.themeIdx}
 }
 
+// pickerOrder lists the Themes indexes in the order the picker shows them:
+// the dark themes, then the light ones; in each group the kb themes first,
+// then the others in Themes order.
+func pickerOrder() []int {
+	var order []int
+	for _, light := range []bool{false, true} {
+		for _, kb := range []bool{true, false} {
+			for i, p := range Themes {
+				if p.Light == light && strings.HasPrefix(p.Name, "kb-") == kb {
+					order = append(order, i)
+				}
+			}
+		}
+	}
+	return order
+}
+
+// pickerStep moves the cursor n themes along pickerOrder, wrapping around.
+// Headings are not in the order, so they are skipped.
+func pickerStep(cursor, n int) int {
+	order := pickerOrder()
+	for k, i := range order {
+		if i == cursor {
+			return order[(k+n+len(order))%len(order)]
+		}
+	}
+	return order[0]
+}
+
 func (m *Model) pickerKey(key string) tea.Cmd {
 	p := m.picker
 	switch key {
 	case "up":
-		p.cursor = (p.cursor + len(Themes) - 1) % len(Themes)
+		p.cursor = pickerStep(p.cursor, -1)
 		m.setTheme(p.cursor)
 	case "down":
-		p.cursor = (p.cursor + 1) % len(Themes)
+		p.cursor = pickerStep(p.cursor, 1)
 		m.setTheme(p.cursor)
 	case "esc", "t":
 		m.setTheme(p.original)
@@ -72,7 +101,17 @@ func (m *Model) renderPicker() string {
 		m.th.muted.Render("the board behind previews the selected theme"),
 		"",
 	}
-	for i, p := range Themes {
+	groupOf := func(i int) bool { return Themes[i].Light }
+	for k, i := range pickerOrder() {
+		if k == 0 || groupOf(i) != groupOf(pickerOrder()[k-1]) {
+			heading := "Dark"
+			if groupOf(i) {
+				heading = "Light"
+				lines = append(lines, "")
+			}
+			lines = append(lines, m.th.bright.Render(heading))
+		}
+		p := Themes[i]
 		marker, name := "  ", m.th.text.Render(p.Name)
 		if i == m.picker.cursor {
 			marker, name = m.th.fg(m.th.p.Accent).Render("› "), m.th.fg(m.th.p.Accent).Bold(true).Render(p.Name)
@@ -80,11 +119,7 @@ func (m *Model) renderPicker() string {
 		if i == m.picker.original {
 			name += m.th.muted.Render(" (current)")
 		}
-		kind := "dark"
-		if p.Light {
-			kind = "light"
-		}
-		lines = append(lines, spread(marker+name, m.th.muted.Render(kind)+" "+swatches(p), iw))
+		lines = append(lines, spread("  "+marker+name, swatches(p), iw))
 	}
 	lines = append(lines, "", m.th.muted.Render("enter saves the choice for your user"))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))

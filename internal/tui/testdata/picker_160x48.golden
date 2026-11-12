@@ -12,26 +12,26 @@
 │                              │ │ │ API keys per tenant     │ │ │ │ 0/3 done                │ │ │                             │ │                             │
 │                              │ │ │ 0/2 done                │ │ │ ╰─────────────────────────╯ │ │                             │ │                             │
 │                              │ │ ╰─────────────────────────╯ │ │ ╭─────────────────────────╮ │ │                             │ │                             │
-│                              │ │ ╭─────────────────────────╮ │ │ │ KB-4 task        ▲▲ 2pt │ │ │                             │ │                             │
-│                              │ │ │ KB-7 task  ╭──────────────────────────────────────────────────────────────╮               │ │                             │
-│                              │ │ │ Key storage│                                                              │               │ │                             │
-│                              │ │ ╰────────────│  Theme                                           esc cancel  │               │ │                             │
-│                              │ │ ╭────────────│  the board behind previews the selected theme                │               │ │                             │
-│                              │ │ │ KB-8 task  │                                                              │               │ │                             │
-│                              │ │ │ Key rotatio│    tokyo-night (current)                      dark  ■■■■■■   │               │ │                             │
-│                              │ │ │  BLOCKED by│  › catppuccin-mocha                           dark  ■■■■■■   │               │ │                             │
-│                              │ │ ╰────────────│    catppuccin-latte                          light  ■■■■■■   │               │ │                             │
-│                              │ │              │    gruvbox-dark                               dark  ■■■■■■   │               │ │                             │
-│                              │ │              │    gruvbox-light                             light  ■■■■■■   │               │ │                             │
-│                              │ │              │    dracula                                    dark  ■■■■■■   │               │ │                             │
-│                              │ │              │    nord                                       dark  ■■■■■■   │               │ │                             │
-│                              │ │              │    solarized-dark                             dark  ■■■■■■   │               │ │                             │
+│                              │ │ ╭────────────╭──────────────────────────────────────────────────────────────╮               │ │                             │
+│                              │ │ │ KB-7 task  │                                                              │               │ │                             │
+│                              │ │ │ Key storage│  Theme                                           esc cancel  │               │ │                             │
+│                              │ │ ╰────────────│  the board behind previews the selected theme                │               │ │                             │
+│                              │ │ ╭────────────│                                                              │               │ │                             │
+│                              │ │ │ KB-8 task  │  Dark                                                        │               │ │                             │
+│                              │ │ │ Key rotatio│      tokyo-night (current)                          ■■■■■■   │               │ │                             │
+│                              │ │ │  BLOCKED by│    › catppuccin-mocha                               ■■■■■■   │               │ │                             │
+│                              │ │ ╰────────────│      gruvbox-dark                                   ■■■■■■   │               │ │                             │
+│                              │ │              │      dracula                                        ■■■■■■   │               │ │                             │
+│                              │ │              │      nord                                           ■■■■■■   │               │ │                             │
+│                              │ │              │      solarized-dark                                 ■■■■■■   │               │ │                             │
+│                              │ │              │                                                              │               │ │                             │
+│                              │ │              │  Light                                                       │               │ │                             │
+│                              │ │              │      catppuccin-latte                               ■■■■■■   │               │ │                             │
+│                              │ │              │      gruvbox-light                                  ■■■■■■   │               │ │                             │
 │                              │ │              │                                                              │               │ │                             │
 │                              │ │              │  enter saves the choice for your user                        │               │ │                             │
 │                              │ │              │                                                              │               │ │                             │
 │                              │ │              ╰──────────────────────────────────────────────────────────────╯               │ │                             │
-│                              │ │                             │ │                             │ │                             │ │                             │
-│                              │ │                             │ │                             │ │                             │ │                             │
 │                              │ │                             │ │                             │ │                             │ │                             │
 │                              │ │                             │ │                             │ │                             │ │                             │
 │                              │ │                             │ │                             │ │                             │ │                             │

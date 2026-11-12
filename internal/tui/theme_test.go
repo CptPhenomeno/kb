@@ -33,7 +33,7 @@ func TestPickerPreviewsWhileMoving(t *testing.T) {
 		t.Fatalf("moving down previews %s, want %s", m.th.p.Name, Themes[1].Name)
 	}
 	press(t, m, "up", "up")
-	if m.th.p.Name != Themes[len(Themes)-1].Name {
+	if last := pickerOrder()[len(Themes)-1]; m.th.p.Name != Themes[last].Name {
 		t.Fatalf("moving up from the first theme previews %s, want the last one", m.th.p.Name)
 	}
 }
@@ -212,5 +212,108 @@ func TestEveryRoleReadableOnBaseAndSurface(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestPickerGroupsDarkBeforeLight(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t")
+	s := screen(m)
+	d, l := strings.Index(s, "Dark"), strings.Index(s, "Light")
+	if d < 0 || l < 0 || d > l {
+		t.Fatalf("headings missing or out of order (Dark at %d, Light at %d):\n%s", d, l, s)
+	}
+	for _, p := range Themes {
+		i := strings.Index(s, p.Name)
+		if i < 0 {
+			t.Fatalf("%s not listed", p.Name)
+		}
+		if p.Light && i < l || !p.Light && (i < d || i > l) {
+			t.Errorf("%s (light=%v) is in the wrong group", p.Name, p.Light)
+		}
+	}
+}
+
+func TestPickerKbThemesFirstInEachGroup(t *testing.T) {
+	saved := Themes
+	defer func() { Themes = saved }()
+	Themes = append(append([]Palette{}, saved...),
+		withName(saved[0], "kb-test-dark"), withName(saved[2], "kb-test-light"))
+	order := pickerOrder()
+	var dark, light []string
+	for _, i := range order {
+		if Themes[i].Light {
+			light = append(light, Themes[i].Name)
+		} else {
+			dark = append(dark, Themes[i].Name)
+		}
+	}
+	if dark[0] != "kb-test-dark" || dark[1] != "tokyo-night" {
+		t.Errorf("dark group order: %v", dark)
+	}
+	if light[0] != "kb-test-light" || light[1] != "catppuccin-latte" {
+		t.Errorf("light group order: %v", light)
+	}
+}
+
+func withName(p Palette, name string) Palette { p.Name = name; return p }
+
+func TestPickerDownSkipsLightHeading(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t")
+	order := pickerOrder()
+	m.picker.cursor = order[lastDark(order)]
+	m.setTheme(m.picker.cursor)
+	press(t, m, "down")
+	if !Themes[m.picker.cursor].Light || m.picker.cursor != order[lastDark(order)+1] {
+		t.Fatalf("down from the last dark theme landed on %s", Themes[m.picker.cursor].Name)
+	}
+	if m.th.p.Name != Themes[m.picker.cursor].Name {
+		t.Errorf("preview is %s, cursor on %s", m.th.p.Name, Themes[m.picker.cursor].Name)
+	}
+}
+
+func lastDark(order []int) int {
+	n := -1
+	for k, i := range order {
+		if !Themes[i].Light {
+			n = k
+		}
+	}
+	return n
+}
+
+func TestPickerUpSkipsDarkHeadingAtTop(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t")
+	order := pickerOrder()
+	m.picker.cursor = order[0]
+	press(t, m, "up")
+	if m.picker.cursor != order[len(order)-1] || !Themes[m.picker.cursor].Light {
+		t.Fatalf("up from the first theme landed on %s, want the last light theme", Themes[m.picker.cursor].Name)
+	}
+}
+
+func TestPickerRowsHaveNoDarkLightColumn(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t")
+	for _, line := range strings.Split(screen(m), "\n") {
+		for _, p := range Themes {
+			if strings.Contains(line, p.Name) && (strings.Contains(line, " dark ") || strings.Contains(line, " light ")) {
+				t.Errorf("row still has a dark/light column: %q", line)
+			}
+		}
+	}
+}
+
+func TestPickerKeepsSamplesAndCurrent(t *testing.T) {
+	m := newModel(t, sampleBoard(), 160, 48)
+	press(t, m, "t")
+	s := screen(m)
+	if strings.Count(s, "■■■■■■") < len(Themes) {
+		t.Errorf("color samples missing:\n%s", s)
+	}
+	if strings.Count(s, "(current)") != 1 {
+		t.Errorf("want exactly one (current) marker")
 	}
 }
