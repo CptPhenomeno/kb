@@ -62,14 +62,15 @@ func CanClaim(s *Snapshot, item *Item, actor string, now time.Time) error {
 
 // NextFilter restricts the candidates of `kb next`.
 type NextFilter struct {
-	Types  []Type // Empty means tasks and bugs.
+	Types  []Type // Empty means tasks and bugs; epic and story may be asked for.
 	Label  string
 	Parent string // Includes every descendant of Parent.
 }
 
 // Available returns the items `kb next` may hand out, best first
-// (SPEC.md §4.5): claimable, in todo or doing, without an active claim and
-// not blocked; ordered by priority, position and ID.
+// (SPEC.md NEXT-1): of a requested type (tasks and bugs by default), in todo
+// or doing, without an active claim and not blocked; ordered by priority,
+// position and ID.
 func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 	var scope map[string]bool
 	if f.Parent != "" {
@@ -81,7 +82,7 @@ func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 	var out []*Item
 	for _, it := range s.Items() {
 		switch {
-		case !it.Type.IsClaimable(),
+		case len(f.Types) == 0 && !it.Type.IsClaimable(),
 			len(f.Types) > 0 && !slices.Contains(f.Types, it.Type),
 			f.Label != "" && !slices.Contains(it.Labels, f.Label),
 			scope != nil && !scope[it.ID],

@@ -560,7 +560,7 @@ func (c *cli) nextCmd() *cobra.Command {
 			})
 		},
 	}
-	cmd.Flags().StringSliceVar(&types, "type", nil, "only these types (task, bug)")
+	cmd.Flags().StringSliceVar(&types, "type", nil, "only these types: epic, story, task, bug (comma separated or repeated; default task and bug)")
 	cmd.Flags().StringVar(&label, "label", "", "only items with this label")
 	cmd.Flags().StringVar(&parent, "parent", "", "only descendants of this item")
 	cmd.Flags().BoolVar(&claim, "claim", false, "claim the item atomically")

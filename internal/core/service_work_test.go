@@ -3,6 +3,7 @@ package core_test
 import (
 	"errors"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -462,4 +463,70 @@ func TestLogFilters(t *testing.T) {
 	if len(limited) != 2 || limited[1].ID != all[2].ID {
 		t.Fatalf("limit must keep the newest events: %+v", limited)
 	}
+}
+
+// --- NEXT-1 allowed types ---
+
+func nextFor(h *harness, types ...core.Type) (*core.Item, error) {
+	return h.svc.Next(ctx, "agent-1", core.NextFilter{Types: types}, false)
+}
+
+func TestNextWithTypeStoryReturnsUnblockedStoryInTodo(t *testing.T) {
+	h := newHarness(t)
+	h.add("@dev", core.TypeTask, "a task", "", withStatus(core.StatusTodo))
+	story := h.add("@dev", core.TypeStory, "a story", "", withStatus(core.StatusTodo))
+	got, err := nextFor(h, core.TypeStory)
+	if err != nil || got.ID != story.ID {
+		t.Fatalf("Next(story) = %v, %v; want %s", got, err, story.ID)
+	}
+}
+
+func TestNextWithTypeEpicReturnsUnblockedEpicInTodo(t *testing.T) {
+	h := newHarness(t)
+	h.add("@dev", core.TypeStory, "a story", "", withStatus(core.StatusTodo))
+	epic := h.add("@dev", core.TypeEpic, "an epic", "", withStatus(core.StatusTodo))
+	got, err := nextFor(h, core.TypeEpic)
+	if err != nil || got.ID != epic.ID {
+		t.Fatalf("Next(epic) = %v, %v; want %s", got, err, epic.ID)
+	}
+}
+
+func TestNextWithTwoTypesConsidersBoth(t *testing.T) {
+	h := newHarness(t)
+	story := h.add("@dev", core.TypeStory, "a story", "", withStatus(core.StatusTodo), func(i *core.Item) { i.Priority = core.PriorityHigh })
+	task := h.add("@dev", core.TypeTask, "a task", "", withStatus(core.StatusTodo), func(i *core.Item) { i.Priority = core.PriorityLow })
+	got, err := nextFor(h, core.TypeStory, core.TypeTask)
+	if err != nil || got.ID != story.ID {
+		t.Fatalf("Next(story,task) = %v, %v; want %s", got, err, story.ID)
+	}
+	got, err = nextFor(h, core.TypeTask, core.TypeBug)
+	if err != nil || got.ID != task.ID {
+		t.Fatalf("Next(task,bug) = %v, %v; want %s", got, err, task.ID)
+	}
+}
+
+func TestNextWithTypeSubtaskFailsWithRuleError(t *testing.T) {
+	h := newHarness(t)
+	task := h.add("@dev", core.TypeTask, "a task", "", withStatus(core.StatusTodo))
+	h.add("@dev", core.TypeSubtask, "a subtask", task.ID, withStatus(core.StatusTodo))
+	_, err := nextFor(h, core.TypeSubtask)
+	assertErr(t, err, core.ErrRule)
+	if !strings.Contains(err.Error(), "subtask") {
+		t.Fatalf("err = %v, want it to name subtasks", err)
+	}
+}
+
+func TestNextWithSubtaskAmongOtherTypesFailsWithRuleError(t *testing.T) {
+	h := newHarness(t)
+	h.add("@dev", core.TypeStory, "a story", "", withStatus(core.StatusTodo))
+	_, err := nextFor(h, core.TypeStory, core.TypeSubtask)
+	assertErr(t, err, core.ErrRule)
+}
+
+func TestNextWithoutTypeIgnoresStoriesAndEpics(t *testing.T) {
+	h := newHarness(t)
+	h.add("@dev", core.TypeEpic, "an epic", "", withStatus(core.StatusTodo))
+	h.add("@dev", core.TypeStory, "a story", "", withStatus(core.StatusTodo))
+	_, err := nextFor(h)
+	assertErr(t, err, core.ErrNotFound)
 }

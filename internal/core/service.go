@@ -600,6 +600,9 @@ func (s *Service) Touch(ctx context.Context, actor, id string) (*Item, error) {
 // claims it in the same transaction, so concurrent agents never get the
 // same item. It returns ErrNotFound when nothing is available.
 func (s *Service) Next(ctx context.Context, actor string, f NextFilter, claim bool) (*Item, error) {
+	if slices.Contains(f.Types, TypeSubtask) {
+		return nil, NewRuleError("subtasks cannot be proposed: they are worked inside the claimed task")
+	}
 	var out *Item
 	err := s.write(ctx, actor, func(o *op) error {
 		snap, err := o.tx.Snapshot()

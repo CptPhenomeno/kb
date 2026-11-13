@@ -345,3 +345,19 @@ func TestTestEditAndRmWrongArgumentsIsUsageError(t *testing.T) {
 	e.fail(1, "test", "KB-1", "edit", "1", "x", "y")
 	e.fail(1, "test", "KB-1", "rm", "1", "2")
 }
+
+func TestE2ENextTypeStoryJSONPrintsTheStory(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "story", "Token login", "--status", "todo")
+	got := e.jsonOf("next", "--type", "story")
+	if got["id"] != "KB-1" || got["type"] != "story" {
+		t.Fatalf("next --type story = %v", got)
+	}
+}
+
+func TestE2ENextTypeSubtaskExits3(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "story", "Token login", "--status", "todo")
+	e.fail(3, "next", "--type", "subtask")
+	e.fail(3, "next", "--type", "story", "--type", "subtask")
+}
