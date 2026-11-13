@@ -4,6 +4,25 @@ All notable changes to kb are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-11-13
+
+`kb next` picks work in a more useful order and accepts every item type.
+
+### Fixed
+
+- `kb next --type` now accepts `epic` and `story` as well as `task` and
+  `bug`; `subtask` is rejected with exit code 3.
+
+### Changed
+
+- `kb next` orders candidates by status (review, then doing, then todo),
+  then priority, then the item that unblocks the heaviest chain of story
+  points, then points, then position, then id.
+- Review tasks without a valid claim are now offered by `kb next`.
+- `kb next --claim` ignores stories and epics, and fails when no claimable
+  type is left.
+- `kb next` cost now grows linearly with the size of the board.
+
 ## [1.2.0] - 2026-11-12
 
 Tests become as manageable as criteria from the CLI and the TUI, the create
