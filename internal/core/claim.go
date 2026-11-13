@@ -73,11 +73,12 @@ type NextFilter struct {
 // active claim, even one held by the caller, while stories and epics have no
 // claim condition. Ordered by priority, position and ID.
 func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
+	idx := newWorkIndex(s)
 	var scope map[string]bool
 	if f.Parent != "" {
 		scope = map[string]bool{}
-		for _, d := range s.Descendants(f.Parent) {
-			scope[d.ID] = true
+		for _, id := range idx.subtree(f.Parent) {
+			scope[id] = true
 		}
 	}
 	var out []*Item
@@ -91,7 +92,7 @@ func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 			it.Type.IsClaimable() && ClaimState(it, now) == ClaimActive:
 			continue
 		}
-		if blocked, _ := Blockers(s, it.ID); blocked {
+		if idx.isBlocked(it.ID) {
 			continue
 		}
 		out = append(out, it)
