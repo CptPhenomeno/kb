@@ -178,6 +178,18 @@ func TestGuideMentionsStoryAndEpicForNext(t *testing.T) {
 // The next help lists the admitted types, and the docs describe the rules.
 func TestNextHelpListsTypesAndDocsDescribeNext(t *testing.T) {
 	cmd := (&cli{app: DefaultApp()}).nextCmd()
+	if want := "Show (and optionally claim) the next available item (tasks and bugs by default)"; cmd.Short != want {
+		t.Errorf("next short = %q, want %q", cmd.Short, want)
+	}
+	for _, file := range []string{"../../README.md", "../../docs/cli-json.md"} {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(data), "without a valid claim, even your own") {
+			t.Errorf("%s does not say that any valid claim excludes a task or bug", file)
+		}
+	}
 	flag := cmd.Flags().Lookup("type")
 	if flag == nil {
 		t.Fatal("next has no --type flag")

@@ -70,8 +70,8 @@ kb move KB-3 review                      # refused, with the reasons, until ever
 ```
 
 `kb next` shows the best item that is available: in To do, Doing or Review,
-not blocked, and without a valid claim. Review comes first, then Doing, then
-To do; ties go to the higher priority, then to the item that unblocks the
+not blocked, and (for tasks and bugs) without a valid claim, even your own.
+Review comes first, then Doing, then To do; ties go to the higher priority, then to the item that unblocks the
 heaviest chain of story points, then to the one with more points, its
 position and its id. `--type` takes `epic`, `story`, `task` or `bug`
 (default task and bug); `subtask` exits 3. `--claim` only claims tasks and

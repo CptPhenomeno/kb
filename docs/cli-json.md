@@ -113,8 +113,8 @@ same item, exits 3 (`rule`); a missing `n` exits 2 (`not_found`).
 
 `kb next [--type epic,story,task,bug] [--parent ID] [--label L] [--claim]`
 prints one item (shape above). Available means in todo, doing or review,
-not blocked, and without a valid claim by another actor. The order is
-review, then doing, then todo; then priority; then the heaviest chain of
+not blocked, and (for tasks and bugs)
+without a valid claim, even your own. The order is review, then doing, then todo; then priority; then the heaviest chain of
 story points the item blocks; then its own points, its position and its
 id. `--type` defaults to task and bug; `subtask` exits 3 (`rule`). With
 `--claim` only tasks and bugs are considered: stories and epics are

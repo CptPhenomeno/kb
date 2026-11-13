@@ -529,7 +529,7 @@ func (c *cli) nextCmd() *cobra.Command {
 	var label, parent string
 	var claim bool
 	cmd := &cobra.Command{
-		Use: "next", Short: "Show (and optionally claim) the next available task or bug", Args: args(0, 0),
+		Use: "next", Short: "Show (and optionally claim) the next available item (tasks and bugs by default)", Args: args(0, 0),
 		RunE: func(*cobra.Command, []string) error {
 			var f core.NextFilter
 			for _, t := range types {
