@@ -68,9 +68,10 @@ type NextFilter struct {
 }
 
 // Available returns the items `kb next` may hand out, best first
-// (SPEC.md NEXT-1): of a requested type (tasks and bugs by default), in todo
-// or doing, without an active claim and not blocked; ordered by priority,
-// position and ID.
+// (SPEC.md NEXT-1, NEXT-2): of a requested type (tasks and bugs by default),
+// in todo, doing or review and not blocked; tasks and bugs also need no
+// active claim, even one held by the caller, while stories and epics have no
+// claim condition. Ordered by priority, position and ID.
 func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 	var scope map[string]bool
 	if f.Parent != "" {
@@ -86,8 +87,8 @@ func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 			len(f.Types) > 0 && !slices.Contains(f.Types, it.Type),
 			f.Label != "" && !slices.Contains(it.Labels, f.Label),
 			scope != nil && !scope[it.ID],
-			it.Status != StatusTodo && it.Status != StatusDoing,
-			ClaimState(it, now) == ClaimActive:
+			!isWorkable(it.Status),
+			it.Type.IsClaimable() && ClaimState(it, now) == ClaimActive:
 			continue
 		}
 		if blocked, _ := Blockers(s, it.ID); blocked {
@@ -109,4 +110,10 @@ func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 // done keep their last claim but are never stale.
 func IsStale(item *Item, now time.Time) bool {
 	return item.Status == StatusDoing && ClaimState(item, now) == ClaimStale
+}
+
+// isWorkable reports whether an item in status st may be proposed by
+// `kb next`: backlog and done never are.
+func isWorkable(st Status) bool {
+	return st == StatusTodo || st == StatusDoing || st == StatusReview
 }

@@ -119,16 +119,94 @@ func TestAvailableExcludesBlocked(t *testing.T) {
 	}
 }
 
-func TestAvailableExcludesBacklogAndReview(t *testing.T) {
+func TestAvailableTaskInReviewWithoutClaimIsAvailable(t *testing.T) {
+	s := board(items(it("A", TypeTask, StatusReview, "")))
+	if got := availableIDs(s, NextFilter{}); !equal(got, []string{"A"}) {
+		t.Fatalf("Available = %v, want [A]", got)
+	}
+}
+
+func TestAvailableTaskInReviewWithValidClaimIsNot(t *testing.T) {
+	s := board(items(claimed(it("A", TypeBug, StatusReview, ""), "agent-1", now.Add(time.Minute))))
+	if got := availableIDs(s, NextFilter{}); len(got) != 0 {
+		t.Fatalf("Available = %v, want none", got)
+	}
+}
+
+func TestAvailableTaskWithExpiredClaimInReviewIsAvailable(t *testing.T) {
+	s := board(items(claimed(it("A", TypeTask, StatusReview, ""), "agent-1", now.Add(-time.Minute))))
+	if got := availableIDs(s, NextFilter{}); !equal(got, []string{"A"}) {
+		t.Fatalf("Available = %v, want [A]", got)
+	}
+}
+
+func TestAvailableStoryAndEpicIgnoreTaskClaims(t *testing.T) {
+	e := it("E", TypeEpic, StatusReview, "")
+	st := it("S", TypeStory, StatusDoing, "E")
+	t1 := claimed(it("T", TypeTask, StatusDoing, "S"), "agent-1", now.Add(time.Hour))
+	s := board(items(e, st, t1))
+	f := NextFilter{Types: []Type{TypeStory, TypeEpic}}
+	if got := availableIDs(s, f); !equal(got, []string{"E", "S"}) {
+		t.Fatalf("Available = %v, want [E S]", got)
+	}
+}
+
+func TestAvailableNeverBacklogOrDone(t *testing.T) {
 	s := board(items(
 		it("A", TypeTask, StatusBacklog, ""),
-		it("B", TypeTask, StatusReview, ""),
 		it("C", TypeTask, StatusDone, ""),
+		it("E", TypeEpic, StatusBacklog, ""),
+		it("S", TypeStory, StatusDone, ""),
 		it("D", TypeTask, StatusTodo, ""),
-		it("S", TypeStory, StatusTodo, ""),
 	))
-	if got := availableIDs(s, NextFilter{}); !equal(got, []string{"D"}) {
+	f := NextFilter{Types: []Type{TypeEpic, TypeStory, TypeTask, TypeBug}}
+	if got := availableIDs(s, f); !equal(got, []string{"D"}) {
 		t.Fatalf("Available = %v, want [D]", got)
+	}
+}
+
+func TestAvailableExcludesItemBlockedThroughAncestor(t *testing.T) {
+	st := it("S", TypeStory, StatusTodo, "")
+	t1 := it("T", TypeTask, StatusTodo, "S")
+	x := it("X", TypeTask, StatusTodo, "")
+	s := board(items(st, t1, x), blocks("X", "S"))
+	if got := availableIDs(s, NextFilter{}); !equal(got, []string{"X"}) {
+		t.Fatalf("Available = %v, want [X]", got)
+	}
+}
+
+func TestAvailableBlockFromDoneItemDoesNotBlock(t *testing.T) {
+	s := board(items(it("X", TypeTask, StatusDone, ""), it("Y", TypeTask, StatusTodo, "")), blocks("X", "Y"))
+	if got := availableIDs(s, NextFilter{}); !equal(got, []string{"Y"}) {
+		t.Fatalf("Available = %v, want [Y]", got)
+	}
+}
+
+func TestAvailableParentOnTaskYieldsNothing(t *testing.T) {
+	s := board(items(it("T", TypeTask, StatusTodo, ""), it("ST", TypeSubtask, StatusTodo, "T")))
+	if got := availableIDs(s, NextFilter{Parent: "T"}); len(got) != 0 {
+		t.Fatalf("Available = %v, want none", got)
+	}
+}
+
+func TestAvailableParentExcludesParentItself(t *testing.T) {
+	e := it("E", TypeEpic, StatusTodo, "")
+	st := it("S", TypeStory, StatusTodo, "E")
+	t1 := it("T", TypeTask, StatusTodo, "S")
+	s := board(items(e, st, t1))
+	f := NextFilter{Parent: "E", Types: []Type{TypeEpic, TypeStory, TypeTask}}
+	if got := availableIDs(s, f); !equal(got, []string{"S", "T"}) {
+		t.Fatalf("Available = %v, want [S T]", got)
+	}
+}
+
+func TestAvailableLabelAppliesToStories(t *testing.T) {
+	a := it("A", TypeStory, StatusTodo, "")
+	b := it("B", TypeStory, StatusTodo, "")
+	a.Labels = []string{"core"}
+	s := board(items(a, b))
+	if got := availableIDs(s, NextFilter{Types: []Type{TypeStory}, Label: "core"}); !equal(got, []string{"A"}) {
+		t.Fatalf("Available = %v, want [A]", got)
 	}
 }
 
