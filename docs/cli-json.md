@@ -109,6 +109,18 @@ The `data` of an `acceptance` event describes one criterion (`n` is its
 Criterion text that is blank, or a duplicate of another criterion of the
 same item, exits 3 (`rule`); a missing `n` exits 2 (`not_found`).
 
+## Next
+
+`kb next [--type epic,story,task,bug] [--parent ID] [--label L] [--claim]`
+prints one item (shape above). Available means in todo, doing or review,
+not blocked, and without a valid claim by another actor. The order is
+review, then doing, then todo; then priority; then the heaviest chain of
+story points the item blocks; then its own points, its position and its
+id. `--type` defaults to task and bug; `subtask` exits 3 (`rule`). With
+`--claim` only tasks and bugs are considered: stories and epics are
+ignored, exit 3 (`rule`) if `--type` leaves neither, and a task in review
+stays in review. Exit 2 (`not_found`) means nothing is available.
+
 ## Errors
 
 With `--json`, errors are printed on stdout and the exit code is set:

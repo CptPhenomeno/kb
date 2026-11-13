@@ -163,3 +163,39 @@ func TestGuideAndDocsDocumentTestEditAndRm(t *testing.T) {
 		t.Error("docs/cli-json.md does not document the test event fields")
 	}
 }
+
+// The guide explains which types kb next accepts, the order and --claim.
+func TestGuideMentionsStoryAndEpicForNext(t *testing.T) {
+	e := newEnv(t)
+	out := e.ok("guide")
+	for _, want := range []string{"epic", "story", "review first", "heaviest chain", "--claim"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("guide does not explain kb next: missing %q", want)
+		}
+	}
+}
+
+// The next help lists the admitted types, and the docs describe the rules.
+func TestNextHelpListsTypesAndDocsDescribeNext(t *testing.T) {
+	cmd := (&cli{app: DefaultApp()}).nextCmd()
+	flag := cmd.Flags().Lookup("type")
+	if flag == nil {
+		t.Fatal("next has no --type flag")
+	}
+	for _, want := range []string{"epic", "story", "task", "bug"} {
+		if !strings.Contains(flag.Usage, want) {
+			t.Errorf("--type help %q does not list %q", flag.Usage, want)
+		}
+	}
+	for _, file := range []string{"../../README.md", "../../docs/cli-json.md"} {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, want := range []string{"--type", "--claim", "subtask"} {
+			if !strings.Contains(string(data), want) {
+				t.Errorf("%s does not mention %q", file, want)
+			}
+		}
+	}
+}

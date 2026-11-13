@@ -44,7 +44,7 @@ kb add task "Validate token in middleware" --parent KB-2 --points 3 \
 kb                                       # open the TUI
 ```
 
-New items start in Backlog; `kb next` hands out tasks and bugs from To do.
+New items start in Backlog; `kb next` picks from To do, Doing and Review.
 `kb init --prefix API` chooses the ID prefix. `kb export` writes a readable
 `.kanban/board.md` that you can commit next to the code.
 
@@ -68,6 +68,15 @@ kb test KB-3 pass 1
 kb note KB-3 "validated the token in the middleware"
 kb move KB-3 review                      # refused, with the reasons, until every test passes
 ```
+
+`kb next` shows the best item that is available: in To do, Doing or Review,
+not blocked, and without a valid claim. Review comes first, then Doing, then
+To do; ties go to the higher priority, then to the item that unblocks the
+heaviest chain of story points, then to the one with more points, its
+position and its id. `--type` takes `epic`, `story`, `task` or `bug`
+(default task and bug); `subtask` exits 3. `--claim` only claims tasks and
+bugs, ignoring stories and epics (exit 3 if `--type` leaves neither), and a
+task in review stays in review. Exit 2 means nothing is available.
 
 A planning agent turns `SPEC.md` into a YAML plan and imports it in one
 transaction: `kb import plan.yaml --dry-run` validates it, `kb import

@@ -86,6 +86,15 @@ tokens"). Test names describe observable behavior ("rejects expired token").
     kb note <id> "what changed and why"
     kb move <id> review                # only allowed when every test passes
 
+kb next shows the best available item without claiming it. Available means
+in To do, Doing or Review, not blocked, and (for tasks and bugs) without a
+valid claim. The order is: review first, then doing, then to do; then
+priority; then the item that unblocks the heaviest chain of story points;
+then its own points, its position and its id. --type takes epic, story,
+task or bug (default task and bug); subtask exits 3. --claim only claims
+tasks and bugs: stories and epics are ignored, exit 3 if --type leaves
+neither, and a task in review stays in review.
+
 Other commands:
 
     kb show <id>                       # the item with its history
