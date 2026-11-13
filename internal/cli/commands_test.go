@@ -361,3 +361,10 @@ func TestE2ENextTypeSubtaskExits3(t *testing.T) {
 	e.fail(3, "next", "--type", "subtask")
 	e.fail(3, "next", "--type", "story", "--type", "subtask")
 }
+
+func TestE2ENextClaimWithStoryOrEpicTypeExits3(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "story", "Token login", "--status", "todo")
+	e.fail(3, "next", "--type", "story", "--claim")
+	e.fail(3, "next", "--type", "epic", "--claim")
+}

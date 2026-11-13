@@ -530,3 +530,45 @@ func TestNextWithoutTypeIgnoresStoriesAndEpics(t *testing.T) {
 	_, err := nextFor(h)
 	assertErr(t, err, core.ErrNotFound)
 }
+
+// --- NEXT-5 --claim only takes tasks and bugs ---
+
+func TestNextClaimWithOnlyStoryTypeFailsWithRuleError(t *testing.T) {
+	h := newHarness(t)
+	h.add("@dev", core.TypeStory, "a story", "", withStatus(core.StatusTodo))
+	_, err := h.svc.Next(ctx, "agent-1", core.NextFilter{Types: []core.Type{core.TypeStory}}, true)
+	assertErr(t, err, core.ErrRule)
+	if !strings.Contains(err.Error(), "stories and epics") {
+		t.Fatalf("err = %v, want it to explain stories and epics are not claimed", err)
+	}
+	_, err = h.svc.Next(ctx, "agent-1", core.NextFilter{Types: []core.Type{core.TypeEpic, core.TypeStory}}, true)
+	assertErr(t, err, core.ErrRule)
+}
+
+func TestNextClaimWithStoryAndTaskTypesClaimsATask(t *testing.T) {
+	h := newHarness(t)
+	h.add("@dev", core.TypeStory, "a story", "", withStatus(core.StatusTodo), func(i *core.Item) { i.Priority = core.PriorityHigh })
+	task := h.add("@dev", core.TypeTask, "a task", "", withStatus(core.StatusTodo), func(i *core.Item) { i.Priority = core.PriorityLow })
+	got, err := h.svc.Next(ctx, "agent-1", core.NextFilter{Types: []core.Type{core.TypeStory, core.TypeTask}}, true)
+	if err != nil || got.ID != task.ID || got.Claim == nil {
+		t.Fatalf("Next(story,task) --claim = %+v, %v; want claimed %s", got, err, task.ID)
+	}
+}
+
+func TestNextClaimOfAReviewTaskKeepsItInReview(t *testing.T) {
+	h := newHarness(t)
+	task := h.add("@dev", core.TypeTask, "a task", "", withStatus(core.StatusReview))
+	got, err := h.svc.Next(ctx, "agent-1", core.NextFilter{}, true)
+	if err != nil || got.ID != task.ID || got.Claim == nil || got.Status != core.StatusReview {
+		t.Fatalf("Next --claim = %+v, %v; want %s claimed and still in review", got, err, task.ID)
+	}
+}
+
+func TestNextClaimOfATodoTaskMovesItToDoing(t *testing.T) {
+	h := newHarness(t)
+	task := h.add("@dev", core.TypeTask, "a task", "", withStatus(core.StatusTodo))
+	got, err := h.svc.Next(ctx, "agent-1", core.NextFilter{}, true)
+	if err != nil || got.ID != task.ID || got.Status != core.StatusDoing {
+		t.Fatalf("Next --claim = %+v, %v; want %s in doing", got, err, task.ID)
+	}
+}

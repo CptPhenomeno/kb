@@ -603,6 +603,13 @@ func (s *Service) Next(ctx context.Context, actor string, f NextFilter, claim bo
 	if slices.Contains(f.Types, TypeSubtask) {
 		return nil, NewRuleError("subtasks cannot be proposed: they are worked inside the claimed task")
 	}
+	if claim && len(f.Types) > 0 {
+		// Only tasks and bugs are claimed (SPEC.md NEXT-5): the other types are ignored.
+		f.Types = slices.DeleteFunc(slices.Clone(f.Types), func(t Type) bool { return !t.IsClaimable() })
+		if len(f.Types) == 0 {
+			return nil, NewRuleError("stories and epics cannot be claimed: use --type task or bug with --claim")
+		}
+	}
 	var out *Item
 	err := s.write(ctx, actor, func(o *op) error {
 		snap, err := o.tx.Snapshot()
