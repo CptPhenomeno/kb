@@ -71,7 +71,8 @@ type NextFilter struct {
 // (SPEC.md NEXT-1, NEXT-2): of a requested type (tasks and bugs by default),
 // in todo, doing or review and not blocked; tasks and bugs also need no
 // active claim, even one held by the caller, while stories and epics have no
-// claim condition. Ordered by priority, position and ID.
+// claim condition. Ordered by NEXT-3: status (review, doing, todo), priority, CBSP, story
+// points (none last), position and natural ID.
 func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 	idx := newWorkIndex(s)
 	var scope map[string]bool
@@ -97,8 +98,24 @@ func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 		}
 		out = append(out, it)
 	}
+	// CBSP and points are computed once per candidate, not per comparison.
+	crit := make(map[string]int, len(out))
+	own := make(map[string]int, len(out))
+	for _, it := range out {
+		crit[it.ID] = idx.cbsp(it.ID)
+		own[it.ID] = idx.storyPoints(it.ID)
+	}
 	slices.SortFunc(out, func(a, b *Item) int {
+		if c := cmp.Compare(b.Status, a.Status); c != 0 { // review, doing, todo
+			return c
+		}
 		if c := cmp.Compare(b.Priority, a.Priority); c != 0 {
+			return c
+		}
+		if c := cmp.Compare(crit[b.ID], crit[a.ID]); c != 0 {
+			return c
+		}
+		if c := cmp.Compare(own[b.ID], own[a.ID]); c != 0 { // no points sort last
 			return c
 		}
 		return byPosition(a, b)
