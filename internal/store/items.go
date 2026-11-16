@@ -18,7 +18,7 @@ const timeLayout = time.RFC3339Nano
 
 // itemColumns lists the columns of items in the order scanItem expects.
 const itemColumns = `id, ref, type, title, description, parent, status, priority, points, spec,
-	labels, links, acceptance, tests, tdd_phase, assignee, claim_actor, claim_expires_at,
+	links, acceptance, tests, tdd_phase, assignee, claim_actor, claim_expires_at,
 	position, version, created_at, created_by, updated_at, updated_by`
 
 // testDTO and criterionDTO fix the JSON shape of the stored lists,
@@ -57,13 +57,13 @@ func (tx *Tx) InsertItem(it *core.Item) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.exec(`INSERT INTO items(`+itemColumns+`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?)`,
-		append(args[:19:19], args[20:]...)...)
+	_, err = tx.exec(`INSERT INTO items(`+itemColumns+`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?)`,
+		append(args[:18:18], args[19:]...)...)
 	if err != nil {
 		return refError(it, fmt.Errorf("insert %s: %w", it.ID, err))
 	}
 	it.Version = 1
-	return nil
+	return tx.setCardTags(it.ID, it.Tags)
 }
 
 // UpdateItem stores every field of it, provided the stored version is
@@ -75,13 +75,13 @@ func (tx *Tx) UpdateItem(it *core.Item, expected int) error {
 	if err != nil {
 		return err
 	}
-	args[19] = expected + 1
+	args[18] = expected + 1
 	res, err := tx.exec(`UPDATE items SET
 		ref = ?2, type = ?3, title = ?4, description = ?5, parent = ?6, status = ?7, priority = ?8,
-		points = ?9, spec = ?10, labels = ?11, links = ?12, acceptance = ?13, tests = ?14,
-		tdd_phase = ?15, assignee = ?16, claim_actor = ?17, claim_expires_at = ?18, position = ?19,
-		version = ?20, created_at = ?21, created_by = ?22, updated_at = ?23, updated_by = ?24
-		WHERE id = ?1 AND version = ?25`, append(args, expected)...)
+		points = ?9, spec = ?10, links = ?11, acceptance = ?12, tests = ?13,
+		tdd_phase = ?14, assignee = ?15, claim_actor = ?16, claim_expires_at = ?17, position = ?18,
+		version = ?19, created_at = ?20, created_by = ?21, updated_at = ?22, updated_by = ?23
+		WHERE id = ?1 AND version = ?24`, append(args, expected)...)
 	if err != nil {
 		return refError(it, fmt.Errorf("update %s: %w", it.ID, err))
 	}
@@ -94,7 +94,7 @@ func (tx *Tx) UpdateItem(it *core.Item, expected int) error {
 		return fmt.Errorf("item %s is at version %d, not %d: %w", it.ID, version, expected, core.ErrConflict)
 	}
 	it.Version = expected + 1
-	return nil
+	return tx.setCardTags(it.ID, it.Tags)
 }
 
 // DeleteItem removes an item and its relations. Children must be removed
@@ -129,6 +129,9 @@ func (tx *Tx) getOne(column, value string) (*core.Item, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := tx.loadTags(items); err != nil {
+		return nil, err
+	}
 	if len(items) == 0 {
 		return nil, fmt.Errorf("item %s %q: %w", column, value, core.ErrNotFound)
 	}
@@ -158,7 +161,8 @@ func (tx *Tx) ListItems(f ItemFilter) ([]*core.Item, error) {
 		where, args = append(where, "assignee = ?"), append(args, f.Assignee)
 	}
 	if f.Label != "" {
-		where, args = append(where, "EXISTS (SELECT 1 FROM json_each(items.labels) WHERE value = ?)"), append(args, f.Label)
+		where, args = append(where, `EXISTS (SELECT 1 FROM card_tags ct JOIN tags t ON t.id = ct.tag
+			WHERE ct.item = items.id AND t.key = ?)`), append(args, core.TagKey(f.Label))
 	}
 	if f.Parent != "" {
 		where, args = append(where, "parent = ?"), append(args, f.Parent)
@@ -173,6 +177,9 @@ func (tx *Tx) ListItems(f ItemFilter) ([]*core.Item, error) {
 	}
 	items, err := scanItems(rows)
 	if err != nil {
+		return nil, err
+	}
+	if err := tx.loadTags(items); err != nil {
 		return nil, err
 	}
 	slices.SortFunc(items, func(a, b *core.Item) int { return core.CompareIDs(a.ID, b.ID) })
@@ -257,10 +264,6 @@ func (tx *Tx) Relations() ([]core.Relation, error) {
 
 // itemArgs returns the column values of it, in itemColumns order.
 func itemArgs(it *core.Item) ([]any, error) {
-	labels, err := jsonList(it.Labels)
-	if err != nil {
-		return nil, err
-	}
 	links, err := jsonList(it.Links)
 	if err != nil {
 		return nil, err
@@ -288,7 +291,7 @@ func itemArgs(it *core.Item) ([]any, error) {
 	return []any{
 		it.ID, nullString(it.Ref), it.Type.String(), it.Title, it.Description, nullString(it.Parent),
 		it.Status.String(), it.Priority.String(), it.Points, it.Spec,
-		labels, links, acceptance, tests, it.Phase.String(), it.Assignee, claimActor, claimExpires,
+		links, acceptance, tests, it.Phase.String(), it.Assignee, claimActor, claimExpires,
 		it.Position, it.Version, formatTime(it.CreatedAt), it.CreatedBy, formatTime(it.UpdatedAt), it.UpdatedBy,
 	}, nil
 }
@@ -311,11 +314,11 @@ func scanItem(rows *sql.Rows) (*core.Item, error) {
 		it                                    core.Item
 		ref, parent, claimActor, claimExpires sql.NullString
 		typ, status, priority, phase          string
-		labels, links, acceptance, tests      string
+		links, acceptance, tests              string
 		createdAt, updatedAt                  string
 	)
 	err := rows.Scan(&it.ID, &ref, &typ, &it.Title, &it.Description, &parent, &status, &priority,
-		&it.Points, &it.Spec, &labels, &links, &acceptance, &tests, &phase, &it.Assignee,
+		&it.Points, &it.Spec, &links, &acceptance, &tests, &phase, &it.Assignee,
 		&claimActor, &claimExpires, &it.Position, &it.Version, &createdAt, &it.CreatedBy,
 		&updatedAt, &it.UpdatedBy)
 	if err != nil {
@@ -332,9 +335,6 @@ func scanItem(rows *sql.Rows) (*core.Item, error) {
 		return nil, err
 	}
 	if it.Phase, err = core.ParsePhase(phase); err != nil {
-		return nil, err
-	}
-	if it.Labels, err = parseList[string](labels); err != nil {
 		return nil, err
 	}
 	if it.Links, err = parseList[string](links); err != nil {

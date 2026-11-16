@@ -22,7 +22,7 @@ type editDoc struct {
 	Parent      string   `yaml:"parent"`
 	Ref         string   `yaml:"ref"`
 	Spec        string   `yaml:"spec"`
-	Labels      []string `yaml:"labels"`
+	Tags        []string `yaml:"labels"`
 	Links       []string `yaml:"links"`
 }
 
@@ -38,7 +38,7 @@ func (c *cli) editInEditor(s *Session, id string, ifVersion int) error {
 	}
 	doc := editDoc{Title: it.Title, Description: it.Description, Priority: it.Priority.String(),
 		Points: it.Points, Parent: it.Parent, Ref: it.Ref, Spec: it.Spec,
-		Labels: nonNil(it.Labels), Links: nonNil(it.Links)}
+		Tags: nonNil(it.Tags), Links: nonNil(it.Links)}
 	body, err := yaml.Marshal(doc)
 	if err != nil {
 		return err
@@ -123,8 +123,8 @@ func patchFrom(it *core.Item, d editDoc) (core.Patch, error) {
 	if d.Spec != it.Spec {
 		p.Spec = &d.Spec
 	}
-	if !slices.Equal(d.Labels, nonNil(it.Labels)) {
-		p.Labels = &d.Labels
+	if !slices.Equal(d.Tags, nonNil(it.Tags)) {
+		p.Tags = &d.Tags
 	}
 	if !slices.Equal(d.Links, nonNil(it.Links)) {
 		p.Links = &d.Links

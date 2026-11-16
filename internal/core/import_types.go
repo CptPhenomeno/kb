@@ -20,7 +20,7 @@ type ImportItem struct {
 	Priority    *Priority
 	Points      *int
 	Status      *Status // Initial status; ignored for existing items.
-	Labels      *[]string
+	Tags        *[]string
 	Links       *[]string
 	Acceptance  *[]string
 	Tests       *[]string

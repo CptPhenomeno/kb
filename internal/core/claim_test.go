@@ -203,7 +203,7 @@ func TestAvailableParentExcludesParentItself(t *testing.T) {
 func TestAvailableLabelAppliesToStories(t *testing.T) {
 	a := it("A", TypeStory, StatusTodo, "")
 	b := it("B", TypeStory, StatusTodo, "")
-	a.Labels = []string{"core"}
+	a.Tags = []string{"core"}
 	s := board(items(a, b))
 	if got := availableIDs(s, NextFilter{Types: []Type{TypeStory}, Label: "core"}); !equal(got, []string{"A"}) {
 		t.Fatalf("Available = %v, want [A]", got)
@@ -230,8 +230,8 @@ func TestAvailableFilterTypeLabelParent(t *testing.T) {
 	t1 := it("T1", TypeTask, StatusTodo, "S")
 	b1 := it("B1", TypeBug, StatusTodo, "S")
 	t2 := it("T2", TypeTask, StatusTodo, "")
-	t1.Labels = []string{"api"}
-	t2.Labels = []string{"api", "docs"}
+	t1.Tags = []string{"api"}
+	t2.Tags = []string{"api", "docs"}
 	s := board(items(e, st, t1, b1, t2))
 
 	if got := availableIDs(s, NextFilter{Types: []Type{TypeBug}}); !equal(got, []string{"B1"}) {

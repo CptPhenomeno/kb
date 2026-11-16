@@ -87,7 +87,7 @@ func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 		switch {
 		case len(f.Types) == 0 && !it.Type.IsClaimable(),
 			len(f.Types) > 0 && !slices.Contains(f.Types, it.Type),
-			f.Label != "" && !slices.Contains(it.Labels, f.Label),
+			f.Label != "" && !hasTag(it.Tags, f.Label),
 			scope != nil && !scope[it.ID],
 			!isWorkable(it.Status),
 			it.Type.IsClaimable() && ClaimState(it, now) == ClaimActive:

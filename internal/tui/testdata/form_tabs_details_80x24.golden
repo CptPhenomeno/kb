@@ -11,7 +11,7 @@
 │ │    parent                                                                │ │
 │ │    priority    medium                                                    │ │
 │ │    points      -                                                         │ │
-│ │    labels                                                                │ │
+│ │    tags                                                                  │ │
 │ │    spec                                                                  │ │
 │ │    description                                                           │ │
 │ │                                                                          │ │

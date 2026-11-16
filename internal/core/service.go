@@ -58,7 +58,7 @@ type Patch struct {
 	Priority    *Priority
 	Points      *int
 	Spec        *string
-	Labels      *[]string
+	Tags        *[]string
 	Links       *[]string
 }
 
@@ -165,6 +165,10 @@ func (s *Service) Create(ctx context.Context, actor string, in Item) (*Item, err
 		if err := ValidateItem(&it); err != nil {
 			return err
 		}
+		var err error
+		if it.Tags, err = o.canonTags(it.Tags); err != nil {
+			return err
+		}
 		snap, err := o.tx.Snapshot()
 		if err != nil {
 			return err
@@ -233,7 +237,13 @@ func (s *Service) Edit(ctx context.Context, actor, id string, p Patch, ifVersion
 			changes["priority"] = []any{it.Priority.String(), p.Priority.String()}
 			it.Priority = *p.Priority
 		}
-		setList(changes, "labels", &it.Labels, p.Labels)
+		if p.Tags != nil {
+			tags, err := o.canonTags(*p.Tags)
+			if err != nil {
+				return err
+			}
+			setList(changes, "tags", &it.Tags, &tags)
+		}
 		setList(changes, "links", &it.Links, p.Links)
 		it.Title = strings.TrimSpace(it.Title)
 		if err := ValidateItem(it); err != nil {

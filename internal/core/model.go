@@ -17,7 +17,7 @@ type Item struct {
 	Priority    Priority
 	Points      int // Story points; 0 means unset.
 	Spec        string
-	Labels      []string
+	Tags        []string
 	Links       []string
 	Acceptance  []Criterion
 	Tests       []Test

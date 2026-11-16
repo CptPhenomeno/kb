@@ -99,7 +99,7 @@ func (o *op) importPlan(p *ImportPlan, opts ImportOptions) (*ImportReport, error
 			}
 			pl.existing = ex
 			cp := *ex
-			cp.Labels, cp.Links = slices.Clone(ex.Labels), slices.Clone(ex.Links)
+			cp.Tags, cp.Links = slices.Clone(ex.Tags), slices.Clone(ex.Links)
 			cp.Tests, cp.Acceptance = slices.Clone(ex.Tests), slices.Clone(ex.Acceptance)
 			pl.item = &cp
 			pl.oldParent = ex.Parent
@@ -243,6 +243,9 @@ func (o *op) importPlan(p *ImportPlan, opts ImportOptions) (*ImportReport, error
 			continue
 		}
 		it := pl.item
+		if it.Tags, err = o.canonTags(it.Tags); err != nil {
+			return nil, err
+		}
 		if it.Position, err = o.tx.NextPosition(it.Status); err != nil {
 			return nil, err
 		}
@@ -258,6 +261,9 @@ func (o *op) importPlan(p *ImportPlan, opts ImportOptions) (*ImportReport, error
 	for _, pl := range items {
 		if pl.existing == nil || len(pl.changes) == 0 {
 			continue
+		}
+		if pl.item.Tags, err = o.canonTags(pl.item.Tags); err != nil {
+			return nil, err
 		}
 		if err := o.save(pl.item); err != nil {
 			return nil, err
@@ -361,9 +367,9 @@ func applyPlanFields(it *Item, in *ImportItem) []string {
 		it.Points = *in.Points
 		changes = append(changes, "points")
 	}
-	if in.Labels != nil && !slices.Equal(*in.Labels, it.Labels) {
-		it.Labels = slices.Clone(*in.Labels)
-		changes = append(changes, "labels")
+	if in.Tags != nil && !sameTags(*in.Tags, it.Tags) {
+		it.Tags = slices.Clone(*in.Tags)
+		changes = append(changes, "tags")
 	}
 	if in.Links != nil && !slices.Equal(*in.Links, it.Links) {
 		it.Links = slices.Clone(*in.Links)

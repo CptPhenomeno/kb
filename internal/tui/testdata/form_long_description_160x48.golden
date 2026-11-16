@@ -21,7 +21,7 @@
 │                              │ │ │ Key r│    parent                                                                │         │ │                             │
 │                              │ │ │  BLOC│    priority    medium                                                    │         │ │                             │
 │                              │ │ ╰──────│    points      -                                                         │         │ │                             │
-│                              │ │        │    labels                                                                │         │ │                             │
+│                              │ │        │    tags                                                                  │         │ │                             │
 │                              │ │        │    spec                                                                  │         │ │                             │
 │                              │ │        │  › description …the old one stops working at once. The refresh token     │         │ │                             │
 │                              │ │        │                must rotate on every renewal and the old one stops        │         │ │                             │

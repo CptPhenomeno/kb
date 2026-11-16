@@ -26,7 +26,7 @@ type itemView struct {
 	Priority    string          `json:"priority"`
 	Points      *int            `json:"points"`
 	Spec        string          `json:"spec"`
-	Labels      []string        `json:"labels"`
+	Tags        []string        `json:"tags"`
 	Links       []string        `json:"links"`
 	Acceptance  []criterionView `json:"acceptance"`
 	Tests       []testView      `json:"tests"`
@@ -113,7 +113,7 @@ func newItemView(snap *core.Snapshot, it *core.Item, now time.Time) itemView {
 	v := itemView{
 		ID: it.ID, Ref: optional(it.Ref), Type: it.Type.String(), Title: it.Title,
 		Description: it.Description, Parent: optional(it.Parent), Status: it.Status.String(),
-		Priority: it.Priority.String(), Spec: it.Spec, Labels: nonNil(it.Labels), Links: nonNil(it.Links),
+		Priority: it.Priority.String(), Spec: it.Spec, Tags: nonNil(it.Tags), Links: nonNil(it.Links),
 		Acceptance: []criterionView{}, Tests: []testView{}, TDDPhase: optional(it.Phase.String()),
 		Assignee: optional(it.Assignee), BlockedBy: []string{}, Blocks: []string{}, Relates: []string{},
 		Duplicates: []string{}, Position: it.Position, Version: it.Version,
@@ -248,7 +248,7 @@ func writeItem(w io.Writer, snap *core.Snapshot, it *core.Item, history []core.E
 		row("ref", it.Ref)
 	}
 	row("spec", orDash(it.Spec))
-	row("labels", joinOrDash(it.Labels))
+	row("tags", joinOrDash(it.Tags))
 	row("links", joinOrDash(it.Links))
 	if it.Type.IsLeafType() {
 		row("tdd phase", orDash(it.Phase.String()))

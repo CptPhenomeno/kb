@@ -66,7 +66,7 @@ func TestItemRoundTrip(t *testing.T) {
 		Ref: "auth-login-refresh", Type: core.TypeTask, Title: "Token refresh",
 		Description: "Exchange a refresh token.\n\nMarkdown **body**.", Parent: story.ID,
 		Status: core.StatusDoing, Priority: core.PriorityHigh, Points: 2, Spec: "SPEC.md#refresh",
-		Labels: []string{"api", "auth"}, Links: []string{"PR #148"},
+		Tags: []string{"api", "auth"}, Links: []string{"PR #148"},
 		Acceptance: []core.Criterion{{Text: "new pair", Done: true}, {Text: "reuse → 401"}},
 		Tests:      []core.Test{{Name: "rotates", State: core.TestFailing}, {Name: "revokes"}},
 		Phase:      core.PhaseRed, Assignee: "agent-auth",
@@ -146,8 +146,8 @@ func TestListFilters(t *testing.T) {
 	a := newItem(t, db, core.TypeTask, "a", s.ID)
 	b := newItem(t, db, core.TypeBug, "b", s.ID)
 	c := newItem(t, db, core.TypeTask, "c", "")
-	a.Status, a.Assignee, a.Labels = core.StatusDoing, "agent-1", []string{"api"}
-	c.Labels = []string{"docs", "api"}
+	a.Status, a.Assignee, a.Tags = core.StatusDoing, "agent-1", []string{"api"}
+	c.Tags = []string{"docs", "api"}
 	inTx(t, db, func(tx *Tx) error {
 		if err := tx.UpdateItem(a, 1); err != nil {
 			return err

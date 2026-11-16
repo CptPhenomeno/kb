@@ -9,7 +9,7 @@
   "priority": "high",
   "points": 3,
   "spec": "",
-  "labels": [
+  "tags": [
     "api"
   ],
   "links": [],

@@ -6,7 +6,7 @@ points      3pt
 parent      KB-2 Token login
 assignee    agent-auth (claim active, expires 2026-11-09 14:17 UTC)
 spec        -
-labels      api
+tags        api
 links       -
 tdd phase   red
 blocked by  -

@@ -99,7 +99,7 @@ func (c *cli) initCmd() *cobra.Command {
 type itemFlags struct {
 	desc, prio, spec, parent, ref, status string
 	points                                int
-	labels, links, accept, tests          []string
+	tags, links, accept, tests            []string
 }
 
 func (f *itemFlags) register(cmd *cobra.Command, withCreateOnly bool) {
@@ -110,7 +110,7 @@ func (f *itemFlags) register(cmd *cobra.Command, withCreateOnly bool) {
 	fl.StringVar(&f.spec, "spec", "", "reference to the specification, e.g. SPEC.md#auth")
 	fl.StringVar(&f.parent, "parent", "", "parent item ID")
 	fl.StringVar(&f.ref, "ref", "", "stable symbolic key, unique in the board")
-	fl.StringArrayVar(&f.labels, "label", nil, "label (repeatable)")
+	fl.StringArrayVar(&f.tags, "tag", nil, "tag name, created if missing (repeatable)")
 	fl.StringArrayVar(&f.links, "link", nil, "link to a PR, branch or issue (repeatable)")
 	if withCreateOnly {
 		fl.StringVar(&f.status, "status", "", "initial status (default backlog)")
@@ -129,7 +129,7 @@ func (c *cli) addCmd() *cobra.Command {
 				return err
 			}
 			it := core.Item{Type: typ, Title: a[1], Spec: f.spec, Ref: f.ref, Points: f.points,
-				Labels: f.labels, Links: f.links}
+				Tags: nonBlank(f.tags), Links: f.links}
 			if it.Description, err = c.readText(f.desc); err != nil {
 				return err
 			}
@@ -275,7 +275,7 @@ func filterItems(s *Session, c *cli, snap *core.Snapshot, f listFlags) ([]*core.
 		case status != nil && it.Status != *status,
 			typ != nil && it.Type != *typ,
 			f.assignee != "" && it.Assignee != f.assignee,
-			f.label != "" && !slices.Contains(it.Labels, f.label),
+			f.label != "" && !slices.Contains(it.Tags, f.label),
 			scope != nil && !scope[it.ID],
 			f.blocked && !blocked,
 			f.stale && !core.IsStale(it, now):
@@ -369,7 +369,7 @@ func (c *cli) editCmd() *cobra.Command {
 				var p core.Patch
 				changed := cmd.Flags().Changed
 				if !changed("title") && !changed("desc") && !changed("prio") && !changed("points") &&
-					!changed("spec") && !changed("parent") && !changed("ref") && !changed("label") && !changed("link") {
+					!changed("spec") && !changed("parent") && !changed("ref") && !changed("tag") && !changed("link") {
 					return c.editInEditor(s, id, ifVersion)
 				}
 				if changed("title") {
@@ -407,8 +407,9 @@ func (c *cli) editCmd() *cobra.Command {
 					}
 					p.Parent = &parent
 				}
-				if changed("label") {
-					p.Labels = &f.labels
+				if changed("tag") {
+					tags := nonBlank(f.tags)
+					p.Tags = &tags
 				}
 				if changed("link") {
 					p.Links = &f.links
@@ -825,4 +826,15 @@ func (c *cli) rmCmd() *cobra.Command {
 	}
 	cmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "also delete every descendant")
 	return cmd
+}
+
+// nonBlank drops empty names, so --tag "" clears the tags of a card.
+func nonBlank(names []string) []string {
+	out := []string{}
+	for _, n := range names {
+		if strings.TrimSpace(n) != "" {
+			out = append(out, n)
+		}
+	}
+	return out
 }

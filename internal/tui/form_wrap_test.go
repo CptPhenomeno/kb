@@ -176,7 +176,7 @@ func TestFormParentLabelsSpecStayOnOneLine(t *testing.T) {
 	m.form.fields[fLabels].value = long
 	m.form.fields[fSpec].value = long
 	rows := formRows(m)
-	for _, label := range []string{"parent", "labels", "spec"} {
+	for _, label := range []string{"parent", "tags", "spec"} {
 		for i, r := range rows {
 			if strings.HasPrefix(r, "  "+label) {
 				if i+1 < len(rows) && strings.HasPrefix(rows[i+1], strings.Repeat(" ", 14)) && strings.TrimSpace(rows[i+1]) != "" {

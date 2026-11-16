@@ -21,7 +21,7 @@ func fakeEditor(t *testing.T, e *env, script string) {
 func TestEditorRoundTrip(t *testing.T) {
 	e := newEnv(t)
 	e.ok("add", "story", "s")
-	e.ok("add", "task", "old title", "--label", "api", "--desc", "first line")
+	e.ok("add", "task", "old title", "--tag", "api", "--desc", "first line")
 	fakeEditor(t, e, `sed -i -e 's/^title: .*/title: new title/' -e 's/^priority: .*/priority: high/' "$1"`)
 	out := e.ok("edit", "KB-2")
 	if !strings.Contains(out, "KB-2 updated") {
@@ -31,7 +31,7 @@ func TestEditorRoundTrip(t *testing.T) {
 	if item["title"] != "new title" || item["priority"] != "high" || item["description"] != "first line" {
 		t.Fatalf("edited item = %v", item)
 	}
-	if labels := item["labels"].([]any); len(labels) != 1 || labels[0] != "api" {
+	if labels := item["tags"].([]any); len(labels) != 1 || labels[0] != "api" {
 		t.Fatalf("labels = %v", labels)
 	}
 	fakeEditor(t, e, `sed -i 's/^parent: .*/parent: KB-1/' "$1"`)

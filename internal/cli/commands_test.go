@@ -114,7 +114,7 @@ func TestE2EEditLinkAcceptRm(t *testing.T) {
 	e.ok("add", "story", "s")
 	e.ok("add", "task", "a", "--parent", "KB-1")
 	e.ok("add", "task", "b")
-	e.ok("edit", "KB-3", "--title", "renamed", "--prio", "low", "--label", "x", "--label", "y", "--parent", "KB-1")
+	e.ok("edit", "KB-3", "--title", "renamed", "--prio", "low", "--tag", "x", "--tag", "y", "--parent", "KB-1")
 	item := e.jsonOf("show", "KB-3")
 	if item["title"] != "renamed" || item["priority"] != "low" || item["parent"] != "KB-1" {
 		t.Fatalf("edited = %v", item)

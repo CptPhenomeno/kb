@@ -31,7 +31,7 @@ func (b *boardState) matchesExceptType(m *Model, it *core.Item) bool {
 		return false
 	}
 	if q := strings.ToLower(strings.TrimSpace(b.query)); q != "" {
-		hay := strings.ToLower(strings.Join(append([]string{it.ID, it.Title, it.Assignee}, it.Labels...), " "))
+		hay := strings.ToLower(strings.Join(append([]string{it.ID, it.Title, it.Assignee}, it.Tags...), " "))
 		if !strings.Contains(hay, q) {
 			return false
 		}
@@ -159,7 +159,7 @@ func (m *Model) renderFilter() string {
 			lines = append(lines, "  "+m.th.text.Render(line))
 		}
 	}
-	lines = append(lines, "", m.th.muted.Render("/ searches ID, title, label and assignee"))
+	lines = append(lines, "", m.th.muted.Render("/ searches ID, title, tag and assignee"))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
@@ -170,7 +170,7 @@ var filterKeys = []keyHint{
 }
 
 var searchKeys = []keyHint{
-	{"type", "search", "search by ID, title, label or assignee", false},
+	{"type", "search", "search by ID, title, tag or assignee", false},
 	{"enter", "keep", "keep the search and go back to the board", false},
 	{"esc", "clear", "clear the search", false},
 }

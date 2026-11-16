@@ -113,7 +113,7 @@ func newForm(it *core.Item) *formState {
 		{label: "parent"},
 		{label: "priority", value: "medium", choices: formPriorities},
 		{label: "points", value: "-", choices: formPoints},
-		{label: "labels"},
+		{label: "tags"},
 		{label: "spec"},
 		{label: "description"},
 	}}
@@ -128,7 +128,7 @@ func newForm(it *core.Item) *formState {
 		if it.Points != 0 {
 			f.fields[fPoints].value = strconv.Itoa(it.Points)
 		}
-		f.fields[fLabels].value = strings.Join(it.Labels, ", ")
+		f.fields[fLabels].value = strings.Join(it.Tags, ", ")
 		f.fields[fSpec].value = it.Spec
 		f.fields[fDescription].value = it.Description
 	}
@@ -293,7 +293,7 @@ func (m *Model) submitForm() tea.Cmd {
 	if editID == "" {
 		typ, _ := core.ParseType(val(fType))
 		it := core.Item{Type: typ, Title: val(fTitle), Parent: val(fParent), Priority: prio, Points: points,
-			Labels: labels, Spec: val(fSpec), Description: desc}
+			Tags: labels, Spec: val(fSpec), Description: desc}
 		for _, text := range f.criteria {
 			it.Acceptance = append(it.Acceptance, core.Criterion{Text: text})
 		}
@@ -310,7 +310,7 @@ func (m *Model) submitForm() tea.Cmd {
 	}
 	title, parent, spec := val(fTitle), val(fParent), val(fSpec)
 	p := core.Patch{Title: &title, Description: &desc, Parent: &parent, Priority: &prio, Points: &points,
-		Spec: &spec, Labels: &labels}
+		Spec: &spec, Tags: &labels}
 	return func() tea.Msg {
 		if _, err := m.be.Edit(m.ctx, actor, editID, p, version); err != nil {
 			if errors.Is(err, core.ErrConflict) {

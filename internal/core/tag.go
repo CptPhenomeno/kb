@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -130,4 +131,44 @@ func (s *Service) AddTag(ctx context.Context, actor, name, color string) (*Tag, 
 		return nil
 	})
 	return out, err
+}
+
+// canonTags prepares the tags of a card for storing: names are trimmed and
+// validated, a repeated name (ignoring case) is kept once in its first
+// position, and a name that matches an existing tag takes that tag's
+// spelling. Missing tags are not created here: the store creates them in
+// the same transaction as the card, with the rotation of AddTag.
+func (o *op) canonTags(names []string) ([]string, error) {
+	out := make([]string, 0, len(names))
+	seen := map[string]bool{}
+	for _, n := range names {
+		n, err := ValidateTagName(n)
+		if err != nil {
+			return nil, err
+		}
+		k := TagKey(n)
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		if t, found, err := o.tx.FindTag(n); err != nil {
+			return nil, err
+		} else if found {
+			n = t.Name
+		}
+		out = append(out, n)
+	}
+	return out, nil
+}
+
+// hasTag reports whether tags contains name, ignoring case.
+func hasTag(tags []string, name string) bool {
+	k := TagKey(name)
+	return slices.ContainsFunc(tags, func(t string) bool { return TagKey(t) == k })
+}
+
+// sameTags reports whether two tag lists name the same tags in the same
+// order, ignoring case.
+func sameTags(a, b []string) bool {
+	return slices.EqualFunc(a, b, func(x, y string) bool { return TagKey(x) == TagKey(y) })
 }

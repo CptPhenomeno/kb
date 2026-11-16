@@ -112,7 +112,7 @@ func (c *converter) convert(f *fileItem, parentRef string, nested bool) {
 		label += " (" + f.Ref + ")"
 	}
 	it := &core.ImportItem{Ref: strings.TrimSpace(f.Ref), Pos: pos, ParentRef: parentRef,
-		Title: f.Title, Description: f.Description, Points: f.Points, Labels: f.Labels, Links: f.Links,
+		Title: f.Title, Description: f.Description, Points: f.Points, Tags: f.Labels, Links: f.Links,
 		Acceptance: f.Acceptance, Tests: f.Tests, Blocks: f.Blocks, Relates: f.Relates, Duplicates: f.Duplicates,
 		Spec: f.Spec, Status: c.status}
 	if it.Ref == "" {

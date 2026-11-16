@@ -102,12 +102,12 @@ func TestEditPartialFields(t *testing.T) {
 	it := h.add("@dev", core.TypeTask, "old", "", func(i *core.Item) { i.Description = "keep me" })
 	h.advance(time.Minute)
 	got, err := h.svc.Edit(ctx, "agent-1", it.ID, core.Patch{Title: ptr("new"), Priority: ptr(core.PriorityHigh),
-		Points: ptr(3), Labels: ptr([]string{"api"})}, 0)
+		Points: ptr(3), Tags: ptr([]string{"api"})}, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got.Title != "new" || got.Description != "keep me" || got.Priority != core.PriorityHigh ||
-		got.Points != 3 || !slices.Equal(got.Labels, []string{"api"}) {
+		got.Points != 3 || !slices.Equal(got.Tags, []string{"api"}) {
 		t.Fatalf("edited item = %+v", got)
 	}
 	if got.UpdatedBy != "agent-1" || !got.UpdatedAt.Equal(h.now) || got.Version != 2 {

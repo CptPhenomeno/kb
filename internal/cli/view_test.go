@@ -16,7 +16,7 @@ func sampleBoard(t *testing.T) *env {
 		"--accept", "expired token → 401", "--accept", "valid token → 200")
 	e.ok("add", "task", "Validate token in middleware", "--parent", "KB-2", "--status", "todo",
 		"--prio", "high", "--points", "3", "--test", "rejects expired token", "--test", "accepts valid token",
-		"--label", "api")
+		"--tag", "api")
 	e.ok("add", "task", "Token refresh", "--parent", "KB-2", "--status", "todo", "--points", "2",
 		"--test", "refresh rotates the token", "--desc", "Exchange a refresh token for a new pair.")
 	e.ok("link", "KB-3", "blocks", "KB-4")
@@ -61,8 +61,8 @@ func TestJSONFieldsStable(t *testing.T) {
 	}
 	slices.Sort(keys)
 	want := []string{"acceptance", "assignee", "blocked_by", "blocks", "claim", "created_at", "created_by",
-		"description", "duplicates", "history", "id", "labels", "links", "parent", "points", "position",
-		"priority", "ref", "relates", "spec", "status", "tdd_phase", "tests", "title", "type",
+		"description", "duplicates", "history", "id", "links", "parent", "points", "position",
+		"priority", "ref", "relates", "spec", "status", "tags", "tdd_phase", "tests", "title", "type",
 		"updated_at", "updated_by", "version"}
 	if !slices.Equal(keys, want) {
 		t.Fatalf("item JSON keys:\n got %s\nwant %s", strings.Join(keys, " "), strings.Join(want, " "))
