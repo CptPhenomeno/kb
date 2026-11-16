@@ -460,7 +460,19 @@ func (m *Model) formBody(iw, avail int) []string {
 		label := m.th.muted.Render(fmt.Sprintf("%-12s", fld.label))
 		value := fld.value
 		focused := i == f.focus
+		typeStyle := m.th.text
+		if i == fType {
+			if typ, err := core.ParseType(fld.value); err == nil {
+				typeStyle = m.th.fg(m.th.typeColor[typ])
+			}
+		}
 		switch {
+		case i == fType && fld.locked:
+			value = typeStyle.Render(value) + m.th.muted.Render(" (fixed)")
+		case i == fType && focused:
+			value = m.th.fg(m.th.p.Accent).Render("‹ ") + typeStyle.Bold(true).Render(value) + m.th.fg(m.th.p.Accent).Render(" ›")
+		case i == fType:
+			value = typeStyle.Render(value)
 		case fld.choices != nil && fld.locked:
 			value = m.th.muted.Render(value + " (fixed)")
 		case fld.choices != nil && focused:
