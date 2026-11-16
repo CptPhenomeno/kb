@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -71,5 +73,96 @@ func TestE2EImportDryRunJSON(t *testing.T) {
 	}
 	if out := e.ok("--quiet", "list"); out != "" {
 		t.Fatalf("dry run wrote %q", out)
+	}
+}
+
+const tagPlan = "items:\n  - {ref: a, type: task, title: A, %s: [api, ui]}\n  - {ref: b, type: task, title: B, %s: [docs, API]}\n"
+
+func writePlan(t *testing.T, body string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "plan.yaml")
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func tagColors(t *testing.T, e *env) map[string]string {
+	t.Helper()
+	var got []map[string]any
+	if err := json.Unmarshal([]byte(e.ok("--json", "tag", "list")), &got); err != nil {
+		t.Fatal(err)
+	}
+	m := map[string]string{}
+	for _, g := range got {
+		m[g["name"].(string)] = g["color"].(string)
+	}
+	return m
+}
+
+func TestE2EImportPlanTagsAssignedAndCreatedWithRotation(t *testing.T) {
+	e := newEnv(t)
+	path := writePlan(t, fmt.Sprintf(tagPlan, "tags", "tags"))
+	_, errOut, code := e.run("", "import", path)
+	if code != 0 || errOut != "" {
+		t.Fatalf("exit %d stderr %q", code, errOut)
+	}
+	tags := e.jsonOf("show", "KB-2")["tags"].([]any)
+	if len(tags) != 2 || tags[0] != "docs" || tags[1] != "api" {
+		t.Fatalf("tags = %v", tags)
+	}
+	colors := tagColors(t, e)
+	if len(colors) != 3 || colors["api"] != "red" || colors["ui"] != "orange" || colors["docs"] != "yellow" {
+		t.Fatalf("colors = %v", colors)
+	}
+}
+
+func TestE2EImportPlanLabelsWarnsOnStderrOnly(t *testing.T) {
+	e := newEnv(t)
+	path := writePlan(t, fmt.Sprintf(tagPlan, "labels", "labels"))
+	out, errOut, code := e.run("", "--json", "import", path, "--dry-run")
+	if code != 0 || !strings.HasPrefix(errOut, "warning: ") || !strings.Contains(errOut, "labels is deprecated, use tags") {
+		t.Fatalf("dry run: exit %d stderr %q", code, errOut)
+	}
+	var v map[string]any
+	if err := json.Unmarshal([]byte(out), &v); err != nil {
+		t.Fatalf("stdout is not clean JSON: %v\n%s", err, out)
+	}
+	_, errOut, code = e.run("", "import", path)
+	if code != 0 || strings.Count(errOut, "warning:") != 1 {
+		t.Fatalf("import: exit %d stderr %q", code, errOut)
+	}
+	if tags := e.jsonOf("show", "KB-1")["tags"].([]any); len(tags) != 2 || tags[0] != "api" {
+		t.Fatalf("tags = %v", tags)
+	}
+}
+
+func TestE2EImportPlanTagsAndLabelsExit3(t *testing.T) {
+	e := newEnv(t)
+	path := writePlan(t, "items:\n  - {ref: a, type: task, title: A, tags: [x], labels: [y]}\n")
+	_, errOut := e.fail(3, "import", path)
+	if !strings.Contains(errOut, "plan.yaml:2 (a)") || !strings.Contains(errOut, "tags and labels") {
+		t.Fatalf("stderr = %q", errOut)
+	}
+}
+
+func TestE2EImportDryRunCreatesNoTag(t *testing.T) {
+	e := newEnv(t)
+	e.ok("import", writePlan(t, fmt.Sprintf(tagPlan, "tags", "tags")), "--dry-run")
+	if out := e.ok("tag", "list"); out != "" {
+		t.Fatalf("dry run created tags: %q", out)
+	}
+}
+
+func TestE2EImportUpdateReplacesTags(t *testing.T) {
+	e := newEnv(t)
+	e.ok("import", writePlan(t, "items:\n  - {ref: a, type: task, title: A, tags: [api, ui]}\n"))
+	e.ok("import", writePlan(t, "items:\n  - {ref: a, type: task, title: A, tags: [docs]}\n"), "--update")
+	tags := e.jsonOf("show", "KB-1")["tags"].([]any)
+	if len(tags) != 1 || tags[0] != "docs" {
+		t.Fatalf("tags = %v", tags)
+	}
+	if _, ok := tagColors(t, e)["docs"]; !ok {
+		t.Fatal("docs tag not created by update")
 	}
 }

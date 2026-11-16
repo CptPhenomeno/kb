@@ -28,6 +28,7 @@ type fileItem struct {
 	Spec        *string     `yaml:"spec"`
 	Status      *string     `yaml:"status"`
 	Parent      string      `yaml:"parent"`
+	Tags        *[]string   `yaml:"tags"`
 	Labels      *[]string   `yaml:"labels"`
 	Links       *[]string   `yaml:"links"`
 	Acceptance  *[]string   `yaml:"acceptance"`
@@ -42,7 +43,7 @@ type fileItem struct {
 
 var itemKeys = map[string]bool{
 	"ref": true, "type": true, "title": true, "description": true, "priority": true, "points": true,
-	"spec": true, "status": true, "parent": true, "labels": true, "links": true, "acceptance": true,
+	"spec": true, "status": true, "parent": true, "tags": true, "labels": true, "links": true, "acceptance": true,
 	"tests": true, "blocks": true, "relates": true, "duplicates": true, "children": true,
 }
 
@@ -68,14 +69,22 @@ func (f *fileItem) UnmarshalYAML(n *yaml.Node) error {
 // malformed document is a plain error; invalid values are collected into a
 // single core.RuleError listing every problem with its position.
 func Parse(r io.Reader, name string) (*core.ImportPlan, error) {
+	p, _, err := ParseWithWarnings(r, name)
+	return p, err
+}
+
+// ParseWithWarnings is Parse that also returns the warnings the plan earned
+// (each one ready to print on stderr, "warning: ..."). Today the only one is
+// the deprecated "labels" field, reported once per plan.
+func ParseWithWarnings(r io.Reader, name string) (*core.ImportPlan, []string, error) {
 	dec := yaml.NewDecoder(r)
 	dec.KnownFields(true)
 	var doc fileDoc
 	if err := dec.Decode(&doc); err != nil {
 		if err == io.EOF {
-			return nil, fmt.Errorf("%s: empty plan", name)
+			return nil, nil, fmt.Errorf("%s: empty plan", name)
 		}
-		return nil, fmt.Errorf("%s: %w", name, err)
+		return nil, nil, fmt.Errorf("%s: %w", name, err)
 	}
 	c := converter{name: name}
 	if doc.Status != nil {
@@ -89,10 +98,11 @@ func Parse(r io.Reader, name string) (*core.ImportPlan, error) {
 	for _, it := range doc.Items {
 		c.convert(it, "", false)
 	}
+	c.finishWarnings()
 	if len(c.problems) > 0 {
-		return nil, core.NewRuleError(fmt.Sprintf("%s has %d problems", name, len(c.problems)), c.problems...)
+		return nil, c.warnings, core.NewRuleError(fmt.Sprintf("%s has %d problems", name, len(c.problems)), c.problems...)
 	}
-	return &core.ImportPlan{Items: c.items}, nil
+	return &core.ImportPlan{Items: c.items}, c.warnings, nil
 }
 
 type converter struct {
@@ -101,6 +111,22 @@ type converter struct {
 	status   *core.Status
 	items    []*core.ImportItem
 	problems []string
+	warnings []string
+
+	labelsPos   string // first item using the deprecated "labels"
+	labelsCount int
+}
+
+// finishWarnings turns the deprecated-field counters into the warning.
+func (c *converter) finishWarnings() {
+	if c.labelsCount == 0 {
+		return
+	}
+	msg := fmt.Sprintf("warning: %s: labels is deprecated, use tags", c.labelsPos)
+	if c.labelsCount > 1 {
+		msg += fmt.Sprintf(" (%d items)", c.labelsCount)
+	}
+	c.warnings = append(c.warnings, msg)
 }
 
 func (c *converter) problem(msg string) { c.problems = append(c.problems, msg) }
@@ -112,9 +138,19 @@ func (c *converter) convert(f *fileItem, parentRef string, nested bool) {
 		label += " (" + f.Ref + ")"
 	}
 	it := &core.ImportItem{Ref: strings.TrimSpace(f.Ref), Pos: pos, ParentRef: parentRef,
-		Title: f.Title, Description: f.Description, Points: f.Points, Tags: f.Labels, Links: f.Links,
+		Title: f.Title, Description: f.Description, Points: f.Points, Tags: f.Tags, Links: f.Links,
 		Acceptance: f.Acceptance, Tests: f.Tests, Blocks: f.Blocks, Relates: f.Relates, Duplicates: f.Duplicates,
 		Spec: f.Spec, Status: c.status}
+	switch {
+	case f.Tags != nil && f.Labels != nil:
+		c.problem(label + ": tags and labels cannot be combined (labels is a deprecated alias of tags)")
+	case f.Labels != nil:
+		it.Tags = f.Labels
+		if c.labelsCount == 0 {
+			c.labelsPos = label
+		}
+		c.labelsCount++
+	}
 	if it.Ref == "" {
 		c.problem(label + ": ref is required")
 	}

@@ -113,3 +113,39 @@ func TestParseTopLevelParent(t *testing.T) {
 		t.Fatalf("parent on a nested item: err = %v, want ErrRule", err)
 	}
 }
+
+func TestParsePlanWithTagsAssignsTags(t *testing.T) {
+	p, warns, err := ParseWithWarnings(strings.NewReader("items:\n  - ref: a\n    type: task\n    title: A\n    tags: [api, UI]\n"), "p.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := *p.Items[0].Tags; !slices.Equal(got, []string{"api", "UI"}) {
+		t.Fatalf("tags = %v", got)
+	}
+	if len(warns) != 0 {
+		t.Fatalf("warnings = %v", warns)
+	}
+}
+
+func TestParsePlanWithLabelsWarnsAndAssignsTags(t *testing.T) {
+	src := "items:\n  - ref: a\n    type: task\n    title: A\n    labels: [api]\n  - ref: b\n    type: task\n    title: B\n    labels: [ui]\n"
+	p, warns, err := ParseWithWarnings(strings.NewReader(src), "p.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := *p.Items[0].Tags; !slices.Equal(got, []string{"api"}) {
+		t.Fatalf("tags = %v", got)
+	}
+	if len(warns) != 1 || !strings.HasPrefix(warns[0], "warning: ") || !strings.Contains(warns[0], "labels is deprecated, use tags") ||
+		!strings.Contains(warns[0], "p.yaml:2 (a)") {
+		t.Fatalf("warnings = %q", warns)
+	}
+}
+
+func TestParsePlanItemWithTagsAndLabelsIsValidationError(t *testing.T) {
+	_, _, err := ParseWithWarnings(strings.NewReader("items:\n  - ref: a\n    type: task\n    title: A\n    tags: [x]\n    labels: [y]\n"), "p.yaml")
+	var re *core.RuleError
+	if !errors.As(err, &re) || !strings.Contains(err.Error(), "p.yaml:2 (a)") || !strings.Contains(err.Error(), "tags and labels") {
+		t.Fatalf("err = %v", err)
+	}
+}

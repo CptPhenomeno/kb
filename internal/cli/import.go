@@ -31,7 +31,10 @@ func (c *cli) importCmd() *cobra.Command {
 				defer f.Close()
 				r = f
 			}
-			p, err := plan.Parse(r, name)
+			p, warnings, err := plan.ParseWithWarnings(r, name)
+			for _, w := range warnings {
+				fmt.Fprintln(c.app.Stderr, w)
+			}
 			if err != nil {
 				return err
 			}
