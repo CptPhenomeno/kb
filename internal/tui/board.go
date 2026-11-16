@@ -387,11 +387,14 @@ func cardLines(m *Model, it *core.Item, width int) []string {
 		who = m.th.actor(it.Assignee).Render(it.Assignee)
 	}
 	status := strings.Join(parts, " ")
-	switch {
-	case status != "" && who != "" && displayWidth(status)+1+displayWidth(who) > width:
-		lines = append(lines, status, truncate(who, width)) // narrow column: two lines
-	case status != "" || who != "":
-		lines = append(lines, spread(status, who, width))
+	both := strings.TrimSpace(status + " " + who)
+	if box := tagRows(m, it, width, both); box != nil {
+		lines = append(lines, box.rows...)
+		if both != "" && !box.inline {
+			lines = append(lines, statusLines(status, who, width)...)
+		}
+	} else {
+		lines = append(lines, statusLines(status, who, width)...)
 	}
 	if blocked, by := core.Blockers(m.snap, it.ID); blocked {
 		lines = append(lines, truncate(m.th.badge.Render(" BLOCKED by "+strings.Join(by, ",")+" "), width))
@@ -400,6 +403,58 @@ func cardLines(m *Model, it *core.Item, width int) []string {
 		lines = append(lines, m.th.stale.Render("STALE "+shortDuration(now.Sub(it.Claim.ExpiresAt))))
 	}
 	return lines
+}
+
+// statusLines are the lines for the status parts and the assignee under a
+// card's title or tag box: one line when they fit, two in a narrow column.
+func statusLines(status, who string, width int) []string {
+	switch {
+	case status != "" && who != "" && displayWidth(status)+1+displayWidth(who) > width:
+		return []string{status, truncate(who, width)}
+	case status != "" || who != "":
+		return []string{spread(status, who, width)}
+	}
+	return nil
+}
+
+// tagBoxRows are the rows of a card's tag box and whether the status and
+// assignee were already placed on its middle row.
+type tagBoxRows struct {
+	rows   []string
+	inline bool
+}
+
+// tagRows draws the box of the first tag of a card, with a muted +N for the
+// others next to it. When right (the status and assignee) fits on the middle
+// row it goes there, at the right edge. It returns nil for a card without
+// tags and when the column is too narrow for a box.
+func tagRows(m *Model, it *core.Item, width int, right string) *tagBoxRows {
+	if len(it.Tags) == 0 {
+		return nil
+	}
+	first := it.Tags[0]
+	plus := ""
+	if n := len(it.Tags) - 1; n > 0 {
+		plus = fmt.Sprintf("+%d", n)
+	}
+	box := m.th.tagBox(m.tagColor(first), first, width-displayWidth(plus)-1)
+	if box == nil || plus == "" {
+		plus = "" // no room for +N next to the box
+		box = m.th.tagBox(m.tagColor(first), first, width)
+	}
+	if box == nil {
+		return nil
+	}
+	mid := box[1]
+	if plus != "" {
+		mid += " " + m.th.muted.Render(plus)
+	}
+	out := &tagBoxRows{rows: []string{box[0], mid, box[2]}}
+	if right != "" && displayWidth(mid)+1+displayWidth(right) <= width {
+		out.rows[1] = spread(mid, right, width)
+		out.inline = true
+	}
+	return out
 }
 
 func renderCard(m *Model, it *core.Item, w int, selected bool) string {
