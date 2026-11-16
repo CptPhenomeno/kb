@@ -1,5 +1,7 @@
--- Tags are stored once and reused by cards. This migration only creates the
--- schema; moving the existing labels into tags is a later step.
+-- Tags are stored once and reused by cards. This file creates the schema and
+-- clears the points of stories (they are derived from their tasks); moving
+-- the existing items.labels into tags needs Unicode case folding, so the Go
+-- step migrateLabelsToTags runs in the same transaction right after it.
 --
 -- tags.id grows with creation order. tags.key is the case-folded name
 -- (core.TagKey), computed in Go so that comparison follows Unicode folding
@@ -20,3 +22,6 @@ CREATE TABLE card_tags (
 );
 
 CREATE INDEX card_tags_tag ON card_tags(tag);
+
+-- Stories no longer carry points of their own.
+UPDATE items SET points = 0 WHERE type = 'story' AND points <> 0;

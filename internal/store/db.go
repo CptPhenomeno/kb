@@ -41,7 +41,7 @@ func Open(path string) (*DB, error) {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
 	db := &DB{sql: sqlDB, path: path}
-	if err := migrate(context.Background(), sqlDB, migrationsFS); err != nil {
+	if err := migrate(context.Background(), sqlDB, migrationsFS, goSteps); err != nil {
 		sqlDB.Close()
 		return nil, err
 	}

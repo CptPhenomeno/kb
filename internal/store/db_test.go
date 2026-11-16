@@ -98,10 +98,10 @@ func TestMigrateFromV1ToLatest(t *testing.T) {
 	// Apply only the first migration, then both: the second run must apply
 	// 0002 alone.
 	first := fstest.MapFS{"migrations/0001_first.sql": fsys["migrations/0001_first.sql"]}
-	if err := migrate(context.Background(), db.sql, first); err != nil {
+	if err := migrate(context.Background(), db.sql, first, nil); err != nil {
 		t.Fatalf("migrate v1: %v", err)
 	}
-	if err := migrate(context.Background(), db.sql, fsys); err != nil {
+	if err := migrate(context.Background(), db.sql, fsys, nil); err != nil {
 		t.Fatalf("migrate v2: %v", err)
 	}
 	if got := pragma(t, db, "user_version"); got != "2" {

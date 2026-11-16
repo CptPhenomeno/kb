@@ -40,9 +40,19 @@ func migrationNames(fsys fs.FS) ([]string, error) {
 	return names, nil
 }
 
+// goStep is Go code that runs inside the transaction of a migration, right
+// after its SQL, for changes SQL cannot express (such as Unicode case folding).
+type goStep func(ctx context.Context, tx *sql.Tx) error
+
+// goSteps are the Go steps of the embedded migrations, keyed by migration
+// number.
+var goSteps = map[int]goStep{2: migrateLabelsToTags}
+
 // migrate applies, in one transaction each, the migrations of fsys that are
-// newer than the database's PRAGMA user_version.
-func migrate(ctx context.Context, db *sql.DB, fsys fs.FS) error {
+// newer than the database's PRAGMA user_version. steps holds the Go steps
+// keyed by migration number; they run in the migration's own transaction, so
+// the version advances only when SQL and step both succeed.
+func migrate(ctx context.Context, db *sql.DB, fsys fs.FS, steps map[int]goStep) error {
 	names, err := migrationNames(fsys)
 	if err != nil {
 		return err
@@ -59,14 +69,14 @@ func migrate(ctx context.Context, db *sql.DB, fsys fs.FS) error {
 		if err != nil {
 			return fmt.Errorf("read migration %s: %w", names[i], err)
 		}
-		if err := applyMigration(ctx, db, string(body), i+1); err != nil {
+		if err := applyMigration(ctx, db, string(body), i+1, steps[i+1]); err != nil {
 			return fmt.Errorf("apply migration %s: %w", names[i], err)
 		}
 	}
 	return nil
 }
 
-func applyMigration(ctx context.Context, db *sql.DB, body string, version int) error {
+func applyMigration(ctx context.Context, db *sql.DB, body string, version int, step goStep) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -74,6 +84,11 @@ func applyMigration(ctx context.Context, db *sql.DB, body string, version int) e
 	defer tx.Rollback()
 	if _, err := tx.ExecContext(ctx, body); err != nil {
 		return err
+	}
+	if step != nil {
+		if err := step(ctx, tx); err != nil {
+			return err
+		}
 	}
 	// PRAGMA does not accept bound parameters; version is an integer.
 	if _, err := tx.ExecContext(ctx, fmt.Sprintf("PRAGMA user_version = %d", version)); err != nil {
