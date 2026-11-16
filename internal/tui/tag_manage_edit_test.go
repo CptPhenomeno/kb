@@ -177,3 +177,67 @@ func indexOfColor(c core.TagColor) int {
 	}
 	return -1
 }
+
+// A reload that shifts the sorted list while a rename or delete confirmation
+// is open must not move the target to another tag.
+func TestManageTagsRenameTargetsTheTagItStartedOn(t *testing.T) {
+	m, svc := manageModel(t)
+	press(t, m, "down", "down") // ui
+	press(t, m, "r")
+	if _, err := svc.AddTag(context.Background(), "@dev", "AAA", "pink"); err != nil {
+		t.Fatal(err)
+	}
+	reload(t, m)
+	typeText(t, m, "2")
+	press(t, m, "enter")
+	if _, ok := storedTag(t, svc, "ui2"); !ok {
+		t.Fatalf("ui was not renamed:\n%s", screen(m))
+	}
+	for _, n := range []string{"AAA", "API", "Docs"} {
+		if _, ok := storedTag(t, svc, n); !ok {
+			t.Fatalf("tag %s was touched", n)
+		}
+	}
+}
+
+func TestManageTagsDeleteTargetsTheTagItStartedOn(t *testing.T) {
+	m, svc := manageModel(t)
+	press(t, m, "down", "down") // ui, 1 card
+	press(t, m, "d")
+	if _, err := svc.AddTag(context.Background(), "@dev", "AAA", "pink"); err != nil {
+		t.Fatal(err)
+	}
+	reload(t, m)
+	if s := screen(m); !strings.Contains(s, "⟨ui⟩") || !strings.Contains(s, "1 card loses it") {
+		t.Fatalf("confirmation changed under the user:\n%s", s)
+	}
+	press(t, m, "enter")
+	if _, ok := storedTag(t, svc, "ui"); ok {
+		t.Fatal("ui was not deleted")
+	}
+	for _, n := range []string{"AAA", "API", "Docs"} {
+		if _, ok := storedTag(t, svc, n); !ok {
+			t.Fatalf("tag %s was deleted", n)
+		}
+	}
+}
+
+func TestManageTagsTargetDeletedElsewhereFallsBackToTheList(t *testing.T) {
+	for _, key := range []string{"r", "d"} {
+		m, svc := manageModel(t)
+		press(t, m, "down", "down", key)
+		if _, err := svc.DeleteTag(context.Background(), "@dev", "ui"); err != nil {
+			t.Fatal(err)
+		}
+		reload(t, m)
+		if m.tagsPopup.mode != tagsList || !strings.Contains(screen(m), "no longer exists") {
+			t.Fatalf("%s: want list mode with a message:\n%s", key, screen(m))
+		}
+		press(t, m, "enter")
+		for _, n := range []string{"API", "Docs"} {
+			if _, ok := storedTag(t, svc, n); !ok {
+				t.Fatalf("%s: tag %s was touched", key, n)
+			}
+		}
+	}
+}

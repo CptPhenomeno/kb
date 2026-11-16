@@ -34,6 +34,10 @@ type tagsState struct {
 	// focus is the name of the tag to put the cursor on once the board is
 	// reloaded, after a rename or a creation moved it in the sorted list.
 	focus string
+	// target is the name of the tag a rename or a delete confirmation was
+	// opened on. The write and the confirmation text use it, never the
+	// cursor: a reload can shift the list under the user.
+	target string
 	// last is the color of the most recently created tag when creation
 	// started, color the one proposed or chosen for the new tag.
 	last, color core.TagColor
@@ -59,9 +63,47 @@ func (m *Model) selectedTag() *core.Tag {
 	return &m.tags[t.cursor]
 }
 
+// targetTag is the tag the open rename or delete confirmation is about, or
+// nil when it is gone.
+func (m *Model) targetTag() *core.Tag {
+	t := m.tagsPopup
+	if t == nil || t.target == "" {
+		return nil
+	}
+	for i := range m.tags {
+		if core.TagKey(m.tags[i].Name) == core.TagKey(t.target) {
+			return &m.tags[i]
+		}
+	}
+	return nil
+}
+
+// syncTagsTarget runs after a reload: the cursor follows the target of a
+// rename or a delete confirmation, and when the tag is gone (deleted or
+// renamed elsewhere) the popup goes back to the list with a message.
+func (m *Model) syncTagsTarget() {
+	t := m.tagsPopup
+	if t == nil || (t.mode != tagsRename && t.mode != tagsConfirmDelete) {
+		return
+	}
+	tag := m.targetTag()
+	if tag == nil {
+		t.mode, t.input, t.err = tagsList, "", "The tag no longer exists."
+		return
+	}
+	for i := range m.tags {
+		if &m.tags[i] == tag {
+			t.cursor = i
+		}
+	}
+}
+
 func (m *Model) tagsKey(key, text string) tea.Cmd {
 	t := m.tagsPopup
 	tag := m.selectedTag()
+	if t.mode == tagsConfirmDelete {
+		tag = m.targetTag()
+	}
 	if t.mode == tagsRename || t.mode == tagsCreateName || t.mode == tagsCreateColor {
 		return m.tagsEditKey(key, text)
 	}
@@ -110,7 +152,7 @@ func (m *Model) tagsKey(key, text string) tea.Cmd {
 		return m.saveNextColor()
 	case "d":
 		if tag != nil {
-			t.mode = tagsConfirmDelete
+			t.mode, t.target = tagsConfirmDelete, tag.Name
 		}
 	case "r":
 		if tag == nil {
@@ -122,7 +164,7 @@ func (m *Model) tagsKey(key, text string) tea.Cmd {
 			t.err = "The color is still being saved; try again in a moment."
 			return nil
 		}
-		t.mode, t.input = tagsRename, tag.Name
+		t.mode, t.input, t.target = tagsRename, tag.Name, tag.Name
 	case "n":
 		t.mode, t.input = tagsCreateName, ""
 		t.last, _ = m.be.LastTagColor(m.ctx)
@@ -192,7 +234,7 @@ func (m *Model) tagsEditConfirm() tea.Cmd {
 			return tagEditedMsg{name, err}
 		}
 	}
-	tag := m.selectedTag()
+	tag := m.targetTag()
 	if tag == nil {
 		return nil
 	}
@@ -321,7 +363,7 @@ func (m *Model) renderTags() string {
 			m.th.muted.Render(plural(tg.Cards, "card", "cards")), iw))
 	}
 	lines = append(lines, "")
-	if tag := m.selectedTag(); t.mode == tagsConfirmDelete && tag != nil {
+	if tag := m.targetTag(); t.mode == tagsConfirmDelete && tag != nil {
 		loss := "No card uses it."
 		if tag.Cards > 0 {
 			loss = lossText(tag.Cards)

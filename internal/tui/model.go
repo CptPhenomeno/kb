@@ -292,6 +292,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.snap, m.recent, m.version, m.loaded, m.err = msg.snap, msg.recent, msg.version, true, nil
 		m.tags, m.tagColors = msg.tags, tagColorsOf(msg.tags)
 		m.applyWantedColors()
+		m.syncTagsTarget()
 		if m.detailOpen {
 			if m.snap.Get(m.detailID) == nil {
 				m.detailOpen = false
