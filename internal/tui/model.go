@@ -610,7 +610,7 @@ func (m *Model) header() string {
 	right := ""
 	if m.snap != nil {
 		agents, stale := m.claimCounts()
-		right = m.th.muted.Render(fmt.Sprintf("%d items", len(m.snap.Items())))
+		right = m.th.muted.Render(m.headerTotal())
 		if agents > 0 {
 			right += "  " + m.th.fg(m.th.p.Agent).Render(plural(agents, "agent active", "agents active"))
 		}
@@ -622,6 +622,22 @@ func (m *Model) header() string {
 		right = m.th.warn.Render("refresh failed: "+m.err.Error()) + "  " + right
 	}
 	return spread(left, right, m.width)
+}
+
+// headerTotal is the total of the header: the Board counts the visible cards
+// (or their points, as the lanes do), the other views the whole database.
+func (m *Model) headerTotal() string {
+	if m.view != viewBoard {
+		return fmt.Sprintf("%d items", len(m.snap.Items()))
+	}
+	var visible []*core.Item
+	for _, col := range m.board.columns(m) {
+		visible = append(visible, col...)
+	}
+	if m.board.points {
+		return m.board.counter(visible)
+	}
+	return fmt.Sprintf("%d cards", len(visible))
 }
 
 // claimCounts returns the agents holding an active claim and the number
@@ -724,6 +740,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"p", "epics & stories", "show or hide epics and stories (saved for your user)", false},
 		{"/", "search", "search by ID, title, label or assignee; suggests tags, types and cards as you type", false},
 		{"f", "filter", "choose the types shown, or only blocked or stale items", false},
+		{"#", "counters", "switch the lane counters and the total between cards and points (saved for your user)", false},
 	},
 	viewTree: {
 		{"↑ ↓", "navigate", "move between rows", false},

@@ -188,7 +188,9 @@ func TestEnterWithoutASelectionKeepsTheSearch(t *testing.T) {
 	if m.board.searching || m.board.query != "tok" {
 		t.Errorf("searching=%v query=%q, want the search kept", m.board.searching, m.board.query)
 	}
-	if strings.Contains(screen(m), "cards") && strings.Contains(ansi.Strip(m.renderSuggestions()), "cards") {
-		t.Error("suggestions must go away when the search closes")
+	for _, l := range strings.Split(screen(m), "\n") {
+		if strings.Trim(l, " │╭╮╰╯─") == "cards" {
+			t.Error("suggestions must go away when the search closes")
+		}
 	}
 }

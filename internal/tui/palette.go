@@ -32,6 +32,7 @@ var actions = []action{
 	{"Filter", "f", itemViews},
 	{"Show or hide epics and stories", "p", boardOnly},
 	{"Sort columns by date, ID or story points", "s", boardOnly},
+	{"Toggle counters: cards / points", "#", boardOnly},
 	{"Manage criteria and tests", "c", itemViews},
 	{"Create item", "n", boardOnly},
 	{"Create child item", "n", treeOnly},

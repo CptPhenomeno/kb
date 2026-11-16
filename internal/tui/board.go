@@ -49,6 +49,22 @@ func (b *boardState) counter(items []*core.Item) string {
 	return fmt.Sprint(len(items))
 }
 
+// toggleCounters switches the counters between cards and points and saves
+// the choice for the user. The # key and the palette entry both run it.
+func (b *boardState) toggleCounters(m *Model) {
+	b.points = !b.points
+	mode := "cards"
+	if b.points {
+		mode = "points"
+	}
+	m.notice = "counters: " + mode
+	if m.opts.SaveBoardCounter != nil {
+		if err := m.opts.SaveBoardCounter(mode); err != nil {
+			m.notice += " (could not save: " + err.Error() + ")"
+		}
+	}
+}
+
 // columns returns the cards of every column in board order.
 func (b *boardState) columns(m *Model) [5][]*core.Item {
 	var cols [5][]*core.Item
@@ -154,17 +170,7 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 		}
 		return nil
 	case "#":
-		b.points = !b.points
-		mode := "cards"
-		if b.points {
-			mode = "points"
-		}
-		m.notice = "counters: " + mode
-		if m.opts.SaveBoardCounter != nil {
-			if err := m.opts.SaveBoardCounter(mode); err != nil {
-				m.notice += " (could not save: " + err.Error() + ")"
-			}
-		}
+		b.toggleCounters(m)
 		return nil
 	case "n":
 		m.form = newForm(nil)

@@ -1,4 +1,4 @@
- kb  api-gateway   Board  Tree  Activity   sh… 12 items  1 agent active  1 stale
+ kb  api-gateway   Board  Tree  Activity   sh… 11 cards  1 agent active  1 stale
  Board  Detail  Criteria  Form  Tags   tab or ← → switch · ? or esc closes      
                                                                                 
                                                                                 
@@ -18,7 +18,7 @@ Board view
   ctrl+e        edit the description of the selected item in $EDITOR            
   a             claim or release the selected item                              
   l             manage relations                                                
-                            ↓ 11 more lines · pgdown                            
+                            ↓ 13 more lines · pgdown                            
 14:04  agent-auth  KB-4  test "refresh rotates the token" → failing             
 tab → next tab   shift+tab ← previous tab   ↑ ↓ scroll   pgup pgdn page         
 ?/esc close                                                                     
