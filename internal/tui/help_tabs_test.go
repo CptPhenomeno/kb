@@ -9,13 +9,13 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
-var wantHelpTabs = []string{"Board", "Detail", "Criteria", "Form"}
+var wantHelpTabs = []string{"Board", "Detail", "Criteria", "Form", "Tags"}
 
 // activeHelpTab returns the name of the help tab drawn with the active tab
 // style of the header, or "" when none is.
 func activeHelpTab(m *Model) string {
 	raw := m.renderHelp(m.bodyHeight())
-	for _, n := range []string{"Board", "Tree", "Activity", "Detail", "Criteria", "Form"} {
+	for _, n := range []string{"Board", "Tree", "Activity", "Detail", "Criteria", "Form", "Tags"} {
 		if strings.Contains(raw, m.th.tabOn.Render(" "+n+" ")) {
 			return n
 		}
@@ -66,7 +66,7 @@ func TestActiveHelpTabUsesTheHeaderTabStyle(t *testing.T) {
 	if !strings.Contains(raw, m.th.tabOn.Render(" Board ")) {
 		t.Errorf("active tab does not use tabOn")
 	}
-	for _, n := range []string{"Detail", "Criteria", "Form"} {
+	for _, n := range []string{"Detail", "Criteria", "Form", "Tags"} {
 		if !strings.Contains(raw, m.th.tabOff.Render(" "+n+" ")) {
 			t.Errorf("inactive tab %s does not use tabOff", n)
 		}
@@ -76,7 +76,7 @@ func TestActiveHelpTabUsesTheHeaderTabStyle(t *testing.T) {
 func TestTabAndRightGoToTheNextHelpTab(t *testing.T) {
 	for _, k := range []string{"tab", "right"} {
 		m := helpModel(t)
-		for _, want := range []string{"Detail", "Criteria", "Form"} {
+		for _, want := range []string{"Detail", "Criteria", "Form", "Tags"} {
 			press(t, m, k)
 			if got := activeHelpTab(m); got != want {
 				t.Errorf("%s: active tab %q, want %q", k, got, want)
@@ -101,16 +101,16 @@ func TestShiftTabAndLeftGoToThePreviousHelpTab(t *testing.T) {
 func TestHelpTabsWrapAroundInBothDirections(t *testing.T) {
 	m := helpModel(t)
 	press(t, m, "shift+tab")
-	if got := activeHelpTab(m); got != "Form" {
-		t.Errorf("shift+tab from the first tab: %q, want Form", got)
+	if got := activeHelpTab(m); got != "Tags" {
+		t.Errorf("shift+tab from the first tab: %q, want Tags", got)
 	}
 	press(t, m, "tab")
 	if got := activeHelpTab(m); got != "Board" {
 		t.Errorf("tab from the last tab: %q, want Board", got)
 	}
 	press(t, m, "left")
-	if got := activeHelpTab(m); got != "Form" {
-		t.Errorf("left from the first tab: %q, want Form", got)
+	if got := activeHelpTab(m); got != "Tags" {
+		t.Errorf("left from the first tab: %q, want Tags", got)
 	}
 	press(t, m, "right")
 	if got := activeHelpTab(m); got != "Board" {
@@ -501,6 +501,6 @@ func TestHelpBoardTabGoldenAt80By24(t *testing.T) {
 
 func TestHelpFormTabGoldenAt160By48(t *testing.T) {
 	m := newModel(t, sampleBoard(), 160, 48)
-	press(t, m, "?", "shift+tab")
+	press(t, m, "?", "shift+tab", "shift+tab")
 	golden(t, "help_form_160x48", screen(m))
 }

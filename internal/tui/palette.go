@@ -48,6 +48,7 @@ var actions = []action{
 	{"Open the actor's item", "o", activityOnly},
 	{"Release the actor's claim", "a", activityOnly},
 	{"Choose theme", "t", nil},
+	{actionManageTags, "", nil}, // no key: the palette opens the popup itself
 	{actionCommandBar, "", nil}, // no key: the palette runs it itself
 	{"Next view", "tab", nil},
 	{"Previous view", "shift+tab", nil},
@@ -144,7 +145,9 @@ func (m *Model) paletteKey(key, text string) tea.Cmd {
 		p.cursor = min(max(0, len(list)-1), p.cursor+1)
 	case "enter":
 		m.palette = nil
-		if p.cursor < len(list) && list[p.cursor].key == "" {
+		if p.cursor < len(list) && list[p.cursor].name == actionManageTags {
+			m.tagsPopup = &tagsState{}
+		} else if p.cursor < len(list) && list[p.cursor].key == "" {
 			m.toggleBarMode()
 		} else if p.cursor < len(list) {
 			return m.dispatch(list[p.cursor].key, "")

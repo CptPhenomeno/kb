@@ -20,6 +20,7 @@ type Backend interface {
 	LastTagColor(ctx context.Context) (core.TagColor, error)
 	AddTag(ctx context.Context, actor, name, color string) (*core.Tag, error)
 	DeleteTag(ctx context.Context, actor, name string) (*core.Tag, error)
+	SetTagColor(ctx context.Context, actor, name, color string) (*core.Tag, error)
 	Log(ctx context.Context, f core.LogFilter) ([]core.Event, error)
 	DataVersion(ctx context.Context) (int64, error)
 	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
@@ -157,6 +158,7 @@ type Model struct {
 	palette    *paletteState // open command palette, or nil
 	accept     *acceptState  // open acceptance popup, or nil
 	confirm    *confirmState // open delete confirmation, or nil
+	tagsPopup  *tagsState    // open Manage tags popup, or nil
 	links      *linksState   // open links popup, or nil
 	form       *formState    // open create/edit form, or nil
 	sort       *sortState    // open sort popup, or nil
@@ -375,7 +377,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // popupOpen reports whether a popup is drawn over the view, and over the
 // detail when it is open: it owns the mouse as well as the keyboard.
 func (m *Model) popupOpen() bool {
-	return m.alert != nil || m.picker != nil || m.palette != nil || m.accept != nil || m.confirm != nil ||
+	return m.alert != nil || m.picker != nil || m.palette != nil || m.accept != nil || m.confirm != nil || m.tagsPopup != nil ||
 		m.links != nil || m.form != nil || m.sort != nil || m.filterOpen
 }
 
@@ -420,6 +422,9 @@ func (m *Model) route(key, text string) tea.Cmd {
 	}
 	if m.confirm != nil {
 		return m.confirmKey(key)
+	}
+	if m.tagsPopup != nil {
+		return m.tagsKey(key)
 	}
 	if m.links != nil {
 		return m.linksKey(key, text)
@@ -509,6 +514,8 @@ func (m *Model) View() tea.View {
 			popup = m.renderAccept()
 		case m.confirm != nil:
 			popup = m.renderConfirm()
+		case m.tagsPopup != nil:
+			popup = m.renderTags()
 		case m.links != nil && m.snap.Get(m.links.id) != nil:
 			popup = m.renderLinks()
 		case m.form != nil:
@@ -769,6 +776,10 @@ func (m *Model) commandBar() []string {
 		hints = m.accept.hints()
 	case m.confirm != nil:
 		hints = confirmKeys
+	case m.tagsPopup != nil && m.tagsPopup.mode == tagsConfirmDelete:
+		hints = tagsConfirmKeys
+	case m.tagsPopup != nil:
+		hints = tagsKeys
 	case m.links != nil && m.links.adding:
 		hints = linkAddKeys
 	case m.links != nil:
@@ -814,7 +825,7 @@ func (m *Model) wrapHints(hints []keyHint) []string {
 }
 
 // helpTabNames are the help tabs after the one of the current view.
-var helpTabNames = []string{"Detail", "Criteria", "Form"}
+var helpTabNames = []string{"Detail", "Criteria", "Form", "Tags"}
 
 // openHelp shows the help on the tab of the current view.
 func (m *Model) openHelp() {
@@ -854,8 +865,10 @@ func (m *Model) helpHints(tab int) (title, opens string, hints []keyHint) {
 		return "Detail popup", "enter", detailKeys
 	case 2:
 		return "Criteria and tests popup", "c", append(append(append([]keyHint{}, acceptKeys...), acceptInputKeys...), acceptConfirmKeys...)
+	case 3:
+		return "Create and edit form", "n, e", formKeys
 	}
-	return "Create and edit form", "n, e", formKeys
+	return "Manage tags popup", "ctrl+p › Manage tags", append(append([]keyHint{}, tagsKeys...), tagsConfirmKeys[0])
 }
 
 // helpWindow is the number of help lines shown at once in the given height

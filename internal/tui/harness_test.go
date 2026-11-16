@@ -69,6 +69,10 @@ func (f *fakeBackend) AddTag(context.Context, string, string, string) (*core.Tag
 	return nil, errors.New("read-only fake")
 }
 
+func (f *fakeBackend) SetTagColor(context.Context, string, string, string) (*core.Tag, error) {
+	return nil, errors.New("read-only fake")
+}
+
 func (f *fakeBackend) DeleteTag(context.Context, string, string) (*core.Tag, error) {
 	return nil, errors.New("read-only fake")
 }
