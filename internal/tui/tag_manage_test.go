@@ -1,6 +1,7 @@
 package tui
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"context"
 	"strings"
 	"testing"
@@ -164,5 +165,33 @@ func TestManageTagsKeysAreInHintsAndHelp(t *testing.T) {
 	}
 	if s := screen(m); !strings.Contains(s, "Manage tags") || !strings.Contains(s, "color") {
 		t.Fatalf("help lacks the Manage tags tab:\n%s", s)
+	}
+}
+
+func TestManageTagsRapidColorChangesSaveTheLastChoice(t *testing.T) {
+	m, svc := manageModel(t)
+	// three → before any command runs: API blue → purple → pink → red
+	var cmds []tea.Cmd
+	for i := 0; i < 3; i++ {
+		_, cmd := m.Update(keyMsg("right"))
+		if cmd != nil {
+			cmds = append(cmds, cmd)
+		}
+	}
+	if row := manageRow(m, "⟨API⟩"); !strings.Contains(row, "red") {
+		t.Fatalf("popup must show the last choice at once: %q", row)
+	}
+	// run the commands newest first, the worst order a scheduler may pick
+	for i := len(cmds) - 1; i >= 0; i-- {
+		runCmd(t, m, cmds[i], 0)
+		if row := manageRow(m, "⟨API⟩"); !strings.Contains(row, "red") {
+			t.Fatalf("display stepped back to %q", row)
+		}
+	}
+	if tg, _ := storedTag(t, svc, "API"); tg.Color != "red" {
+		t.Fatalf("stored %q, want red", tg.Color)
+	}
+	if row := manageRow(m, "⟨API⟩"); !strings.Contains(row, "red") {
+		t.Fatalf("final display %q", row)
 	}
 }

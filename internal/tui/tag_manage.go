@@ -76,20 +76,84 @@ func (m *Model) tagsKey(key string) tea.Cmd {
 			d = len(core.TagColors) - 1
 		}
 		color := core.TagColors[(i+d+len(core.TagColors))%len(core.TagColors)]
-		// repaint at once; the reload after the write confirms it
+		// repaint at once; the saves catch up one at a time
 		tag.Color = color
 		m.tagColors[core.TagKey(tag.Name)] = color
-		name, actor := tag.Name, m.opts.Actor
-		return m.tagWrite("RECOLOR FAILED", name, func() error {
-			_, err := m.be.SetTagColor(m.ctx, actor, name, string(color))
-			return err
-		})
+		if m.wantedColors == nil {
+			m.wantedColors = map[string]wantedColor{}
+		}
+		m.wantedColors[core.TagKey(tag.Name)] = wantedColor{tag.Name, color}
+		return m.saveNextColor()
 	case "d":
 		if tag != nil {
 			t.mode = tagsConfirmDelete
 		}
 	}
 	return nil
+}
+
+// wantedColor is the color the user chose for a tag and that is not saved yet.
+type wantedColor struct {
+	name  string
+	color core.TagColor
+}
+
+// tagColorSavedMsg reports a finished color save.
+type tagColorSavedMsg struct {
+	key   string
+	color core.TagColor
+	err   error
+}
+
+// saveNextColor starts the save of a wanted color unless one is in flight:
+// there is at most one color save at a time, so the last choice is the one
+// that ends up stored whatever the scheduling.
+func (m *Model) saveNextColor() tea.Cmd {
+	if m.savingColor || len(m.wantedColors) == 0 {
+		return nil
+	}
+	var key string
+	for k := range m.wantedColors { // any order: each tag keeps only its last choice
+		if key == "" || k < key {
+			key = k
+		}
+	}
+	w, actor := m.wantedColors[key], m.opts.Actor
+	m.savingColor = true
+	return func() tea.Msg {
+		_, err := m.be.SetTagColor(m.ctx, actor, w.name, string(w.color))
+		return tagColorSavedMsg{key, w.color, err}
+	}
+}
+
+// colorSaved handles a finished save: a failure drops the wanted color and
+// shows an alert; otherwise the next wanted color is saved, or the board is
+// reloaded when nothing is left.
+func (m *Model) colorSaved(msg tagColorSavedMsg) tea.Cmd {
+	m.savingColor = false
+	if w, ok := m.wantedColors[msg.key]; ok && (msg.err != nil || w.color == msg.color) {
+		delete(m.wantedColors, msg.key)
+	}
+	if msg.err != nil {
+		m.alert = &alertState{title: "RECOLOR FAILED", headline: "tag " + msg.key, detail: msg.err.Error(), footer: "The board is reloaded."}
+	}
+	if next := m.saveNextColor(); next != nil {
+		return next
+	}
+	return m.load()
+}
+
+// applyWantedColors repaints the colors chosen and not saved yet over a
+// freshly loaded snapshot, so a reload never steps back to an older color.
+func (m *Model) applyWantedColors() {
+	for key, w := range m.wantedColors {
+		m.tagColors[key] = w.color
+		for i := range m.tags {
+			if core.TagKey(m.tags[i].Name) == key {
+				m.tags[i].Color = w.color
+			}
+		}
+	}
 }
 
 // tagWrite runs a tag write in a command and reloads the board after it; a

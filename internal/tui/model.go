@@ -158,12 +158,16 @@ type Model struct {
 	palette    *paletteState // open command palette, or nil
 	accept     *acceptState  // open acceptance popup, or nil
 	confirm    *confirmState // open delete confirmation, or nil
-	tagsPopup  *tagsState    // open Manage tags popup, or nil
-	links      *linksState   // open links popup, or nil
-	form       *formState    // open create/edit form, or nil
-	sort       *sortState    // open sort popup, or nil
-	pendingSel string        // item to select after the next reload
-	editing    string        // item whose description is open in $EDITOR
+	// wantedColors are tag colors chosen in Manage tags and not saved yet;
+	// savingColor is set while one save is in flight.
+	wantedColors map[string]wantedColor
+	savingColor  bool
+	tagsPopup    *tagsState  // open Manage tags popup, or nil
+	links        *linksState // open links popup, or nil
+	form         *formState  // open create/edit form, or nil
+	sort         *sortState  // open sort popup, or nil
+	pendingSel   string      // item to select after the next reload
+	editing      string      // item whose description is open in $EDITOR
 
 	detailScroll   int    // first detail line shown
 	detailScrollID string // item the scroll refers to
@@ -286,6 +290,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.snap, m.recent, m.version, m.loaded, m.err = msg.snap, msg.recent, msg.version, true, nil
 		m.tags, m.tagColors = msg.tags, tagColorsOf(msg.tags)
+		m.applyWantedColors()
 		if m.detailOpen {
 			if m.snap.Get(m.detailID) == nil {
 				m.detailOpen = false
@@ -298,6 +303,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.tree.reveal(m, prevTree)
 		m.board.restore(m, prevBoard)
 		m.tree.restore(m, prevTree)
+	case tagColorSavedMsg:
+		return m, m.colorSaved(msg)
 	case writeMsg:
 		m.alert = msg.alert
 		if msg.notice != "" {
