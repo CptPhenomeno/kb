@@ -63,7 +63,7 @@ func CanClaim(s *Snapshot, item *Item, actor string, now time.Time) error {
 // NextFilter restricts the candidates of `kb next`.
 type NextFilter struct {
 	Types  []Type // Empty means tasks and bugs; epic and story may be asked for.
-	Label  string
+	Tag    string
 	Parent string // Includes every descendant of Parent.
 }
 
@@ -87,7 +87,7 @@ func Available(s *Snapshot, f NextFilter, now time.Time) []*Item {
 		switch {
 		case len(f.Types) == 0 && !it.Type.IsClaimable(),
 			len(f.Types) > 0 && !slices.Contains(f.Types, it.Type),
-			f.Label != "" && !hasTag(it.Tags, f.Label),
+			f.Tag != "" && !hasTag(it.Tags, f.Tag),
 			scope != nil && !scope[it.ID],
 			!isWorkable(it.Status),
 			it.Type.IsClaimable() && ClaimState(it, now) == ClaimActive:

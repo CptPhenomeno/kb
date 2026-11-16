@@ -205,7 +205,7 @@ func TestAvailableLabelAppliesToStories(t *testing.T) {
 	b := it("B", TypeStory, StatusTodo, "")
 	a.Tags = []string{"core"}
 	s := board(items(a, b))
-	if got := availableIDs(s, NextFilter{Types: []Type{TypeStory}, Label: "core"}); !equal(got, []string{"A"}) {
+	if got := availableIDs(s, NextFilter{Types: []Type{TypeStory}, Tag: "core"}); !equal(got, []string{"A"}) {
 		t.Fatalf("Available = %v, want [A]", got)
 	}
 }
@@ -237,7 +237,7 @@ func TestAvailableFilterTypeLabelParent(t *testing.T) {
 	if got := availableIDs(s, NextFilter{Types: []Type{TypeBug}}); !equal(got, []string{"B1"}) {
 		t.Errorf("--type bug = %v, want [B1]", got)
 	}
-	if got := availableIDs(s, NextFilter{Label: "api"}); !equal(got, []string{"T1", "T2"}) {
+	if got := availableIDs(s, NextFilter{Tag: "api"}); !equal(got, []string{"T1", "T2"}) {
 		t.Errorf("--label api = %v, want [T1 T2]", got)
 	}
 	// --parent includes every descendant, not only direct children.

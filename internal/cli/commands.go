@@ -99,7 +99,32 @@ func (c *cli) initCmd() *cobra.Command {
 type itemFlags struct {
 	desc, prio, spec, parent, ref, status string
 	points                                int
-	tags, links, accept, tests            []string
+	tags, labels, links, accept, tests    []string
+}
+
+// tagList returns the tags given with --tag followed by those given with the
+// deprecated --label alias.
+func (f *itemFlags) tagList() []string {
+	return nonBlank(append(slices.Clone(f.tags), f.labels...))
+}
+
+// tagChanged reports whether --tag or its alias --label was given.
+func tagChanged(cmd *cobra.Command) bool {
+	return cmd.Flags().Changed("tag") || cmd.Flags().Changed("label")
+}
+
+// hideLabel marks the registered --label flag as a deprecated alias: it works
+// but does not show in the help.
+func hideLabel(cmd *cobra.Command) {
+	_ = cmd.Flags().MarkHidden("label")
+}
+
+// warnLabel writes the --label deprecation warning on stderr, once per
+// invocation, when the flag was given. Stdout is never touched.
+func (c *cli) warnLabel(cmd *cobra.Command) {
+	if cmd.Flags().Changed("label") {
+		fmt.Fprintln(c.app.Stderr, "warning: --label is deprecated, use --tag")
+	}
 }
 
 func (f *itemFlags) register(cmd *cobra.Command, withCreateOnly bool) {
@@ -111,25 +136,28 @@ func (f *itemFlags) register(cmd *cobra.Command, withCreateOnly bool) {
 	fl.StringVar(&f.parent, "parent", "", "parent item ID")
 	fl.StringVar(&f.ref, "ref", "", "stable symbolic key, unique in the board")
 	fl.StringArrayVar(&f.tags, "tag", nil, "tag name, created if missing (repeatable)")
+	fl.StringArrayVar(&f.labels, "label", nil, "deprecated alias of --tag")
 	fl.StringArrayVar(&f.links, "link", nil, "link to a PR, branch or issue (repeatable)")
 	if withCreateOnly {
 		fl.StringVar(&f.status, "status", "", "initial status (default backlog)")
 		fl.StringArrayVar(&f.accept, "accept", nil, "acceptance criterion (repeatable)")
 		fl.StringArrayVar(&f.tests, "test", nil, "test name (repeatable)")
 	}
+	hideLabel(cmd)
 }
 
 func (c *cli) addCmd() *cobra.Command {
 	var f itemFlags
 	cmd := &cobra.Command{
 		Use: "add <type> <title>", Short: "Create an item (epic, story, task, subtask, bug)", Args: args(2, 2),
-		RunE: func(_ *cobra.Command, a []string) error {
+		RunE: func(cmd *cobra.Command, a []string) error {
+			c.warnLabel(cmd)
 			typ, err := core.ParseType(a[0])
 			if err != nil {
 				return err
 			}
 			it := core.Item{Type: typ, Title: a[1], Spec: f.spec, Ref: f.ref, Points: f.points,
-				Tags: nonBlank(f.tags), Links: f.links}
+				Tags: f.tagList(), Links: f.links}
 			if it.Description, err = c.readText(f.desc); err != nil {
 				return err
 			}
@@ -205,15 +233,17 @@ func (c *cli) showCmd() *cobra.Command {
 
 // listFlags select items in list.
 type listFlags struct {
-	status, typ, assignee, label, parent, sort string
-	blocked, stale                             bool
+	status, typ, assignee, tag, label, parent, sort string
+	blocked, stale                                  bool
 }
 
 func (c *cli) listCmd() *cobra.Command {
 	var f listFlags
 	cmd := &cobra.Command{
 		Use: "list", Short: "List items", Args: args(0, 0),
-		RunE: func(*cobra.Command, []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			c.warnLabel(cmd)
+			f.tag = firstNonEmpty(f.tag, f.label)
 			return c.with(func(s *Session) error {
 				snap, err := s.Service.Board(c.ctx)
 				if err != nil {
@@ -231,7 +261,9 @@ func (c *cli) listCmd() *cobra.Command {
 	fl.StringVar(&f.status, "status", "", "only items in this status")
 	fl.StringVar(&f.typ, "type", "", "only items of this type")
 	fl.StringVar(&f.assignee, "assignee", "", "only items assigned to this actor")
-	fl.StringVar(&f.label, "label", "", "only items with this label")
+	fl.StringVar(&f.tag, "tag", "", "only items with this tag (exact name, any case)")
+	fl.StringVar(&f.label, "label", "", "deprecated alias of --tag")
+	hideLabel(cmd)
 	fl.StringVar(&f.parent, "parent", "", "only descendants of this item")
 	fl.BoolVar(&f.blocked, "blocked", false, "only blocked items")
 	fl.BoolVar(&f.stale, "stale", false, "only items whose claim expired")
@@ -275,7 +307,7 @@ func filterItems(s *Session, c *cli, snap *core.Snapshot, f listFlags) ([]*core.
 		case status != nil && it.Status != *status,
 			typ != nil && it.Type != *typ,
 			f.assignee != "" && it.Assignee != f.assignee,
-			f.label != "" && !slices.Contains(it.Tags, f.label),
+			f.tag != "" && !slices.ContainsFunc(it.Tags, func(t string) bool { return core.TagKey(t) == core.TagKey(f.tag) }),
 			scope != nil && !scope[it.ID],
 			f.blocked && !blocked,
 			f.stale && !core.IsStale(it, now):
@@ -361,6 +393,7 @@ func (c *cli) editCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "edit <id> [flags]", Short: "Change the fields of an item (no flags: open $EDITOR)", Args: args(1, 1),
 		RunE: func(cmd *cobra.Command, a []string) error {
+			c.warnLabel(cmd)
 			return c.with(func(s *Session) error {
 				id, err := resolveID(s, c, a[0])
 				if err != nil {
@@ -369,7 +402,7 @@ func (c *cli) editCmd() *cobra.Command {
 				var p core.Patch
 				changed := cmd.Flags().Changed
 				if !changed("title") && !changed("desc") && !changed("prio") && !changed("points") &&
-					!changed("spec") && !changed("parent") && !changed("ref") && !changed("tag") && !changed("link") {
+					!changed("spec") && !changed("parent") && !changed("ref") && !tagChanged(cmd) && !changed("link") {
 					return c.editInEditor(s, id, ifVersion)
 				}
 				if changed("title") {
@@ -407,8 +440,8 @@ func (c *cli) editCmd() *cobra.Command {
 					}
 					p.Parent = &parent
 				}
-				if changed("tag") {
-					tags := nonBlank(f.tags)
+				if tagChanged(cmd) {
+					tags := f.tagList()
 					p.Tags = &tags
 				}
 				if changed("link") {
@@ -527,11 +560,12 @@ func (c *cli) linkCmd(add bool) *cobra.Command {
 
 func (c *cli) nextCmd() *cobra.Command {
 	var types []string
-	var label, parent string
+	var tag, label, parent string
 	var claim bool
 	cmd := &cobra.Command{
 		Use: "next", Short: "Show (and optionally claim) the next available item (tasks and bugs by default)", Args: args(0, 0),
-		RunE: func(*cobra.Command, []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			c.warnLabel(cmd)
 			var f core.NextFilter
 			for _, t := range types {
 				typ, err := core.ParseType(t)
@@ -540,7 +574,7 @@ func (c *cli) nextCmd() *cobra.Command {
 				}
 				f.Types = append(f.Types, typ)
 			}
-			f.Label = label
+			f.Tag = firstNonEmpty(tag, label)
 			return c.with(func(s *Session) error {
 				if parent != "" {
 					id, err := resolveID(s, c, parent)
@@ -562,7 +596,9 @@ func (c *cli) nextCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringSliceVar(&types, "type", nil, "only these types: epic, story, task, bug (comma separated or repeated; default task and bug)")
-	cmd.Flags().StringVar(&label, "label", "", "only items with this label")
+	cmd.Flags().StringVar(&tag, "tag", "", "only items with this tag (exact name, any case)")
+	cmd.Flags().StringVar(&label, "label", "", "deprecated alias of --tag")
+	hideLabel(cmd)
 	cmd.Flags().StringVar(&parent, "parent", "", "only descendants of this item")
 	cmd.Flags().BoolVar(&claim, "claim", false, "claim the item atomically")
 	return cmd
@@ -837,4 +873,14 @@ func nonBlank(names []string) []string {
 		}
 	}
 	return out
+}
+
+// firstNonEmpty returns the first argument that is not empty.
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

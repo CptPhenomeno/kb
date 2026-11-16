@@ -165,7 +165,7 @@ func TestListFilters(t *testing.T) {
 		{"type", ItemFilter{Type: &task}, []string{a.ID, c.ID}},
 		{"type bug", ItemFilter{Type: &bug}, []string{b.ID}},
 		{"assignee", ItemFilter{Assignee: "agent-1"}, []string{a.ID}},
-		{"label", ItemFilter{Label: "api"}, []string{a.ID, c.ID}},
+		{"label", ItemFilter{Tag: "api"}, []string{a.ID, c.ID}},
 		{"parent", ItemFilter{Parent: s.ID}, []string{a.ID, b.ID}},
 	}
 	for _, tc := range cases {

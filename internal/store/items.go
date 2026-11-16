@@ -143,7 +143,7 @@ type ItemFilter struct {
 	Status   *core.Status
 	Type     *core.Type
 	Assignee string
-	Label    string
+	Tag      string
 	Parent   string // Direct children only.
 }
 
@@ -160,9 +160,9 @@ func (tx *Tx) ListItems(f ItemFilter) ([]*core.Item, error) {
 	if f.Assignee != "" {
 		where, args = append(where, "assignee = ?"), append(args, f.Assignee)
 	}
-	if f.Label != "" {
+	if f.Tag != "" {
 		where, args = append(where, `EXISTS (SELECT 1 FROM card_tags ct JOIN tags t ON t.id = ct.tag
-			WHERE ct.item = items.id AND t.key = ?)`), append(args, core.TagKey(f.Label))
+			WHERE ct.item = items.id AND t.key = ?)`), append(args, core.TagKey(f.Tag))
 	}
 	if f.Parent != "" {
 		where, args = append(where, "parent = ?"), append(args, f.Parent)
