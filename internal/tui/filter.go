@@ -30,11 +30,8 @@ func (b *boardState) matchesExceptType(m *Model, it *core.Item) bool {
 	if b.onlyStale && !core.IsStale(it, m.opts.Now()) {
 		return false
 	}
-	if q := strings.ToLower(strings.TrimSpace(b.query)); q != "" {
-		hay := strings.ToLower(strings.Join(append([]string{it.ID, it.Title, it.Assignee}, it.Tags...), " "))
-		if !strings.Contains(hay, q) {
-			return false
-		}
+	if !matchSearch(b.query, it) {
+		return false
 	}
 	return true
 }
