@@ -243,3 +243,20 @@ func TestFreshSchemaMatchesMigratedV1Schema(t *testing.T) {
 		}
 	}
 }
+
+func TestMigrationTrimsLabelsAndDropsEmptyOnes(t *testing.T) {
+	path := newV1DB(t, []v1Item{
+		{"KB-1", "task", "2026-01-01T00:00:00Z", 1, `[" api","", "  ","ui "]`},
+		{"KB-2", "task", "2026-01-02T00:00:00Z", 1, `["api","\tUI"]`},
+	})
+	db := openPath(t, path)
+	if got, want := tagsOf(t, db), []tagRow{{"api", "red"}, {"ui", "orange"}}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("tags = %v, want %v", got, want)
+	}
+	if got, want := cardTagsOf(t, db, "KB-1"), []string{"api", "ui"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("KB-1 = %v, want %v", got, want)
+	}
+	if got, want := cardTagsOf(t, db, "KB-2"), []string{"api", "ui"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("KB-2 = %v, want %v", got, want)
+	}
+}
