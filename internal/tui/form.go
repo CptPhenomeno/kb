@@ -38,6 +38,7 @@ type formState struct {
 	tab      formTab  // active tab of the create form
 	tags     []string // tags chosen for the card, in the order they were added
 	picker   *tagPicker
+	newTags  []pendingTag // tags created in the picker, stored when the form is saved
 }
 
 // formTab is a tab of the create form; the edit form has no tabs.
@@ -219,6 +220,7 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 			return nil
 		case fTags:
 			f.picker = &tagPicker{}
+			f.picker.last, _ = m.be.LastTagColor(m.ctx)
 			return nil
 		}
 		f.saving = true
@@ -295,6 +297,12 @@ func (m *Model) submitForm() tea.Cmd {
 	labels := slices.Clone(f.tags)
 	actor, editID, version := m.opts.Actor, f.editID, f.version
 	desc := f.fields[fDescription].value
+	var pending []pendingTag
+	for _, t := range f.newTags {
+		if f.chosenIndex(t.name) >= 0 {
+			pending = append(pending, t)
+		}
+	}
 	if editID == "" {
 		typ, _ := core.ParseType(val(fType))
 		it := core.Item{Type: typ, Title: val(fTitle), Parent: val(fParent), Priority: prio, Points: points,
@@ -306,8 +314,13 @@ func (m *Model) submitForm() tea.Cmd {
 			it.Tests = append(it.Tests, core.Test{Name: name})
 		}
 		return func() tea.Msg {
+			made, err := m.createPendingTags(actor, pending)
+			if err != nil {
+				return formError(err)
+			}
 			created, err := m.be.Create(m.ctx, actor, it)
 			if err != nil {
+				m.dropPendingTags(actor, made)
 				return formError(err)
 			}
 			return formDoneMsg{id: created.ID}
@@ -317,13 +330,47 @@ func (m *Model) submitForm() tea.Cmd {
 	p := core.Patch{Title: &title, Description: &desc, Parent: &parent, Priority: &prio, Points: &points,
 		Spec: &spec, Tags: &labels}
 	return func() tea.Msg {
+		made, err := m.createPendingTags(actor, pending)
+		if err != nil {
+			return formError(err)
+		}
 		if _, err := m.be.Edit(m.ctx, actor, editID, p, version); err != nil {
+			m.dropPendingTags(actor, made)
 			if errors.Is(err, core.ErrConflict) {
 				return formDoneMsg{general: "the item changed meanwhile: close the form (esc) and edit it again"}
 			}
 			return formError(err)
 		}
 		return formDoneMsg{id: editID}
+	}
+}
+
+// createPendingTags writes the tags created in the form's selector, each with
+// its chosen color, just before the card is saved so that the card finds them
+// and does not create them with a rotation color. It returns the names it
+// created; a tag that exists meanwhile is left as it is. On an error the
+// tags created so far are dropped again.
+func (m *Model) createPendingTags(actor string, pending []pendingTag) ([]string, error) {
+	var made []string
+	for _, t := range pending {
+		if _, err := m.be.AddTag(m.ctx, actor, t.name, string(t.color)); err != nil {
+			if errors.Is(err, core.ErrConflict) {
+				continue
+			}
+			m.dropPendingTags(actor, made)
+			return nil, err
+		}
+		made = append(made, t.name)
+	}
+	return made, nil
+}
+
+// dropPendingTags removes tags written by createPendingTags when the card
+// could not be saved, so a failed save leaves no stray tag. They are not on
+// any card yet, so nothing else changes.
+func (m *Model) dropPendingTags(actor string, names []string) {
+	for _, n := range names {
+		_, _ = m.be.DeleteTag(m.ctx, actor, n)
 	}
 }
 
@@ -420,6 +467,11 @@ func (m *Model) formBody(iw, avail int) []string {
 			value = m.th.fg(m.th.p.Accent).Render("‹ ") + m.th.bright.Render(value) + m.th.fg(m.th.p.Accent).Render(" ›")
 		case fld.choices != nil:
 			value = m.th.text.Render(value)
+		case i == fTags && len(f.tags) > 0:
+			value = m.tagsValue(f.tags)
+			if focused {
+				value += m.th.fg(m.th.p.Accent).Render("▌")
+			}
 		case focused:
 			value = m.th.bright.Render(value) + m.th.fg(m.th.p.Accent).Render("▌")
 		default:
@@ -586,4 +638,14 @@ func (m *Model) editorDone(msg editorDoneMsg) tea.Cmd {
 		}
 		return writeMsg{notice: item.ID + " description saved"}
 	}
+}
+
+// tagsValue is the comma list of the tags field with each name in its tag
+// color, a pending tag in the color chosen in the selector.
+func (m *Model) tagsValue(tags []string) string {
+	parts := make([]string, len(tags))
+	for i, n := range tags {
+		parts[i] = m.th.fg(m.tagColor(n)).Render(n)
+	}
+	return strings.Join(parts, m.th.muted.Render(", "))
 }

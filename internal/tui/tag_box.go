@@ -28,6 +28,13 @@ func (t *theme) tagLabel(c color.Color, name string, maxW int) string {
 // to case (by core.TagKey). A tag the board does not know, for example one removed since the
 // last refresh, is drawn in Muted.
 func (m *Model) tagColor(name string) color.Color {
+	if m.form != nil {
+		if i := m.form.pendingIndex(name); i >= 0 {
+			if tc := m.th.p.TagColor(m.form.newTags[i].color); tc != nil {
+				return tc
+			}
+		}
+	}
 	if tc := m.th.p.TagColor(m.tagColors[core.TagKey(name)]); tc != nil {
 		return tc
 	}

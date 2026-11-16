@@ -26,6 +26,15 @@ type serviceBackend struct {
 
 func (b *serviceBackend) Board(ctx context.Context) (*core.Snapshot, error) { return b.svc.Board(ctx) }
 func (b *serviceBackend) Tags(ctx context.Context) ([]core.Tag, error)      { return b.svc.Tags(ctx) }
+func (b *serviceBackend) LastTagColor(ctx context.Context) (core.TagColor, error) {
+	return b.svc.LastTagColor(ctx)
+}
+func (b *serviceBackend) AddTag(ctx context.Context, actor, name, color string) (*core.Tag, error) {
+	return b.svc.AddTag(ctx, actor, name, color)
+}
+func (b *serviceBackend) DeleteTag(ctx context.Context, actor, name string) (*core.Tag, error) {
+	return b.svc.DeleteTag(ctx, actor, name)
+}
 func (b *serviceBackend) Log(ctx context.Context, f core.LogFilter) ([]core.Event, error) {
 	return b.svc.Log(ctx, f)
 }

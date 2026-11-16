@@ -95,6 +95,14 @@ func (s *Service) Tags(ctx context.Context) ([]Tag, error) {
 	return out, err
 }
 
+// LastTagColor is the color of the most recently created tag, or "" when
+// there is no tag; NextTagColor of it is the color AddTag proposes.
+func (s *Service) LastTagColor(ctx context.Context) (TagColor, error) {
+	var c TagColor
+	err := s.Store.Transact(ctx, func(tx Tx) (err error) { c, err = tx.LastTagColor(); return err })
+	return c, err
+}
+
 // AddTag creates a tag. An empty color takes the one after the color of
 // the most recently created tag. A name that exists with any case is a
 // conflict.

@@ -63,6 +63,16 @@ func (f *fakeBackend) Board(context.Context) (*core.Snapshot, error) {
 
 func (f *fakeBackend) Tags(context.Context) ([]core.Tag, error) { return f.tags, nil }
 
+func (f *fakeBackend) LastTagColor(context.Context) (core.TagColor, error) { return "", nil }
+
+func (f *fakeBackend) AddTag(context.Context, string, string, string) (*core.Tag, error) {
+	return nil, errors.New("read-only fake")
+}
+
+func (f *fakeBackend) DeleteTag(context.Context, string, string) (*core.Tag, error) {
+	return nil, errors.New("read-only fake")
+}
+
 func (f *fakeBackend) Log(_ context.Context, flt core.LogFilter) ([]core.Event, error) {
 	var out []core.Event
 	for _, e := range f.events {

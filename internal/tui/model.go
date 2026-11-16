@@ -17,6 +17,9 @@ import (
 type Backend interface {
 	Board(ctx context.Context) (*core.Snapshot, error)
 	Tags(ctx context.Context) ([]core.Tag, error)
+	LastTagColor(ctx context.Context) (core.TagColor, error)
+	AddTag(ctx context.Context, actor, name, color string) (*core.Tag, error)
+	DeleteTag(ctx context.Context, actor, name string) (*core.Tag, error)
 	Log(ctx context.Context, f core.LogFilter) ([]core.Event, error)
 	DataVersion(ctx context.Context) (int64, error)
 	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
