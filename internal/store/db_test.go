@@ -242,3 +242,14 @@ func mustMigrations(t *testing.T) []string {
 	}
 	return names
 }
+
+func TestFreshDatabaseHasTagTables(t *testing.T) {
+	db := openTemp(t)
+	for _, table := range []string{"tags", "card_tags"} {
+		var n int
+		err := db.sql.QueryRow("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?", table).Scan(&n)
+		if err != nil || n != 1 {
+			t.Errorf("table %s missing (n=%d, err=%v)", table, n, err)
+		}
+	}
+}

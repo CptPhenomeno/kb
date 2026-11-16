@@ -25,6 +25,12 @@ type Tx interface {
 	AppendEvent(e *Event) error
 	EventsSince(afterID int64, limit int) ([]Event, error)
 	EventsFor(item string) ([]Event, error)
+	ListTags() ([]Tag, error)
+	// FindTag looks a tag up by name, ignoring case (TagKey).
+	FindTag(name string) (Tag, bool, error)
+	// LastTagColor is the color of the most recently created tag, or "".
+	LastTagColor() (TagColor, error)
+	InsertTag(t *Tag) error
 }
 
 // Store runs a function inside one atomic, serialized transaction.
