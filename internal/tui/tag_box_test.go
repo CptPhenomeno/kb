@@ -79,7 +79,7 @@ func TestTagBoxNeverExceedsTheAvailableWidth(t *testing.T) {
 
 func TestUnknownTagFallsBackToMuted(t *testing.T) {
 	m := newModel(t, sampleBoard(), 80, 24)
-	m.tagColors = map[string]core.TagColor{"api": "blue"}
+	m.tagColors = tagColorsOf([]core.Tag{{Name: "api", Color: "blue"}})
 	if m.tagColor("API") != m.th.p.TagColor("blue") {
 		t.Error("known tag, matched case-insensitively, should use its color")
 	}

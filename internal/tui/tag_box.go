@@ -33,24 +33,20 @@ func (t *theme) tagBox(c color.Color, name string, maxW int) []string {
 }
 
 // tagColor is the theme color of the tag called name, matched without regard
-// to case. A tag the board does not know, for example one removed since the
+// to case (by core.TagKey). A tag the board does not know, for example one removed since the
 // last refresh, is drawn in Muted.
 func (m *Model) tagColor(name string) color.Color {
-	for n, c := range m.tagColors {
-		if strings.EqualFold(n, name) {
-			if tc := m.th.p.TagColor(c); tc != nil {
-				return tc
-			}
-		}
+	if tc := m.th.p.TagColor(m.tagColors[core.TagKey(name)]); tc != nil {
+		return tc
 	}
 	return m.th.p.Muted
 }
 
-// tagColorsOf maps each tag name to its color name.
+// tagColorsOf maps each tag's core.TagKey to its color name.
 func tagColorsOf(tags []core.Tag) map[string]core.TagColor {
 	m := make(map[string]core.TagColor, len(tags))
 	for _, t := range tags {
-		m[t.Name] = t.Color
+		m[core.TagKey(t.Name)] = t.Color
 	}
 	return m
 }
