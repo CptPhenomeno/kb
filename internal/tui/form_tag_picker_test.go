@@ -139,3 +139,14 @@ func TestSavingTheFormStoresTheChosenTags(t *testing.T) {
 		t.Fatalf("stored tags %v, want [API]", it.Tags)
 	}
 }
+
+func TestSelectorKeepsTheFormMessages(t *testing.T) {
+	m, _ := tagFormModel(t)
+	m.form.general = "the item changed meanwhile"
+	m.form.info = "description updated"
+	press(t, m, "enter")
+	s := screen(m)
+	if !strings.Contains(s, "✗ the item changed meanwhile") || !strings.Contains(s, "✓ description updated") {
+		t.Fatalf("selector dropped a form message:\n%s", s)
+	}
+}

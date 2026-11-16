@@ -106,7 +106,7 @@ func (m *Model) renderTagPicker(head, foot []string, width, iw int) string {
 		lines = append(lines, m.th.muted.Render("  no tag matches"))
 	}
 	status := "type to filter · ↑ ↓ move · space adds or removes · esc back to the form"
-	foot = append(foot[:max(0, len(foot)-1)], m.th.muted.Render(status))
+	foot = append(foot, "", m.th.muted.Render(status))
 	avail := max(3, m.bodyHeight()-4-len(head)-len(foot))
 	cur := lo + p.cursor
 	body := scrollWindow(lines, cur, cur, avail, m.th.muted)
