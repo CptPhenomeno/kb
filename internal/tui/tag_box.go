@@ -32,6 +32,22 @@ func (t *theme) tagBox(c color.Color, name string, maxW int) []string {
 	}
 }
 
+// minTagLabelWidth is the narrowest tag label: both brackets and one cell for
+// the name.
+const minTagLabelWidth = 3
+
+// tagLabel draws a tag on one line as its name between ⟨ and ⟩, brackets and
+// name in c, with no background and no spaces inside. A name that does not
+// fit maxW is cut with "…" inside the brackets; the label is never wider
+// than maxW, and below minTagLabelWidth there is no room and it is "".
+func (t *theme) tagLabel(c color.Color, name string, maxW int) string {
+	if maxW < minTagLabelWidth {
+		return ""
+	}
+	name = truncate(name, maxW-2)
+	return lipgloss.NewStyle().Foreground(c).Render("⟨" + name + "⟩")
+}
+
 // tagColor is the theme color of the tag called name, matched without regard
 // to case (by core.TagKey). A tag the board does not know, for example one removed since the
 // last refresh, is drawn in Muted.
