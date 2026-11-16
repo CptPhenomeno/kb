@@ -172,3 +172,145 @@ func hasTag(tags []string, name string) bool {
 func sameTags(a, b []string) bool {
 	return slices.EqualFunc(a, b, func(x, y string) bool { return TagKey(x) == TagKey(y) })
 }
+
+// SetTagColor changes the color of a tag, found ignoring case. Cards are
+// untouched and get no event: the color is not part of a card.
+func (s *Service) SetTagColor(ctx context.Context, actor, name, color string) (*Tag, error) {
+	c, err := ParseTagColor(color)
+	if err != nil {
+		return nil, err
+	}
+	var out *Tag
+	err = s.write(ctx, actor, func(o *op) error {
+		t, err := o.mustTag(name)
+		if err != nil {
+			return err
+		}
+		t.Color = c
+		if err := o.tx.UpdateTag(t.Name, t); err != nil {
+			return err
+		}
+		out = &t
+		return nil
+	})
+	return out, err
+}
+
+// RenameTag gives a tag a new name, also when only the case changes. A name
+// that is another existing tag is a conflict: tags never merge. Every card
+// using the tag gets an updated event with its tags before and after.
+func (s *Service) RenameTag(ctx context.Context, actor, oldName, newName string) (*Tag, error) {
+	newName, err := ValidateTagName(newName)
+	if err != nil {
+		return nil, err
+	}
+	var out *Tag
+	err = s.write(ctx, actor, func(o *op) error {
+		t, err := o.mustTag(oldName)
+		if err != nil {
+			return err
+		}
+		if other, found, err := o.tx.FindTag(newName); err != nil {
+			return err
+		} else if found && TagKey(other.Name) != TagKey(t.Name) {
+			return wrapf(ErrConflict, "tag %s already exists", other.Name)
+		}
+		items, err := o.cardsWithTag(t.Name)
+		if err != nil {
+			return err
+		}
+		prev := t.Name
+		t.Name = newName
+		if err := o.tx.UpdateTag(prev, t); err != nil {
+			return err
+		}
+		out = &t
+		k := TagKey(prev)
+		return o.retag(items, func(tags []string) []string {
+			r := slices.Clone(tags)
+			for i, n := range r {
+				if TagKey(n) == k {
+					r[i] = newName
+				}
+			}
+			return r
+		}, func() error { return nil })
+	})
+	return out, err
+}
+
+// DeleteTag removes a tag from the board and from every card using it,
+// writing an updated event on each of those cards. It returns the deleted
+// tag, with the number of cards it was on.
+func (s *Service) DeleteTag(ctx context.Context, actor, name string) (*Tag, error) {
+	var out *Tag
+	err := s.write(ctx, actor, func(o *op) error {
+		t, err := o.mustTag(name)
+		if err != nil {
+			return err
+		}
+		items, err := o.cardsWithTag(t.Name)
+		if err != nil {
+			return err
+		}
+		out = &t
+		k := TagKey(t.Name)
+		return o.retag(items, func(tags []string) []string {
+			return slices.DeleteFunc(slices.Clone(tags), func(n string) bool { return TagKey(n) == k })
+		}, func() error { return o.tx.DeleteTag(t.Name) })
+	})
+	return out, err
+}
+
+func (o *op) mustTag(name string) (Tag, error) {
+	t, found, err := o.tx.FindTag(strings.TrimSpace(name))
+	if err != nil {
+		return Tag{}, err
+	}
+	if !found {
+		return Tag{}, wrapf(ErrNotFound, "tag %s", strings.TrimSpace(name))
+	}
+	return t, nil
+}
+
+// cardsWithTag loads the cards using the tag, as they are now.
+func (o *op) cardsWithTag(name string) ([]*Item, error) {
+	ids, err := o.tx.CardsWithTag(name)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*Item, 0, len(ids))
+	for _, id := range ids {
+		it, err := o.tx.GetItem(id)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, it)
+	}
+	return items, nil
+}
+
+// retag changes the tags of each card with f and records the change like
+// Edit does (version bump, updated_at/by, an updated event with the tags
+// before and after). apply runs once, after the cards were read and before
+// they are saved, for the change of the tag itself.
+func (o *op) retag(items []*Item, f func([]string) []string, apply func() error) error {
+	if err := apply(); err != nil {
+		return err
+	}
+	for _, it := range items {
+		changes := map[string]any{}
+		after := f(it.Tags)
+		setList(changes, "tags", &it.Tags, &after)
+		if len(changes) == 0 {
+			continue
+		}
+		if err := o.save(it); err != nil {
+			return err
+		}
+		if err := o.event(it.ID, EventUpdated, map[string]any{"changes": changes}); err != nil {
+			return err
+		}
+	}
+	return nil
+}

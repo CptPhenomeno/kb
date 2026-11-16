@@ -115,3 +115,36 @@ func (tx *Tx) setCardTags(item string, names []string) error {
 	}
 	return nil
 }
+
+// UpdateTag sets the name, key and color of the tag named name (ignoring
+// case). The cards keep using it: card_tags points at the tag id.
+func (tx *Tx) UpdateTag(name string, t core.Tag) error {
+	_, err := tx.exec(`UPDATE tags SET name = ?, key = ?, color = ? WHERE key = ?`,
+		t.Name, core.TagKey(t.Name), string(t.Color), core.TagKey(name))
+	return err
+}
+
+// DeleteTag removes the tag; its card_tags rows go with it (cascade).
+func (tx *Tx) DeleteTag(name string) error {
+	_, err := tx.exec(`DELETE FROM tags WHERE key = ?`, core.TagKey(name))
+	return err
+}
+
+// CardsWithTag lists the IDs of the cards using the tag.
+func (tx *Tx) CardsWithTag(name string) ([]string, error) {
+	rows, err := tx.query(`SELECT ct.item FROM card_tags ct JOIN tags t ON t.id = ct.tag
+		WHERE t.key = ? ORDER BY ct.item`, core.TagKey(name))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out = append(out, id)
+	}
+	return out, rows.Err()
+}

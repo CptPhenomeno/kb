@@ -31,6 +31,13 @@ type Tx interface {
 	// LastTagColor is the color of the most recently created tag, or "".
 	LastTagColor() (TagColor, error)
 	InsertTag(t *Tag) error
+	// UpdateTag sets the name and color of the tag currently named name
+	// (found ignoring case); cards keep using it.
+	UpdateTag(name string, t Tag) error
+	// DeleteTag removes the tag and its use on every card.
+	DeleteTag(name string) error
+	// CardsWithTag lists the IDs of the cards using the tag, by ID order.
+	CardsWithTag(name string) ([]string, error)
 }
 
 // Store runs a function inside one atomic, serialized transaction.

@@ -97,3 +97,42 @@ func TestCLITagListCountsTheCardsOfEachTag(t *testing.T) {
 		t.Fatalf("tag list = %v", got)
 	}
 }
+
+func TestCLITagColorRenameAndDeleteHonorJSONAndExitCodes(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--tag", "api", "--tag", "ui")
+
+	v := e.jsonOf("tag", "color", "API", "blue")
+	if v["name"] != "api" || v["color"] != "blue" || v["cards"] != float64(1) {
+		t.Fatalf("color = %v", v)
+	}
+	_, errOut := e.fail(3, "tag", "color", "api", "nope")
+	if !strings.Contains(errOut, "red") || !strings.Contains(errOut, "pink") {
+		t.Fatalf("stderr does not list the colors: %s", errOut)
+	}
+	e.fail(2, "tag", "color", "missing", "red")
+
+	v = e.jsonOf("tag", "rename", "api", "API")
+	if v["name"] != "API" || v["color"] != "blue" {
+		t.Fatalf("rename = %v", v)
+	}
+	e.fail(4, "tag", "rename", "api", "UI")
+	e.fail(2, "tag", "rename", "missing", "x")
+	e.fail(3, "tag", "rename", "api", "a,b")
+	card := e.jsonOf("show", "KB-1")
+	if tags, _ := card["tags"].([]any); len(tags) != 2 || tags[0] != "API" {
+		t.Fatalf("card tags = %v", card["tags"])
+	}
+
+	v = e.jsonOf("tag", "delete", "ui")
+	if v["name"] != "ui" || v["cards"] != float64(1) {
+		t.Fatalf("delete = %v", v)
+	}
+	e.fail(2, "tag", "delete", "ui")
+	if out := e.ok("tag", "list"); strings.Contains(out, "ui") {
+		t.Fatalf("list after delete:\n%s", out)
+	}
+	if out := e.ok("log"); !strings.Contains(out, "tags") {
+		t.Fatalf("log:\n%s", out)
+	}
+}

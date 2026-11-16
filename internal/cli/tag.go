@@ -16,7 +16,7 @@ func (c *cli) tagCmd() *cobra.Command {
 		Args:  unknownCommand,
 		RunE:  func(cmd *cobra.Command, _ []string) error { return cmd.Help() },
 	}
-	cmd.AddCommand(c.tagAddCmd(), c.tagListCmd())
+	cmd.AddCommand(c.tagAddCmd(), c.tagListCmd(), c.tagColorCmd(), c.tagRenameCmd(), c.tagDeleteCmd())
 	return cmd
 }
 
@@ -74,6 +74,70 @@ func (c *cli) tagListCmd() *cobra.Command {
 					fmt.Fprintf(w, "%s\t%s\t%d\n", t.Name, t.Color, t.Cards)
 				}
 				return w.Flush()
+			})
+		},
+	}
+}
+
+// printTag writes the result of a tag command in the requested format.
+func (c *cli) printTag(t *core.Tag, verb string) error {
+	switch {
+	case c.g.json:
+		return printJSON(c.app.Stdout, t)
+	case c.g.quiet:
+		fmt.Fprintln(c.app.Stdout, t.Name)
+	default:
+		fmt.Fprintf(c.app.Stdout, "✓ tag %s %s\n", t.Name, verb)
+	}
+	return nil
+}
+
+func (c *cli) tagColorCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "color <name> <color>",
+		Short: "Change the color of a tag on every card (red, orange, yellow, green, cyan, blue, purple or pink)",
+		Args:  args(2, 2),
+		RunE: func(_ *cobra.Command, a []string) error {
+			return c.with(func(s *Session) error {
+				t, err := s.Service.SetTagColor(c.ctx, s.Actor, a[0], a[1])
+				if err != nil {
+					return err
+				}
+				return c.printTag(t, "is now "+string(t.Color))
+			})
+		},
+	}
+}
+
+func (c *cli) tagRenameCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "rename <old> <new>",
+		Short: "Rename a tag on every card (also only to change the case; a name of another tag is a conflict)",
+		Args:  args(2, 2),
+		RunE: func(_ *cobra.Command, a []string) error {
+			return c.with(func(s *Session) error {
+				t, err := s.Service.RenameTag(c.ctx, s.Actor, a[0], a[1])
+				if err != nil {
+					return err
+				}
+				return c.printTag(t, "renamed")
+			})
+		},
+	}
+}
+
+func (c *cli) tagDeleteCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "delete <name>",
+		Short: "Delete a tag and remove it from every card",
+		Args:  args(1, 1),
+		RunE: func(_ *cobra.Command, a []string) error {
+			return c.with(func(s *Session) error {
+				t, err := s.Service.DeleteTag(c.ctx, s.Actor, a[0])
+				if err != nil {
+					return err
+				}
+				return c.printTag(t, fmt.Sprintf("deleted (was on %d cards)", t.Cards))
 			})
 		},
 	}
