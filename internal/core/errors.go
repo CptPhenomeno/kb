@@ -45,3 +45,16 @@ func (e *RuleError) Is(target error) bool { return target == ErrRule }
 func wrapf(sentinel error, format string, args ...any) error {
 	return fmt.Errorf("%s: %w", fmt.Sprintf(format, args...), sentinel)
 }
+
+// conflictError is a conflict that is not about an item version: it
+// matches ErrConflict but prints only its own message.
+type conflictError struct{ msg string }
+
+func (e *conflictError) Error() string        { return e.msg }
+func (e *conflictError) Is(target error) bool { return target == ErrConflict }
+
+// conflictf builds an ErrConflict-matching error whose text is just the
+// formatted message, without the "version conflict" suffix.
+func conflictf(format string, args ...any) error {
+	return &conflictError{msg: fmt.Sprintf(format, args...)}
+}

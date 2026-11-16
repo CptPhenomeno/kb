@@ -111,10 +111,10 @@ func (s *Service) AddTag(ctx context.Context, actor, name, color string) (*Tag, 
 	}
 	var out *Tag
 	err = s.write(ctx, actor, func(o *op) error {
-		if _, found, err := o.tx.FindTag(name); err != nil {
+		if existing, found, err := o.tx.FindTag(name); err != nil {
 			return err
 		} else if found {
-			return wrapf(ErrConflict, "tag %s already exists", name)
+			return conflictf("tag %s already exists", existing.Name)
 		}
 		if c == "" {
 			last, err := o.tx.LastTagColor()
@@ -213,7 +213,7 @@ func (s *Service) RenameTag(ctx context.Context, actor, oldName, newName string)
 		if other, found, err := o.tx.FindTag(newName); err != nil {
 			return err
 		} else if found && TagKey(other.Name) != TagKey(t.Name) {
-			return wrapf(ErrConflict, "tag %s already exists", other.Name)
+			return conflictf("tag %s already exists", other.Name)
 		}
 		items, err := o.cardsWithTag(t.Name)
 		if err != nil {

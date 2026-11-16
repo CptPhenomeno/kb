@@ -136,3 +136,17 @@ func TestCLITagColorRenameAndDeleteHonorJSONAndExitCodes(t *testing.T) {
 		t.Fatalf("log:\n%s", out)
 	}
 }
+
+func TestCLITagConflictMessageIsPlain(t *testing.T) {
+	e := newEnv(t)
+	e.ok("tag", "add", "api")
+	e.ok("tag", "add", "ui")
+	_, errOut := e.fail(4, "tag", "add", "UI")
+	if strings.Contains(errOut, "version") || !strings.Contains(errOut, "tag ui already exists") {
+		t.Fatalf("stderr = %q", errOut)
+	}
+	_, errOut = e.fail(4, "--json", "tag", "rename", "api", "ui")
+	if strings.Contains(errOut, "version") {
+		t.Fatalf("json stderr = %q", errOut)
+	}
+}

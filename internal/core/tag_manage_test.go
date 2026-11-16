@@ -174,3 +174,16 @@ func TestTagNameArgumentMatchesWithoutCase(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestTagNameConflictMessageHasNoVersionText(t *testing.T) {
+	h := newHarness(t)
+	h.add("dev", core.TypeTask, "t", "", withTags("api", "ui"))
+	_, err := h.svc.AddTag(ctx, "dev", "UI", "")
+	if !errors.Is(err, core.ErrConflict) || err.Error() != "tag ui already exists" {
+		t.Fatalf("add err = %v", err)
+	}
+	_, err = h.svc.RenameTag(ctx, "dev", "api", "ui")
+	if !errors.Is(err, core.ErrConflict) || err.Error() != "tag ui already exists" {
+		t.Fatalf("rename err = %v", err)
+	}
+}
