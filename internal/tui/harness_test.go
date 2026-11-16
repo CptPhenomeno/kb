@@ -32,6 +32,7 @@ type fakeBackend struct {
 	editErr    error        // returned by EditCriterion
 	removes    []removeCall // RemoveCriterion calls, in order
 	removeErr  error        // returned by RemoveCriterion
+	tags       []core.Tag   // returned by Tags
 }
 
 // editCall is one recorded EditCriterion call.
@@ -59,6 +60,8 @@ func (f *fakeBackend) Board(context.Context) (*core.Snapshot, error) {
 	f.boardCalls++
 	return f.snap, nil
 }
+
+func (f *fakeBackend) Tags(context.Context) ([]core.Tag, error) { return f.tags, nil }
 
 func (f *fakeBackend) Log(_ context.Context, flt core.LogFilter) ([]core.Event, error) {
 	var out []core.Event

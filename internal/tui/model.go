@@ -16,6 +16,7 @@ import (
 // the database; tests use an in-memory fake.
 type Backend interface {
 	Board(ctx context.Context) (*core.Snapshot, error)
+	Tags(ctx context.Context) ([]core.Tag, error)
 	Log(ctx context.Context, f core.LogFilter) ([]core.Event, error)
 	DataVersion(ctx context.Context) (int64, error)
 	Move(ctx context.Context, actor, id string, to core.Status, ifVersion int) (*core.MoveResult, error)
@@ -93,6 +94,7 @@ type (
 	}
 	loadedMsg struct {
 		snap    *core.Snapshot
+		tags    []core.Tag
 		recent  []core.Event
 		history []core.Event
 		version int64
@@ -123,11 +125,13 @@ type Model struct {
 	helpTab       int // active help tab: 0 is the current view, then helpTabNames
 	barMode       barMode
 
-	snap    *core.Snapshot
-	recent  []core.Event
-	version int64
-	loaded  bool
-	err     error
+	snap   *core.Snapshot
+	recent []core.Event
+	// tagColors maps tag names to color names, refreshed with the snapshot.
+	tagColors map[string]core.TagColor
+	version   int64
+	loaded    bool
+	err       error
 
 	// tickEvery is the polling period of the live refresh; 0 disables it.
 	tickEvery time.Duration
@@ -221,6 +225,9 @@ func (m *Model) load() tea.Cmd {
 		if msg.snap, msg.err = m.be.Board(m.ctx); msg.err != nil {
 			return msg
 		}
+		if msg.tags, msg.err = m.be.Tags(m.ctx); msg.err != nil {
+			return msg
+		}
 		if msg.recent, msg.err = m.be.Log(m.ctx, core.LogFilter{Limit: recentEvents}); msg.err != nil {
 			return msg
 		}
@@ -271,6 +278,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.pendingSel = ""
 		}
 		m.snap, m.recent, m.version, m.loaded, m.err = msg.snap, msg.recent, msg.version, true, nil
+		m.tagColors = tagColorsOf(msg.tags)
 		if m.detailOpen {
 			if m.snap.Get(m.detailID) == nil {
 				m.detailOpen = false
