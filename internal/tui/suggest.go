@@ -111,10 +111,17 @@ func (m *Model) suggestsCard(it *core.Item) bool {
 }
 
 // selectedSuggestion is the suggestion picked with ↑ ↓, nil when none is.
+// The pick is remembered as the suggestion itself, not as a position: a live
+// reload can reshuffle the list, and the highlight must stay on what the user
+// chose. A pick that is no longer in the list counts as no selection.
 func (m *Model) selectedSuggestion() *suggestion {
-	sg := m.suggestions()
-	if i := m.board.sugCursor - 1; i >= 0 && i < len(sg) {
-		return &sg[i]
+	if m.board.sugPick == nil {
+		return nil
+	}
+	for _, s := range m.suggestions() {
+		if s == *m.board.sugPick {
+			return &s
+		}
 	}
 	return nil
 }
@@ -123,8 +130,20 @@ func (m *Model) selectedSuggestion() *suggestion {
 // none, down picks the first; up from the first goes back to none; the ends
 // do not wrap.
 func (m *Model) moveSuggestion(delta int) {
-	n := len(m.suggestions())
-	m.board.sugCursor = max(0, min(n, m.board.sugCursor+delta))
+	sg := m.suggestions()
+	cur := 0 // 1-based position of the pick, 0 for none
+	if sel := m.selectedSuggestion(); sel != nil {
+		for i, s := range sg {
+			if s == *sel {
+				cur = i + 1
+			}
+		}
+	}
+	cur = max(0, min(len(sg), cur+delta))
+	m.board.sugPick = nil
+	if cur > 0 {
+		m.board.sugPick = &sg[cur-1]
+	}
 }
 
 // renderSuggestions draws the list as a box, "" when there is nothing to
@@ -134,6 +153,7 @@ func (m *Model) renderSuggestions() string {
 	if len(sg) == 0 {
 		return ""
 	}
+	sel := m.selectedSuggestion()
 	width := min(60, m.width-4)
 	iw := width - 6
 	var lines []string
@@ -143,7 +163,7 @@ func (m *Model) renderSuggestions() string {
 			lines = append(lines, m.th.muted.Render(heading[s.kind]))
 		}
 		row := m.suggestionRow(s, iw-2)
-		if i+1 == m.board.sugCursor {
+		if sel != nil && s == *sel {
 			lines = append(lines, m.th.fg(m.th.p.Accent).Render("› ")+row)
 		} else {
 			lines = append(lines, "  "+row)
@@ -170,10 +190,32 @@ func (m *Model) suggestionRow(s suggestion, w int) string {
 		m.th.text.Render(truncate(it.Title, max(1, w-len(head))))
 }
 
-// acceptSuggestion is what enter does on a selected suggestion. Inserting a
-// tag: or type: filter and jumping to a card come with KB-148; until then
-// the search is kept, as with no selection.
-func (m *Model) acceptSuggestion(suggestion) tea.Cmd {
-	m.board.searching = false
+// acceptSuggestion is what enter does on a selected suggestion. A tag or a
+// type replaces the word being typed with the exact tag: or type: filter and
+// a space, so the list closes and the next word starts clean; the search
+// stays open. A card closes the search, clears it and selects the card in
+// the current view, opening the Tree branches above it.
+func (m *Model) acceptSuggestion(s suggestion) tea.Cmd {
+	b := &m.board
+	b.sugPick = nil
+	switch s.kind {
+	case sugTag, sugType:
+		prefix := "tag:"
+		if s.kind == sugType {
+			prefix = "type:"
+		}
+		head := strings.TrimSuffix(b.query, typedWord(b.query))
+		b.query = head + prefix + s.value + " "
+		b.restore(m, b.selectedID(m))
+		m.tree.restore(m, m.tree.selectedID(m))
+	case sugCard:
+		b.searching, b.query = false, ""
+		if m.view == viewTree {
+			m.tree.reveal(m, s.value)
+			m.tree.restore(m, s.value)
+		} else {
+			b.restore(m, s.value)
+		}
+	}
 	return nil
 }

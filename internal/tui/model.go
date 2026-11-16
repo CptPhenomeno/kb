@@ -716,7 +716,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
 		{"p", "epics & stories", "show or hide epics and stories (saved for your user)", false},
-		{"/", "search", "search by ID, title, label or assignee", false},
+		{"/", "search", "search by ID, title, label or assignee; suggests tags, types and cards as you type", false},
 		{"f", "filter", "choose the types shown, or only blocked or stale items", false},
 	},
 	viewTree: {
@@ -731,7 +731,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"ctrl+e", "describe", "edit the description of the selected item in $EDITOR", false},
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
-		{"/", "search", "search by ID, title, label or assignee; ancestors of a match stay shown", false},
+		{"/", "search", "search by ID, title, label or assignee; suggests tags, types and cards; ancestors of a match stay shown", false},
 		{"f", "filter", "only blocked or stale items, with their ancestors (types apply to the Board only)", false},
 	},
 	viewActivity: {

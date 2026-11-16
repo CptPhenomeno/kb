@@ -20,11 +20,11 @@ type boardState struct {
 	types        map[core.Type]bool // types shown on the board
 	onlyBlocked  bool
 	onlyStale    bool
-	query        string    // search text
-	searching    bool      // typing into the search
-	sugCursor    int       // selected search suggestion, 1-based; 0 is none
-	filterCursor int       // selected row of the filter popup
-	sort         boardSort // order of the cards in each column
+	query        string      // search text
+	searching    bool        // typing into the search
+	sugPick      *suggestion // search suggestion picked with ↑ ↓, nil is none
+	filterCursor int         // selected row of the filter popup
+	sort         boardSort   // order of the cards in each column
 }
 
 // columns returns the cards of every column in board order.
