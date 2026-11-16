@@ -23,6 +23,7 @@ func main() {
 			SaveTheme: store.SaveUserTheme, ShowParents: prefs.ShowParents, SaveShowParents: store.SaveUserShowParents,
 			BoardSort: prefs.BoardSort, SaveBoardSort: store.SaveUserBoardSort,
 			CommandBar: prefs.CommandBar, SaveCommandBar: store.SaveUserCommandBar,
+			BoardCounter: prefs.Counter(), SaveBoardCounter: store.SaveUserBoardCounter,
 		})
 	}
 	code := cli.Run(ctx, os.Args[1:], app)

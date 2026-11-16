@@ -25,6 +25,28 @@ type boardState struct {
 	sugPick      *suggestion // search suggestion picked with ↑ ↓, nil is none
 	filterCursor int         // selected row of the filter popup
 	sort         boardSort   // order of the cards in each column
+	points       bool        // lane counters show points instead of cards
+}
+
+// visiblePoints sums the points of the tasks and bugs in items. Stories and
+// epics are left out (their points are derived from their children) and so
+// are subtasks; cards without points count 0.
+func visiblePoints(items []*core.Item) int {
+	sum := 0
+	for _, it := range items {
+		if it.Type == core.TypeTask || it.Type == core.TypeBug {
+			sum += it.Points
+		}
+	}
+	return sum
+}
+
+// counter is the text of a lane counter for the visible cards of a column.
+func (b *boardState) counter(items []*core.Item) string {
+	if b.points {
+		return fmt.Sprintf("%dpt", visiblePoints(items))
+	}
+	return fmt.Sprint(len(items))
 }
 
 // columns returns the cards of every column in board order.
@@ -127,6 +149,19 @@ func (b *boardState) key(m *Model, key string) tea.Cmd {
 		}
 		if m.opts.SaveShowParents != nil {
 			if err := m.opts.SaveShowParents(show); err != nil {
+				m.notice += " (could not save: " + err.Error() + ")"
+			}
+		}
+		return nil
+	case "#":
+		b.points = !b.points
+		mode := "cards"
+		if b.points {
+			mode = "points"
+		}
+		m.notice = "counters: " + mode
+		if m.opts.SaveBoardCounter != nil {
+			if err := m.opts.SaveBoardCounter(mode); err != nil {
 				m.notice += " (could not save: " + err.Error() + ")"
 			}
 		}
@@ -325,7 +360,7 @@ func (b *boardState) render(m *Model, height int) string {
 
 func (b *boardState) renderColumn(m *Model, st core.Status, items []*core.Item, scroll, w, height int, sel string) string {
 	inner := w - 4
-	title := spread(m.th.fg(m.th.statusColor[st]).Bold(true).Render(st.Label()), m.th.muted.Render(fmt.Sprint(len(items))), inner)
+	title := spread(m.th.fg(m.th.statusColor[st]).Bold(true).Render(st.Label()), m.th.muted.Render(b.counter(items)), inner)
 	lines := []string{title}
 	avail := height - 3
 	end, cut, above, below := b.visible(m, items, scroll, w, avail)

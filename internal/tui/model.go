@@ -70,6 +70,11 @@ type Options struct {
 	// SaveCommandBar stores the mode chosen from the palette; nil disables
 	// saving.
 	SaveCommandBar func(mode string) error
+	// BoardCounter is the saved lane counter mode, "cards" or "points"; any
+	// other value means cards.
+	BoardCounter string
+	// SaveBoardCounter stores the mode chosen with #; nil disables saving.
+	SaveBoardCounter func(mode string) error
 }
 
 type viewKind int
@@ -195,6 +200,7 @@ func New(ctx context.Context, be Backend, opts Options) *Model {
 	m.th = newTheme(Themes[m.themeIdx])
 	m.board.types = defaultTypes()
 	m.board.sort = parseBoardSort(opts.BoardSort)
+	m.board.points = opts.BoardCounter == "points"
 	if opts.CommandBar == "full" {
 		m.barMode = barFull
 	}

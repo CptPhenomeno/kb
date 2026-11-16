@@ -14,10 +14,20 @@ import (
 
 // UserPrefs are the personal preferences of the TUI user.
 type UserPrefs struct {
-	Theme       string `toml:"theme,omitempty"`
-	ShowParents *bool  `toml:"show_parents,omitempty"` // epics and stories on the board
-	BoardSort   string `toml:"board_sort,omitempty"`   // "recent" or "manual"
-	CommandBar  string `toml:"command_bar,omitempty"`  // "compact" or "full"
+	Theme        string `toml:"theme,omitempty"`
+	ShowParents  *bool  `toml:"show_parents,omitempty"`  // epics and stories on the board
+	BoardSort    string `toml:"board_sort,omitempty"`    // "recent" or "manual"
+	CommandBar   string `toml:"command_bar,omitempty"`   // "compact" or "full"
+	BoardCounter string `toml:"board_counter,omitempty"` // "cards" or "points"
+}
+
+// Counter is the lane counter mode: "points", or "cards" for a missing or
+// unknown value.
+func (p UserPrefs) Counter() string {
+	if p.BoardCounter == "points" {
+		return "points"
+	}
+	return "cards"
 }
 
 func userConfigPath() (string, error) {
@@ -86,5 +96,13 @@ func SaveUserBoardSort(order string) error {
 func SaveUserCommandBar(mode string) error {
 	p := LoadUserPrefs()
 	p.CommandBar = mode
+	return SaveUserPrefs(p)
+}
+
+// SaveUserBoardCounter stores what the board counters count ("cards" or
+// "points"), keeping the other preferences.
+func SaveUserBoardCounter(mode string) error {
+	p := LoadUserPrefs()
+	p.BoardCounter = mode
 	return SaveUserPrefs(p)
 }

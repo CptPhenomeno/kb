@@ -236,3 +236,32 @@ func TestUserCommandBarRoundTrips(t *testing.T) {
 		t.Fatalf("config file = %q, %v; want command_bar = \"full\"", raw, err)
 	}
 }
+
+func TestBoardCounterPreferenceIsSavedAndReloaded(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	if err := SaveUserTheme("nord"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveUserBoardCounter("points"); err != nil {
+		t.Fatal(err)
+	}
+	p := LoadUserPrefs()
+	if p.BoardCounter != "points" || p.Theme != "nord" || p.Counter() != "points" {
+		t.Fatalf("prefs = %+v, want board_counter points and the theme kept", p)
+	}
+}
+
+func TestUnknownBoardCounterValueReadsAsCards(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	if got := LoadUserPrefs().Counter(); got != "cards" {
+		t.Fatalf("missing value reads %q, want cards", got)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "kb"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(dir, "kb", "config.toml"), "board_counter = \"bananas\"\n")
+	if got := LoadUserPrefs().Counter(); got != "cards" {
+		t.Fatalf("unknown value reads %q, want cards", got)
+	}
+}
