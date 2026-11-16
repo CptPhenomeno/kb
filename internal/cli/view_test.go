@@ -68,3 +68,39 @@ func TestJSONFieldsStable(t *testing.T) {
 		t.Fatalf("item JSON keys:\n got %s\nwant %s", strings.Join(keys, " "), strings.Join(want, " "))
 	}
 }
+
+// derivedBoard has a story with tasks of 3 and 5 points under an epic.
+func derivedBoard(t *testing.T) *env {
+	t.Helper()
+	e := newEnv(t)
+	e.ok("add", "epic", "Epic")
+	e.ok("add", "story", "Story", "--parent", "KB-1")
+	e.ok("add", "task", "Three", "--parent", "KB-2", "--points", "3")
+	e.ok("add", "task", "Five", "--parent", "KB-2", "--points", "5")
+	e.ok("add", "story", "Empty story", "--parent", "KB-1")
+	return e
+}
+
+func TestShowAndTreePrintDerivedPointsForStories(t *testing.T) {
+	e := derivedBoard(t)
+	for id, want := range map[string]string{"KB-2": "points      8pt (from children)", "KB-1": "points      8pt (from children)"} {
+		if out := e.ok("show", id); !strings.Contains(out, want) {
+			t.Errorf("show %s lacks %q:\n%s", id, want, out)
+		}
+	}
+	if out := e.ok("show", "KB-5"); !strings.Contains(out, "points      -\n") {
+		t.Errorf("show of an empty story:\n%s", out)
+	}
+	if out := e.ok("show", "KB-3"); !strings.Contains(out, "points      3pt\n") {
+		t.Errorf("show of a task:\n%s", out)
+	}
+	tree := e.ok("tree")
+	for _, line := range strings.Split(tree, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "KB-2 ") && !strings.Contains(line, "8pt") {
+			t.Errorf("tree line of the story has no 8pt: %q", line)
+		}
+	}
+	if j := e.jsonOf("--json", "show", "KB-2"); j["points"] != nil {
+		t.Errorf("story JSON points = %v, want null", j["points"])
+	}
+}

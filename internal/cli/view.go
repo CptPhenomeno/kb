@@ -233,7 +233,17 @@ func writeItem(w io.Writer, snap *core.Snapshot, it *core.Item, history []core.E
 	row := func(k, val string) { fmt.Fprintf(tw, "%s\t%s\n", k, val) }
 	row("status", fmt.Sprintf("%s (%s)", it.Status, it.Status.Label()))
 	row("priority", fmt.Sprintf("%s %s", prioMark[it.Priority], it.Priority))
-	row("points", pointsText(it.Points))
+	if it.Type.IsParentType() {
+		// Stories and epics have no points of their own: the sum of their
+		// work is shown, marked so it is not mistaken for an estimate.
+		if p := core.PointsSum(snap, it.ID); p > 0 {
+			row("points", pointsText(p)+" (from children)")
+		} else {
+			row("points", pointsText(0))
+		}
+	} else {
+		row("points", pointsText(it.Points))
+	}
 	parent := "-"
 	if p := snap.Get(it.Parent); p != nil {
 		parent = p.ID + " " + p.Title
@@ -322,7 +332,7 @@ func writeTree(w io.Writer, snap *core.Snapshot, roots []*core.Item, now time.Ti
 			progress = fmt.Sprintf("%d/%d %s", done, total, unit)
 		}
 		pts := pointsText(it.Points)
-		if it.Type == core.TypeEpic {
+		if it.Type.IsParentType() {
 			pts = pointsText(core.PointsSum(snap, it.ID))
 		}
 		fmt.Fprintf(tw, "%s%s\t%s\t%s\t%s\t%s\t%s\t%s\n", strings.Repeat("  ", depth), it.ID, it.Type,

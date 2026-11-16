@@ -29,7 +29,11 @@ func (m *Model) detailLines(iw int) []string {
 		field := func(k, v string) { add(m.th.muted.Render(fmt.Sprintf("%-10s", k)) + v) }
 		field("status", m.th.fg(m.th.statusColor[it.Status]).Render(it.Status.Label()))
 		field("priority", m.th.fg(m.th.prioColor[it.Priority]).Render(prioMarks[it.Priority]+" "+it.Priority.String()))
-		if it.Points != 0 {
+		if it.Type.IsParentType() {
+			if p := core.PointsSum(m.snap, it.ID); p > 0 {
+				field("points", m.th.fg(m.th.typeColor[it.Type]).Render(fmt.Sprint(p))+" "+m.th.muted.Render("(from children)"))
+			}
+		} else if it.Points != 0 {
 			field("points", m.th.text.Render(fmt.Sprint(it.Points)))
 		}
 		if it.Assignee != "" {

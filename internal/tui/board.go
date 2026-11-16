@@ -360,7 +360,7 @@ func cardLines(m *Model, it *core.Item, width int) []string {
 	// priority: the ID is never cut.
 	id := m.th.muted.Render(it.ID)
 	prio := m.th.fg(m.th.prioColor[it.Priority]).Render(prioMarks[it.Priority])
-	left, right := id+" "+m.th.fg(m.th.typeColor[it.Type]).Render(it.Type.String()), prio+pointsLabel(m, it.Points)
+	left, right := id+" "+m.th.fg(m.th.typeColor[it.Type]).Render(it.Type.String()), prio+pointsLabel(m, it)
 	for _, opt := range [][2]string{{left, right}, {id, right}, {id, prio}, {id, ""}} {
 		left, right = opt[0], opt[1]
 		if displayWidth(left)+1+displayWidth(right) <= width {
@@ -450,11 +450,20 @@ func renderCard(m *Model, it *core.Item, w int, selected bool) string {
 	return style.Render(paintBlock(cardLines(m, it, w-4), m.th.p.Surface, w-4))
 }
 
-func pointsLabel(m *Model, p int) string {
-	if p == 0 {
+// pointsLabel is the points of a card: a task's own points are muted, the
+// derived points of a story or an epic take the color of its type. Without
+// points it is empty.
+func pointsLabel(m *Model, it *core.Item) string {
+	if it.Type.IsParentType() {
+		if p := core.PointsSum(m.snap, it.ID); p > 0 {
+			return m.th.fg(m.th.typeColor[it.Type]).Render(fmt.Sprintf(" %dpt", p))
+		}
 		return ""
 	}
-	return m.th.muted.Render(fmt.Sprintf(" %dpt", p))
+	if it.Points == 0 {
+		return ""
+	}
+	return m.th.muted.Render(fmt.Sprintf(" %dpt", it.Points))
 }
 
 // shortDuration renders 22m, 3h or 2d.
