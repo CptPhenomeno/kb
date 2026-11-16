@@ -26,8 +26,8 @@ func TestBoardHeaderSumsVisibleTaskAndBugPointsInPointsMode(t *testing.T) {
 func TestBoardHeaderFollowsTheSearch(t *testing.T) {
 	m := counterModel(t, Options{})
 	press(t, m, "/", "E", "i", "g", "h", "t", "enter")
-	if h := headerTotal(m); !strings.Contains(h, "1 cards") {
-		t.Fatalf("header = %q, want 1 cards", h)
+	if h := headerTotal(m); !strings.Contains(h, "1 card") {
+		t.Fatalf("header = %q, want 1 card", h)
 	}
 	press(t, m, "#")
 	if h := headerTotal(m); !strings.Contains(h, "8pt") {
@@ -72,5 +72,13 @@ func TestHelpAndFullBarListTheHashKey(t *testing.T) {
 	press(t, m, "?")
 	if s := screen(m); !strings.Contains(s, "counters") || !strings.Contains(s, "#") {
 		t.Fatalf("help lacks #:\n%s", s)
+	}
+}
+
+func TestBoardHeaderSaysOneCardInTheSingular(t *testing.T) {
+	m := counterModel(t, Options{})
+	press(t, m, "/", "E", "i", "g", "h", "t", "enter")
+	if h := headerTotal(m); !strings.Contains(h, "1 card") || strings.Contains(h, "1 cards") {
+		t.Fatalf("header = %q, want 1 card", h)
 	}
 }
