@@ -35,6 +35,9 @@ func (b *serviceBackend) AddTag(ctx context.Context, actor, name, color string) 
 func (b *serviceBackend) SetTagColor(ctx context.Context, actor, name, color string) (*core.Tag, error) {
 	return b.svc.SetTagColor(ctx, actor, name, color)
 }
+func (b *serviceBackend) RenameTag(ctx context.Context, actor, oldName, newName string) (*core.Tag, error) {
+	return b.svc.RenameTag(ctx, actor, oldName, newName)
+}
 func (b *serviceBackend) DeleteTag(ctx context.Context, actor, name string) (*core.Tag, error) {
 	return b.svc.DeleteTag(ctx, actor, name)
 }

@@ -18,12 +18,25 @@ type tagsMode int
 const (
 	tagsList          tagsMode = iota // browsing the tags
 	tagsConfirmDelete                 // asking to delete the selected tag
+	tagsRename                        // editing the name of the selected tag in line
+	tagsCreateName                    // typing the name of a new tag
+	tagsCreateColor                   // choosing the color of a new tag
 )
 
 // tagsState is the open Manage tags popup.
 type tagsState struct {
 	cursor int
 	mode   tagsMode
+	// input is the name being typed in rename and create; err is the message
+	// of the last refused attempt, shown in the popup until the next key.
+	input string
+	err   string
+	// focus is the name of the tag to put the cursor on once the board is
+	// reloaded, after a rename or a creation moved it in the sorted list.
+	focus string
+	// last is the color of the most recently created tag when creation
+	// started, color the one proposed or chosen for the new tag.
+	last, color core.TagColor
 }
 
 // actionManageTags is the palette entry that opens the Manage tags popup.
@@ -35,13 +48,24 @@ func (m *Model) selectedTag() *core.Tag {
 	if t == nil || len(m.tags) == 0 {
 		return nil
 	}
+	if t.focus != "" {
+		for i := range m.tags {
+			if m.tags[i].Name == t.focus {
+				t.cursor, t.focus = i, ""
+			}
+		}
+	}
 	t.cursor = max(0, min(t.cursor, len(m.tags)-1))
 	return &m.tags[t.cursor]
 }
 
-func (m *Model) tagsKey(key string) tea.Cmd {
+func (m *Model) tagsKey(key, text string) tea.Cmd {
 	t := m.tagsPopup
 	tag := m.selectedTag()
+	if t.mode == tagsRename || t.mode == tagsCreateName || t.mode == tagsCreateColor {
+		return m.tagsEditKey(key, text)
+	}
+	t.err = ""
 	if t.mode == tagsConfirmDelete {
 		switch key {
 		case "enter", "y":
@@ -88,8 +112,114 @@ func (m *Model) tagsKey(key string) tea.Cmd {
 		if tag != nil {
 			t.mode = tagsConfirmDelete
 		}
+	case "r":
+		if tag == nil {
+			return nil
+		}
+		// a rename changes the key a pending color save is filed under, so
+		// the rename waits until that save is done
+		if _, pending := m.wantedColors[core.TagKey(tag.Name)]; pending {
+			t.err = "The color is still being saved; try again in a moment."
+			return nil
+		}
+		t.mode, t.input = tagsRename, tag.Name
+	case "n":
+		t.mode, t.input = tagsCreateName, ""
+		t.last, _ = m.be.LastTagColor(m.ctx)
+		t.color = core.NextTagColor(t.last)
 	}
 	return nil
+}
+
+// tagEditedMsg reports a finished rename or creation of a tag.
+type tagEditedMsg struct {
+	name string // the name written, to put the cursor on
+	err  error
+}
+
+// tagsEditKey handles the keys of the rename and create modes. Typing goes
+// into the name, so r, n and d are letters here; arrows only.
+func (m *Model) tagsEditKey(key, text string) tea.Cmd {
+	t := m.tagsPopup
+	switch key {
+	case "esc":
+		t.mode, t.input, t.err = tagsList, "", ""
+	case "backspace":
+		if t.mode != tagsCreateColor {
+			if r := []rune(t.input); len(r) > 0 {
+				t.input = string(r[:len(r)-1])
+			}
+			t.err = ""
+		}
+	case "left", "right":
+		if t.mode == tagsCreateColor {
+			i := slices.Index(core.TagColors, t.color)
+			d := 1
+			if key == "left" {
+				d = len(core.TagColors) - 1
+			}
+			t.color = core.TagColors[(i+d)%len(core.TagColors)]
+		}
+	case "enter":
+		return m.tagsEditConfirm()
+	default:
+		if t.mode != tagsCreateColor && text != "" {
+			t.input += text
+			t.err = ""
+		}
+	}
+	return nil
+}
+
+// tagsEditConfirm validates the typed name and runs the write: a rename, or
+// the move from the name to the color of a new tag and then its creation.
+func (m *Model) tagsEditConfirm() tea.Cmd {
+	t := m.tagsPopup
+	name, err := core.ValidateTagName(t.input)
+	if err != nil {
+		t.err = err.Error()
+		return nil
+	}
+	actor := m.opts.Actor
+	switch t.mode {
+	case tagsCreateName:
+		t.input, t.mode = name, tagsCreateColor
+		return nil
+	case tagsCreateColor:
+		color := string(t.color)
+		return func() tea.Msg {
+			_, err := m.be.AddTag(m.ctx, actor, name, color)
+			return tagEditedMsg{name, err}
+		}
+	}
+	tag := m.selectedTag()
+	if tag == nil {
+		return nil
+	}
+	old := tag.Name
+	return func() tea.Msg {
+		_, err := m.be.RenameTag(m.ctx, actor, old, name)
+		return tagEditedMsg{name, err}
+	}
+}
+
+// tagEdited handles a finished rename or creation: a refusal stays in the
+// popup with the typed name kept, so it can be fixed; success returns to the
+// list on the tag and reloads.
+func (m *Model) tagEdited(msg tagEditedMsg) tea.Cmd {
+	t := m.tagsPopup
+	if t == nil {
+		return m.load()
+	}
+	if msg.err != nil {
+		t.err = msg.err.Error()
+		if t.mode == tagsCreateColor {
+			t.mode = tagsCreateName // the name is what needs fixing
+		}
+		return nil
+	}
+	t.mode, t.input, t.err, t.focus = tagsList, "", "", msg.name
+	return m.load()
 }
 
 // wantedColor is the color the user chose for a tag and that is not saved yet.
@@ -202,7 +332,30 @@ func (m *Model) renderTags() string {
 			spread(m.th.chip.Render(" esc ")+" "+m.th.muted.Render("cancel"), m.th.badge.Render(" enter ")+" "+m.th.text.Render("delete"), iw))
 		return m.popupBox(lines, width, m.th.warn)
 	}
-	lines = append(lines, m.th.muted.Render("↑ ↓ move · ← → color · d delete · esc close"))
+	switch t.mode {
+	case tagsRename, tagsCreateName:
+		verb := "RENAME"
+		if t.mode == tagsCreateName {
+			verb = "NEW TAG"
+		}
+		lines = append(lines, m.th.fg(m.th.p.Accent).Bold(true).Render(verb)+" "+m.th.bright.Render(t.input)+m.th.muted.Render("▏"))
+		if t.err != "" {
+			lines = append(lines, m.th.warn.Render(t.err))
+		}
+		lines = append(lines, m.th.muted.Render("enter confirm · esc cancel"))
+		return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
+	case tagsCreateColor:
+		lines = append(lines, m.th.fg(m.th.p.Accent).Bold(true).Render("NEW TAG")+" "+m.th.tagLabel(m.th.p.TagColor(t.color), t.input, iw-12)+" "+m.th.muted.Render("‹ "+string(t.color)+" ›"))
+		if t.err != "" {
+			lines = append(lines, m.th.warn.Render(t.err))
+		}
+		lines = append(lines, m.th.muted.Render("← → color · enter create · esc cancel"))
+		return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
+	}
+	if t.err != "" {
+		lines = append(lines, m.th.warn.Render(t.err))
+	}
+	lines = append(lines, m.th.muted.Render("↑ ↓ move · ← → color · r rename · n new · d delete · esc close"))
 	return m.popupBox(lines, width, m.th.fg(m.th.p.Accent))
 }
 
@@ -217,6 +370,8 @@ func lossText(n int) string {
 var tagsKeys = []keyHint{
 	{"↑ ↓", "move", "choose a tag", false},
 	{"← →", "color", "change the color of the selected tag; it is saved at once", false},
+	{"r", "rename", "rename the selected tag in line: enter confirms, esc cancels; another tag's name is refused", false},
+	{"n", "new tag", "create a tag: type the name, enter, choose the color with ← →, enter creates it", false},
 	{"d", "delete", "delete the selected tag from the board and every card, after confirmation", false},
 	{"esc", "close", "close the popup", false},
 }
@@ -224,4 +379,10 @@ var tagsKeys = []keyHint{
 var tagsConfirmKeys = []keyHint{
 	{"enter", "delete", "delete the tag and remove it from its cards", false},
 	{"esc", "cancel", "keep the tag", false},
+}
+
+var tagsEditKeys = []keyHint{
+	{"enter", "confirm", "save the name, or create the tag after choosing its color", false},
+	{"← →", "color", "change the color of the new tag", false},
+	{"esc", "cancel", "leave the name or the new tag unchanged", false},
 }

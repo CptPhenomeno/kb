@@ -20,6 +20,7 @@ type Backend interface {
 	LastTagColor(ctx context.Context) (core.TagColor, error)
 	AddTag(ctx context.Context, actor, name, color string) (*core.Tag, error)
 	DeleteTag(ctx context.Context, actor, name string) (*core.Tag, error)
+	RenameTag(ctx context.Context, actor, oldName, newName string) (*core.Tag, error)
 	SetTagColor(ctx context.Context, actor, name, color string) (*core.Tag, error)
 	Log(ctx context.Context, f core.LogFilter) ([]core.Event, error)
 	DataVersion(ctx context.Context) (int64, error)
@@ -305,6 +306,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.tree.restore(m, prevTree)
 	case tagColorSavedMsg:
 		return m, m.colorSaved(msg)
+	case tagEditedMsg:
+		return m, m.tagEdited(msg)
 	case writeMsg:
 		m.alert = msg.alert
 		if msg.notice != "" {
@@ -431,7 +434,7 @@ func (m *Model) route(key, text string) tea.Cmd {
 		return m.confirmKey(key)
 	}
 	if m.tagsPopup != nil {
-		return m.tagsKey(key)
+		return m.tagsKey(key, text)
 	}
 	if m.links != nil {
 		return m.linksKey(key, text)
@@ -785,6 +788,8 @@ func (m *Model) commandBar() []string {
 		hints = confirmKeys
 	case m.tagsPopup != nil && m.tagsPopup.mode == tagsConfirmDelete:
 		hints = tagsConfirmKeys
+	case m.tagsPopup != nil && m.tagsPopup.mode != tagsList:
+		hints = tagsEditKeys
 	case m.tagsPopup != nil:
 		hints = tagsKeys
 	case m.links != nil && m.links.adding:
@@ -875,7 +880,7 @@ func (m *Model) helpHints(tab int) (title, opens string, hints []keyHint) {
 	case 3:
 		return "Create and edit form", "n, e", formKeys
 	}
-	return "Manage tags popup", "ctrl+p › Manage tags", append(append([]keyHint{}, tagsKeys...), tagsConfirmKeys[0])
+	return "Manage tags popup", "ctrl+p › Manage tags", append(append(append([]keyHint{}, tagsKeys...), tagsEditKeys...), tagsConfirmKeys[0])
 }
 
 // helpWindow is the number of help lines shown at once in the given height
