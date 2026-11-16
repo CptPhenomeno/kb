@@ -32,14 +32,29 @@ type suggestion struct {
 	value string
 }
 
-// typedWord is the word being typed in the search: the last
-// whitespace-separated word, or "" when the text ends with a space.
-func typedWord(query string) string {
-	if query == "" || strings.TrimRight(query, " \t") != query {
-		return ""
+// typedWordOf returns the word being typed in the search, as raw text and
+// unquoted: the last word of splitSearch, or "" when the text ends with a
+// space outside a quote. A word inside an open quote counts as typed, even
+// when it ends with a space.
+func typedWordOf(query string) (raw, text string) {
+	words := splitSearch(query)
+	if len(words) == 0 {
+		return "", ""
 	}
-	f := strings.Fields(query)
-	return f[len(f)-1]
+	last := words[len(words)-1]
+	if !strings.HasSuffix(query, last.raw) {
+		return "", ""
+	}
+	if strings.TrimRight(query, " \t") != query && strings.Count(last.raw, `"`)%2 == 0 {
+		return "", ""
+	}
+	return last.raw, last.text
+}
+
+// typedWord is the unquoted word being typed in the search.
+func typedWord(query string) string {
+	_, text := typedWordOf(query)
+	return text
 }
 
 // suggestions lists what the typed word could mean, in group order: tags,
@@ -204,8 +219,9 @@ func (m *Model) acceptSuggestion(s suggestion) tea.Cmd {
 		if s.kind == sugType {
 			prefix = "type:"
 		}
-		head := strings.TrimSuffix(b.query, typedWord(b.query))
-		b.query = head + prefix + s.value + " "
+		raw, _ := typedWordOf(b.query)
+		head := strings.TrimSuffix(b.query, raw)
+		b.query = head + prefix + quoteFilterValue(s.value) + " "
 		b.restore(m, b.selectedID(m))
 		m.tree.restore(m, m.tree.selectedID(m))
 	case sugCard:

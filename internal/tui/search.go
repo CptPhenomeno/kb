@@ -2,6 +2,7 @@ package tui
 
 import (
 	"strings"
+	"unicode"
 
 	"github.com/CptPhenomeno/kb/internal/core"
 )
@@ -15,12 +16,11 @@ import (
 //   - other   the word is contained, without case, in the ID, title, assignee
 //     or any tag.
 //
-// The tag: and type: prefixes are recognized without regard to case. Words
-// cannot contain spaces, so a tag name with spaces is matched by its plain
-// words instead.
+// The tag: and type: prefixes are recognized without regard to case. A value
+// with spaces is double-quoted, as in tag:"good first"; see splitSearch.
 func matchSearch(query string, it *core.Item) bool {
-	for _, w := range strings.Fields(query) {
-		if !matchWord(w, it) {
+	for _, w := range splitSearch(query) {
+		if !matchWord(w.text, it) {
 			return false
 		}
 	}
@@ -44,4 +44,53 @@ func matchWord(w string, it *core.Item) bool {
 	}
 	hay := strings.ToLower(strings.Join(append([]string{it.ID, it.Title, it.Assignee}, it.Tags...), " "))
 	return strings.Contains(hay, low)
+}
+
+// searchWord is one word of the search text: raw as typed, text with the
+// double quotes removed.
+type searchWord struct {
+	raw, text string
+}
+
+// splitSearch splits the search text into words on whitespace outside double
+// quotes. Quotes group a value that has spaces (tag:"a b", "a b") and are
+// dropped from the word's text; a quote left open runs to the end of the
+// text, since the user is still typing it. Text without quotes splits as
+// strings.Fields does.
+func splitSearch(query string) []searchWord {
+	var words []searchWord
+	var raw, text strings.Builder
+	inQuote, started := false, false
+	flush := func() {
+		if started {
+			words = append(words, searchWord{raw.String(), text.String()})
+		}
+		raw.Reset()
+		text.Reset()
+		started = false
+	}
+	for _, r := range query {
+		switch {
+		case r == '"':
+			inQuote, started = !inQuote, true
+			raw.WriteRune(r)
+		case !inQuote && unicode.IsSpace(r):
+			flush()
+		default:
+			started = true
+			raw.WriteRune(r)
+			text.WriteRune(r)
+		}
+	}
+	flush()
+	return words
+}
+
+// quoteFilterValue quotes v when it holds whitespace, so a filter built from
+// it stays one word.
+func quoteFilterValue(v string) string {
+	if strings.IndexFunc(v, unicode.IsSpace) >= 0 {
+		return `"` + v + `"`
+	}
+	return v
 }

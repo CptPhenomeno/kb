@@ -143,3 +143,42 @@ func TestHelpDescribesTheSearchSuggestions(t *testing.T) {
 		}
 	}
 }
+
+// spacedTagBoard has a tag with a space, used by KB-5 only.
+func spacedTagBoard() *fakeBackend {
+	be := sampleBoard()
+	be.tags = append(be.tags, core.Tag{Name: "good first", Color: "blue"})
+	be.snap.Get("KB-5").Tags = []string{"good first"}
+	return be
+}
+
+func TestEnterOnATagWithASpaceInsertsAQuotedFilterThatMatches(t *testing.T) {
+	m := newModel(t, spacedTagBoard(), 160, 48)
+	press(t, m, "/")
+	typeText(t, m, "zzz tag:\"good fi") // typing inside an open quote still suggests
+	if len(m.suggestions()) != 1 {
+		t.Fatalf("suggestions = %v, want the spaced tag", m.suggestions())
+	}
+	press(t, m, "down", "enter")
+	if want := `zzz tag:"good first" `; m.board.query != want {
+		t.Fatalf("query = %q, want %q", m.board.query, want)
+	}
+	m.board.query = `tag:"good first" `
+	m.board.restore(m, "")
+	if got := m.board.shownCount(m); got != 1 {
+		t.Errorf("shown = %d, want only the card with the tag", got)
+	}
+}
+
+func TestTypedQuotedTagFiltersExactly(t *testing.T) {
+	it := &core.Item{ID: "KB-1", Type: core.TypeTask, Title: "x", Tags: []string{"good first"}}
+	other := &core.Item{ID: "KB-2", Type: core.TypeTask, Title: "x", Tags: []string{"good", "first"}}
+	for q, want := range map[string]bool{`tag:"good first"`: true, `TAG:"GOOD FIRST" x`: true, `tag:"good fi"`: false, `tag:"good first`: true, `"good first"`: true} {
+		if got := matchSearch(q, it); got != want {
+			t.Errorf("%s on spaced tag = %v, want %v", q, got, want)
+		}
+	}
+	if matchSearch(`tag:"good first"`, other) {
+		t.Error("two separate tags must not match the spaced one")
+	}
+}
