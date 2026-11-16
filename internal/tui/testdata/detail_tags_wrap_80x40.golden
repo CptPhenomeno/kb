@@ -1,0 +1,40 @@
+ kb  api-gateway   Board  Tree  Activity   showing epic · story · task … 2 items
+╭──────────────╮ ╭─────────────╮ ╭─────────────╮ ╭─────────────╮ ╭─────────────╮
+│ Backlog    0 │ │ To do     2 │ │ In progr… 0 │ │ Review    0 │ │ Done      0 │
+│    empty     │ │ ╭─────────╮ │ │    empty    │ │    empty    │ │    empty    │
+│              │ │ │ KB-1  ▲ │ │ │             │ │             │ │             │
+│         ╭──────────────────────────────────────────────────────────╮         │
+│         │ KB-1 · task                                    esc close │         │
+│         │ Many tags                                                │         │
+│         │                                                          │         │
+│         │ status    To do                                          │         │
+│         │ priority  ▲ medium                                       │         │
+│         │ tdd phase ● RED                                          │         │
+│         │                                                          │         │
+│         │ ╭─────╮ ╭────╮ ╭────────────────╮ ╭─────────╮            │         │
+│         │ │ api │ │ ui │ │ infrastructure │ │ backend │            │         │
+│         │ ╰─────╯ ╰────╯ ╰────────────────╯ ╰─────────╯            │         │
+│         │ ╭──────────╮ ╭─────────╮ ╭──────────╮ ╭──────╮           │         │
+│         │ │ frontend │ │ release │ │ security │ │ docs │           │         │
+│         │ ╰──────────╯ ╰─────────╯ ╰──────────╯ ╰──────╯           │         │
+│         │                                                          │         │
+│         │ history                                                  │         │
+│         │ loading…                                                 │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         ╰──────────────────────────────────────────────────────────╯         │
+│              │ │             │ │             │ │             │ │             │
+╰──────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯ ╰─────────────╯
+no activity yet                                                                 
+↑ ↓ scroll   pgup pgdn page   e edit   ctrl+e describe   c criteria   a assign  
+l link   esc/enter close                                                        

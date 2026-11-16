@@ -53,6 +53,10 @@ func (m *Model) detailLines(iw int) []string {
 		if it.Phase != core.PhaseNone {
 			field("tdd phase", m.th.fg(m.th.phaseColor[it.Phase]).Render("● "+strings.ToUpper(it.Phase.String())))
 		}
+		if len(it.Tags) > 0 {
+			add("")
+			add(m.tagRows(it.Tags, iw)...)
+		}
 		if d := strings.TrimSpace(it.Description); d != "" {
 			add("")
 			add(m.md.render(it.ID, it.Version, d, iw, m.themeIdx)...)
@@ -108,6 +112,43 @@ func (m *Model) detailLines(iw int) []string {
 		}
 	}
 	return lines
+}
+
+// tagRows lays the tags out as boxes in card order, one space apart, filling
+// each row of boxes before wrapping to the next. A tag wider than iw is cut
+// by tagBox, so no row is ever wider than iw.
+func (m *Model) tagRows(tags []string, iw int) []string {
+	var out []string
+	var row [3]string
+	used := 0
+	flush := func() {
+		if used > 0 {
+			out = append(out, row[:]...)
+			row, used = [3]string{}, 0
+		}
+	}
+	for _, name := range tags {
+		box := m.th.tagBox(m.tagColor(name), name, iw)
+		if box == nil {
+			continue
+		}
+		w := displayWidth(box[0])
+		if used > 0 && used+1+w > iw {
+			flush()
+		}
+		for i := range row {
+			if used > 0 {
+				row[i] += " "
+			}
+			row[i] += box[i]
+		}
+		if used > 0 {
+			used++
+		}
+		used += w
+	}
+	flush()
+	return out
 }
 
 // renderDetail renders the detail popup of the item shown, w by h cells.
