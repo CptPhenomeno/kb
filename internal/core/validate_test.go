@@ -38,13 +38,27 @@ func TestPointsFibonacciOnly(t *testing.T) {
 	}
 }
 
-func TestPointsNotAllowedOnEpicAndSubtask(t *testing.T) {
-	for _, typ := range []Type{TypeEpic, TypeSubtask} {
-		assertRuleError(t, ValidateItem(&Item{Type: typ, Title: "x", Points: 3}), "points")
-	}
-	for _, typ := range []Type{TypeStory, TypeTask, TypeBug} {
+func TestPointsOnStoryAreARuleError(t *testing.T) {
+	assertRuleError(t, ValidateItem(&Item{Type: TypeStory, Title: "x", Points: 3}), "points")
+}
+
+func TestPointsOnEpicAreARuleError(t *testing.T) {
+	assertRuleError(t, ValidateItem(&Item{Type: TypeEpic, Title: "x", Points: 3}), "points")
+}
+
+func TestPointsOnSubtaskAreARuleError(t *testing.T) {
+	assertRuleError(t, ValidateItem(&Item{Type: TypeSubtask, Title: "x", Points: 3}), "points")
+}
+
+func TestPointsOnTasksAndBugsAreAccepted(t *testing.T) {
+	for _, typ := range []Type{TypeTask, TypeBug} {
 		if err := ValidateItem(&Item{Type: typ, Title: "x", Points: 3}); err != nil {
 			t.Errorf("points on %v rejected: %v", typ, err)
+		}
+	}
+	for _, typ := range []Type{TypeEpic, TypeStory, TypeSubtask} {
+		if err := ValidateItem(&Item{Type: typ, Title: "x"}); err != nil {
+			t.Errorf("no points on %v rejected: %v", typ, err)
 		}
 	}
 }

@@ -109,6 +109,17 @@ var (
 	formPoints     = []string{"-", "1", "2", "3", "5", "8", "13"}
 )
 
+// syncPointsLock locks the points field to "-" for the types that carry no
+// own points (everything but task and bug) and unlocks it for the others.
+func (f *formState) syncPointsLock() {
+	pts := &f.fields[fPoints]
+	typ, err := core.ParseType(f.fields[fType].value)
+	pts.locked = err == nil && typ != core.TypeTask && typ != core.TypeBug
+	if pts.locked {
+		pts.value = "-"
+	}
+}
+
 func newForm(it *core.Item) *formState {
 	f := &formState{errs: map[int]string{}, fields: []formField{
 		{label: "title"},
@@ -131,6 +142,7 @@ func newForm(it *core.Item) *formState {
 		if it.Points != 0 {
 			f.fields[fPoints].value = strconv.Itoa(it.Points)
 		}
+		f.syncPointsLock()
 		f.tags = slices.Clone(it.Tags)
 		f.fields[fTags].value = strings.Join(f.tags, ", ")
 		f.fields[fSpec].value = it.Spec
@@ -198,6 +210,9 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 				i = (i + len(fld.choices) - 1) % len(fld.choices)
 			}
 			fld.value = fld.choices[i]
+			if f.focus == fType {
+				f.syncPointsLock()
+			}
 		}
 	case "backspace":
 		if list := f.listOf(f.focus); list != nil && fld.value == "" {

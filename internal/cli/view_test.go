@@ -12,7 +12,7 @@ import (
 func sampleBoard(t *testing.T) *env {
 	e := newEnv(t)
 	e.ok("add", "epic", "Authentication", "--ref", "auth", "--spec", "SPEC.md#authentication")
-	e.ok("add", "story", "Token login", "--parent", "KB-1", "--points", "5",
+	e.ok("add", "story", "Token login", "--parent", "KB-1",
 		"--accept", "expired token → 401", "--accept", "valid token → 200")
 	e.ok("add", "task", "Validate token in middleware", "--parent", "KB-2", "--status", "todo",
 		"--prio", "high", "--points", "3", "--test", "rejects expired token", "--test", "accepts valid token",

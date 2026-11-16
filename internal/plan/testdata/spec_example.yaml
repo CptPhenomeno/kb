@@ -9,7 +9,6 @@ items:
       - ref: auth-login
         type: story
         title: Token login
-        points: 5
         acceptance:
           - expired token → 401
           - valid token → 200 with profile

@@ -94,3 +94,33 @@ func TestEscCancelsForm(t *testing.T) {
 		t.Fatal("esc must close the form without writing")
 	}
 }
+
+func TestFormLocksPointsForAStory(t *testing.T) {
+	m, svc := newLiveModel(t)
+	press(t, m, "n")
+	typeText(t, m, "Epic story")
+	press(t, m, "down", "down", "down", "down") // type -> parent -> priority -> points
+	press(t, m, "right")                        // points 1
+	press(t, m, "up", "up", "up")
+	press(t, m, "right", "right") // task -> bug -> story: points re-lock and clear
+	press(t, m, "down", "down", "down")
+	if !strings.Contains(screen(m), "- (fixed)") {
+		t.Fatalf("points not locked for a story:\n%s", screen(m))
+	}
+	press(t, m, "right") // locked: stays "-"
+	if v := m.form.fields[fPoints].value; v != "-" {
+		t.Fatalf("locked points = %q", v)
+	}
+	press(t, m, "enter")
+	if it, err := svc.Get(context.Background(), "KB-4"); err != nil || it.Type != core.TypeStory || it.Points != 0 {
+		t.Fatalf("created %+v, %v\n%s", it, err, screen(m))
+	}
+	// Back to task: points unlock.
+	press(t, m, "n")
+	press(t, m, "down", "right", "right") // story
+	press(t, m, "left", "left")           // task again
+	press(t, m, "down", "down", "down", "right")
+	if v := m.form.fields[fPoints].value; v != "1" {
+		t.Fatalf("points did not unlock on task: %q", v)
+	}
+}

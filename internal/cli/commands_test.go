@@ -8,12 +8,12 @@ import (
 
 func TestE2EAddAndShow(t *testing.T) {
 	e := newEnv(t)
-	out := e.ok("add", "story", "Token login", "--points", "5", "--accept", "expired → 401")
+	out := e.ok("add", "story", "Token login", "--accept", "expired → 401")
 	if !strings.Contains(out, "KB-1") {
 		t.Fatalf("add output = %q", out)
 	}
 	item := e.jsonOf("show", "KB-1")
-	if item["type"] != "story" || item["title"] != "Token login" || item["points"] != 5.0 || item["status"] != "backlog" {
+	if item["type"] != "story" || item["title"] != "Token login" || item["status"] != "backlog" {
 		t.Fatalf("item = %v", item)
 	}
 	byRef := e.ok("add", "task", "t", "--ref", "auth-t", "--parent", "KB-1")

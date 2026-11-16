@@ -166,3 +166,16 @@ func TestE2EImportUpdateReplacesTags(t *testing.T) {
 		t.Fatal("docs tag not created by update")
 	}
 }
+
+func TestE2EImportPointsOnStoryFailsValidation(t *testing.T) {
+	e := newEnv(t)
+	path := filepath.Join(t.TempDir(), "plan.yaml")
+	body := "items:\n  - {ref: s, type: story, title: S, points: 5}\n"
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, errOut := e.fail(3, "import", path)
+	if !strings.Contains(errOut, "plan.yaml:2 (s): points are not allowed on a story") {
+		t.Errorf("stderr: %s", errOut)
+	}
+}

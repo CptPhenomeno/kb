@@ -37,7 +37,7 @@ func TestParseSpecExample(t *testing.T) {
 	if story.ParentRef != "auth" || task.ParentRef != "auth-login" || p.Items[0].ParentRef != "" {
 		t.Fatalf("parents = %q %q %q", p.Items[0].ParentRef, story.ParentRef, task.ParentRef)
 	}
-	if *story.Type != core.TypeStory || *story.Points != 5 || len(*story.Acceptance) != 2 {
+	if *story.Type != core.TypeStory || len(*story.Acceptance) != 2 {
 		t.Fatalf("story = %+v", story)
 	}
 	if *task.Priority != core.PriorityHigh || !slices.Equal(*task.Tests, []string{"rejects expired token", "accepts valid token"}) {
@@ -46,7 +46,7 @@ func TestParseSpecExample(t *testing.T) {
 	if !slices.Equal(task.Blocks, []string{"auth-login-refresh"}) {
 		t.Fatalf("blocks = %v", task.Blocks)
 	}
-	if task.Pos != "testdata/spec_example.yaml:17" {
+	if task.Pos != "testdata/spec_example.yaml:16" {
 		t.Fatalf("pos = %q, want the line of the item", task.Pos)
 	}
 }

@@ -19,8 +19,8 @@ func ValidateItem(it *Item) error {
 		if !slices.Contains(fibonacciPoints, it.Points) {
 			return NewRuleError(fmt.Sprintf("points must be one of %v, got %d", fibonacciPoints, it.Points))
 		}
-		if it.Type == TypeEpic || it.Type == TypeSubtask {
-			return NewRuleError(fmt.Sprintf("points are not allowed on a %s", it.Type))
+		if it.Type != TypeTask && it.Type != TypeBug {
+			return NewRuleError(fmt.Sprintf("points are not allowed on a %s (only tasks and bugs carry points)", it.Type))
 		}
 	}
 	if !it.Type.IsLeafType() {

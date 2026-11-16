@@ -205,3 +205,16 @@ func TestLogFollowSeesOtherProcessWrite(t *testing.T) {
 		t.Fatalf("follower exit: %v, want a clean exit on SIGINT", err)
 	}
 }
+
+func TestE2EEditStoryWithPointsExits3(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "story", "Login")
+	_, errOut := e.fail(3, "edit", "KB-1", "--points", "5")
+	if !strings.Contains(errOut, "points are not allowed on a story") {
+		t.Errorf("stderr: %s", errOut)
+	}
+	e.fail(3, "add", "epic", "E", "--points", "3")
+	if got := e.jsonOf("show", "KB-1", "--json"); got["points"] != nil {
+		t.Errorf("story points = %v, want null", got["points"])
+	}
+}

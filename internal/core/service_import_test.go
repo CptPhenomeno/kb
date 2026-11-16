@@ -31,7 +31,6 @@ items:
       - ref: auth-login
         type: story
         title: Token login
-        points: 5
         acceptance: [expired token → 401, valid token → 200]
         children:
           - ref: auth-login-validate
@@ -174,7 +173,7 @@ func TestImportCreatesTree(t *testing.T) {
 		len(task.Tests) != 2 || task.Spec != "SPEC.md" || task.CreatedBy != "agent-plan" {
 		t.Fatalf("task = %+v", task)
 	}
-	if len(story.Acceptance) != 2 || story.Points != 5 || story.Status != core.StatusTodo {
+	if len(story.Acceptance) != 2 || story.Status != core.StatusTodo {
 		t.Fatalf("story = %+v", story)
 	}
 	if ev := lastEvent(t, h, task.ID); ev.Kind != core.EventLinked && ev.Kind != core.EventCreated {
