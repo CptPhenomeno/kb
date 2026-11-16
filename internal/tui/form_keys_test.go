@@ -48,7 +48,7 @@ func TestFormCtrlSSavesFromAnyField(t *testing.T) {
 }
 
 func TestFormEnterOnOtherFieldsSavesTheForm(t *testing.T) {
-	for _, focus := range []int{fTitle, fType, fParent, fPriority, fPoints, fLabels, fSpec} {
+	for _, focus := range []int{fTitle, fType, fParent, fPriority, fPoints, fSpec} {
 		m, svc := newLiveModel(t)
 		press(t, m, "n")
 		typeText(t, m, "Delta task")

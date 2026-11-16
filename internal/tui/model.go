@@ -129,9 +129,11 @@ type Model struct {
 	recent []core.Event
 	// tagColors maps tag names to color names, refreshed with the snapshot.
 	tagColors map[string]core.TagColor
-	version   int64
-	loaded    bool
-	err       error
+	// tags lists the board's tags in name order, refreshed with the snapshot.
+	tags    []core.Tag
+	version int64
+	loaded  bool
+	err     error
 
 	// tickEvery is the polling period of the live refresh; 0 disables it.
 	tickEvery time.Duration
@@ -278,7 +280,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.pendingSel = ""
 		}
 		m.snap, m.recent, m.version, m.loaded, m.err = msg.snap, msg.recent, msg.version, true, nil
-		m.tagColors = tagColorsOf(msg.tags)
+		m.tags, m.tagColors = msg.tags, tagColorsOf(msg.tags)
 		if m.detailOpen {
 			if m.snap.Get(m.detailID) == nil {
 				m.detailOpen = false

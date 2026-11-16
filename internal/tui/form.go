@@ -36,6 +36,8 @@ type formState struct {
 	criteria []string // criteria added so far in the create form
 	tests    []string // tests added so far in the create form
 	tab      formTab  // active tab of the create form
+	tags     []string // tags chosen for the card, in the order they were added
+	picker   *tagPicker
 }
 
 // formTab is a tab of the create form; the edit form has no tabs.
@@ -60,7 +62,7 @@ func (t formTab) fields() []int {
 	case formTests:
 		return []int{fTests}
 	}
-	return []int{fTitle, fType, fParent, fPriority, fPoints, fLabels, fSpec, fDescription}
+	return []int{fTitle, fType, fParent, fPriority, fPoints, fTags, fSpec, fDescription}
 }
 
 // show makes tab t active and focuses its first field.
@@ -94,7 +96,7 @@ const (
 	fParent
 	fPriority
 	fPoints
-	fLabels
+	fTags
 	fSpec
 	fDescription
 	fAcceptance // create form only
@@ -128,7 +130,8 @@ func newForm(it *core.Item) *formState {
 		if it.Points != 0 {
 			f.fields[fPoints].value = strconv.Itoa(it.Points)
 		}
-		f.fields[fLabels].value = strings.Join(it.Tags, ", ")
+		f.tags = slices.Clone(it.Tags)
+		f.fields[fTags].value = strings.Join(f.tags, ", ")
 		f.fields[fSpec].value = it.Spec
 		f.fields[fDescription].value = it.Description
 	}
@@ -154,6 +157,10 @@ type editorDoneMsg struct {
 func (m *Model) formKey(key, text string) tea.Cmd {
 	f := m.form
 	if f.saving {
+		return nil
+	}
+	if f.picker != nil {
+		m.tagPickerKey(key, text)
 		return nil
 	}
 	switch key {
@@ -196,7 +203,7 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 			if n := len(*list); n > 0 {
 				*list = (*list)[:n-1]
 			}
-		} else if fld.choices == nil {
+		} else if fld.choices == nil && f.focus != fTags {
 			if r := []rune(fld.value); len(r) > 0 {
 				fld.value = string(r[:len(r)-1])
 			}
@@ -210,11 +217,14 @@ func (m *Model) formKey(key, text string) tea.Cmd {
 		case fAcceptance, fTests:
 			f.addPending(f.focus)
 			return nil
+		case fTags:
+			f.picker = &tagPicker{}
+			return nil
 		}
 		f.saving = true
 		return m.submitForm()
 	default:
-		if fld.choices == nil && text != "" {
+		if fld.choices == nil && text != "" && f.focus != fTags {
 			fld.value += text
 		}
 	}
@@ -282,12 +292,7 @@ func (m *Model) submitForm() tea.Cmd {
 	val := func(i int) string { return strings.TrimSpace(f.fields[i].value) }
 	prio, _ := core.ParsePriority(val(fPriority))
 	points, _ := strconv.Atoi(val(fPoints))
-	var labels []string
-	for _, l := range strings.Split(val(fLabels), ",") {
-		if l = strings.TrimSpace(l); l != "" {
-			labels = append(labels, l)
-		}
-	}
+	labels := slices.Clone(f.tags)
 	actor, editID, version := m.opts.Actor, f.editID, f.version
 	desc := f.fields[fDescription].value
 	if editID == "" {
@@ -371,12 +376,17 @@ func (m *Model) renderForm() string {
 	if f.info != "" {
 		foot = append(foot, "", m.th.fg(m.th.p.Green).Render("✓ "+f.info))
 	}
+	if f.picker != nil {
+		return m.renderTagPicker(head, foot, width, iw)
+	}
 	status := "enter or ctrl+s saves · tab or ↑ ↓ move · ← → change a choice"
 	switch {
 	case f.saving:
 		status = "saving… · tab or ↑ ↓ move · ← → change a choice"
 	case f.focus == fDescription:
 		status = "enter $EDITOR · ctrl+s saves · tab or ↑ ↓ move"
+	case f.focus == fTags:
+		status = "enter picks tags · ctrl+s saves · tab or ↑ ↓ move"
 	case f.focus == fAcceptance || f.focus == fTests:
 		status = "enter adds · ctrl+s saves · backspace removes last · tab moves"
 	}

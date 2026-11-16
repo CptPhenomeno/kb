@@ -173,7 +173,7 @@ func TestFormParentLabelsSpecStayOnOneLine(t *testing.T) {
 	m := openForm(t)
 	long := strings.Repeat("kb-long-value ", 20)
 	m.form.fields[fParent].value = long
-	m.form.fields[fLabels].value = long
+	m.form.fields[fTags].value = long
 	m.form.fields[fSpec].value = long
 	rows := formRows(m)
 	for _, label := range []string{"parent", "tags", "spec"} {
