@@ -540,6 +540,9 @@ func (m *Model) View() tea.View {
 			content = paint(overlay(content, popup, m.width, m.height), m.th.p.Base, m.width, m.height)
 		}
 	}
+	if m.width >= minWidth && m.height >= minHeight && m.board.searching && m.view != viewActivity {
+		content = paint(m.overlaySuggestions(content), m.th.p.Base, m.width, m.height)
+	}
 	v := tea.NewView(content)
 	v.BackgroundColor = m.th.p.Base
 	v.AltScreen = true

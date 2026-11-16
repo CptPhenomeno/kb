@@ -113,7 +113,16 @@ func (m *Model) searchKey(key, text string) tea.Cmd {
 	b := &m.board
 	prevBoard, prevTree := b.selectedID(m), m.tree.selectedID(m)
 	switch key {
+	case "up":
+		m.moveSuggestion(-1)
+		return nil
+	case "down":
+		m.moveSuggestion(1)
+		return nil
 	case "enter":
+		if sel := m.selectedSuggestion(); sel != nil {
+			return m.acceptSuggestion(*sel)
+		}
 		b.searching = false
 		return nil
 	case "esc":
@@ -128,6 +137,7 @@ func (m *Model) searchKey(key, text string) tea.Cmd {
 		}
 		b.query += text
 	}
+	b.sugCursor = 0
 	b.restore(m, prevBoard)
 	m.tree.restore(m, prevTree)
 	return nil
@@ -168,6 +178,7 @@ var filterKeys = []keyHint{
 
 var searchKeys = []keyHint{
 	{"type", "search", "search by ID, title, tag or assignee", false},
+	{"↑ ↓", "suggest", "move among the suggested tags, types and cards", false},
 	{"enter", "keep", "keep the search and go back to the board", false},
 	{"esc", "clear", "clear the search", false},
 }

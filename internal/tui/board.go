@@ -22,6 +22,7 @@ type boardState struct {
 	onlyStale    bool
 	query        string    // search text
 	searching    bool      // typing into the search
+	sugCursor    int       // selected search suggestion, 1-based; 0 is none
 	filterCursor int       // selected row of the filter popup
 	sort         boardSort // order of the cards in each column
 }

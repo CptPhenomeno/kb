@@ -169,3 +169,17 @@ func (m *Model) failure(old core.Item, title string, err error) *alertState {
 	}
 	return a
 }
+
+// overlaySuggestions draws the search suggestions right above the search
+// line, which sits under the body, so the list never covers the command bar.
+func (m *Model) overlaySuggestions(base string) string {
+	box := m.renderSuggestions()
+	if box == "" {
+		return base
+	}
+	y := max(1, 1+m.bodyHeight()-lipgloss.Height(box))
+	return lipgloss.NewCompositor(
+		lipgloss.NewLayer(base),
+		lipgloss.NewLayer(box).X(1).Y(y).Z(1),
+	).Render()
+}
