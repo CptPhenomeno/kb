@@ -8,6 +8,8 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+func testTagTheme() *theme { return newTheme(Themes[0]) }
+
 func TestTagRendersOnOneLineAsTheNameBetweenAngleBrackets(t *testing.T) {
 	th := testTagTheme()
 	got := ansi.Strip(th.tagLabel(th.p.TagColor("blue"), "api", 20))

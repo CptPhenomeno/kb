@@ -2,35 +2,11 @@ package tui
 
 import (
 	"image/color"
-	"strings"
 
 	"charm.land/lipgloss/v2"
 
 	"github.com/CptPhenomeno/kb/internal/core"
 )
-
-// minTagBoxWidth is the narrowest box that still shows one character of the
-// name: two border cells, two padding cells and the character.
-const minTagBoxWidth = 5
-
-// tagBox draws a tag as a rounded box of three rows, border and name in c.
-// It sets no background, so the surface under it shows through. A name that
-// does not fit maxW is cut with "…"; the box is never wider than maxW, and
-// when maxW is below minTagBoxWidth there is no room and the result is nil.
-// Board cards and the detail both call it, so they draw the same box.
-func (t *theme) tagBox(c color.Color, name string, maxW int) []string {
-	if maxW < minTagBoxWidth {
-		return nil
-	}
-	name = truncate(name, maxW-4)
-	inner := strings.Repeat("─", displayWidth(name)+2)
-	st := lipgloss.NewStyle().Foreground(c)
-	return []string{
-		st.Render("╭" + inner + "╮"),
-		st.Render("│ " + name + " │"),
-		st.Render("╰" + inner + "╯"),
-	}
-}
 
 // minTagLabelWidth is the narrowest tag label: both brackets and one cell for
 // the name.

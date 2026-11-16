@@ -10,16 +10,16 @@
 │         │ status    To do                                          │         │
 │         │ priority  ▲ medium                                       │         │
 │         │ tdd phase ● RED                                          │         │
-│         │                                                          │         │
-│         │ ╭─────╮ ╭────╮ ╭────────────────╮ ╭─────────╮            │         │
-│         │ │ api │ │ ui │ │ infrastructure │ │ backend │            │         │
-│         │ ╰─────╯ ╰────╯ ╰────────────────╯ ╰─────────╯            │         │
-│         │ ╭──────────╮ ╭─────────╮ ╭──────────╮ ╭──────╮           │         │
-│         │ │ frontend │ │ release │ │ security │ │ docs │           │         │
-│         │ ╰──────────╯ ╰─────────╯ ╰──────────╯ ╰──────╯           │         │
+│         │ tags      ⟨api⟩ ⟨ui⟩ ⟨infrastructure⟩ ⟨backend⟩          │         │
+│         │           ⟨frontend⟩ ⟨release⟩ ⟨security⟩ ⟨docs⟩         │         │
 │         │                                                          │         │
 │         │ history                                                  │         │
 │         │ loading…                                                 │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
+│         │                                                          │         │
 │         │                                                          │         │
 │         │                                                          │         │
 │         │                                                          │         │
