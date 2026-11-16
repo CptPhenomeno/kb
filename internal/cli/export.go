@@ -65,6 +65,9 @@ func renderMarkdown(snap *core.Snapshot) string {
 				extra = append(extra, fmt.Sprintf("tests %d/%d", done, total))
 			}
 		}
+		if len(it.Tags) > 0 {
+			extra = append(extra, "tags: "+strings.Join(it.Tags, ", "))
+		}
 		if blocked, by := core.Blockers(snap, it.ID); blocked {
 			extra = append(extra, "blocked by "+strings.Join(by, ", "))
 		}

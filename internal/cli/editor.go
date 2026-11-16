@@ -22,8 +22,10 @@ type editDoc struct {
 	Parent      string   `yaml:"parent"`
 	Ref         string   `yaml:"ref"`
 	Spec        string   `yaml:"spec"`
-	Tags        []string `yaml:"labels"`
+	Tags        []string `yaml:"tags"`
 	Links       []string `yaml:"links"`
+	// Labels is the deprecated alias of Tags: read, never written.
+	Labels *[]string `yaml:"labels,omitempty"`
 }
 
 // editInEditor lets the user edit an item as YAML in $VISUAL or $EDITOR.
@@ -83,6 +85,13 @@ func (c *cli) editInEditor(s *Session, id string, ifVersion int) error {
 	var out editDoc
 	if err := yaml.Unmarshal(edited, &out); err != nil {
 		return fmt.Errorf("invalid YAML: %v; no change applied", err)
+	}
+	if out.Labels != nil {
+		if out.Tags != nil {
+			return fmt.Errorf("tags and labels cannot be combined (labels is a deprecated alias of tags); no change applied")
+		}
+		fmt.Fprintln(c.app.Stderr, "warning: labels is deprecated, use tags")
+		out.Tags = *out.Labels
 	}
 	p, err := patchFrom(it, out)
 	if err != nil {

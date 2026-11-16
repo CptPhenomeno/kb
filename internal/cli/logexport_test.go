@@ -61,6 +61,15 @@ func TestExportGolden(t *testing.T) {
 	}
 }
 
+func TestExportShowsTags(t *testing.T) {
+	e := sampleBoard(t)
+	e.ok("edit", "KB-3", "--tag", "api", "--tag", "Auth")
+	out := e.ok("export", "--out", "-")
+	if !strings.Contains(out, "tests 0/2, tags: api, Auth") {
+		t.Fatalf("export:\n%s", out)
+	}
+}
+
 func TestExportDeterministic(t *testing.T) {
 	e := sampleBoard(t)
 	first := e.ok("export", "--out", "-")

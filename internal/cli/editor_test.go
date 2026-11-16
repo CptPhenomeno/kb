@@ -83,3 +83,49 @@ func TestEditorFailureAborts(t *testing.T) {
 		t.Fatalf("stderr = %q", errOut)
 	}
 }
+
+func TestEditorFileListsTagsInCardOrder(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--tag", "zeta", "--tag", "api")
+	fakeEditor(t, e, `cp "$1" "$(dirname "$0")/seen.yaml"`)
+	e.ok("edit", "KB-1")
+	seen, err := os.ReadFile(filepath.Join(filepath.Dir(e.vars["EDITOR"]), "seen.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(seen), "tags:\n    - zeta\n    - api\n") || strings.Contains(string(seen), "labels") {
+		t.Fatalf("editor file:\n%s", seen)
+	}
+}
+
+func TestEditorSaveAssignsAndCreatesTags(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--tag", "api")
+	fakeEditor(t, e, `sed -i -e '/^    - api$/d' -e 's/^tags:.*/tags: [ui, API, fresh]/' "$1"`)
+	e.ok("edit", "KB-1")
+	got := e.jsonOf("show", "KB-1")["tags"].([]any)
+	if len(got) != 3 || got[0] != "ui" || got[1] != "api" || got[2] != "fresh" {
+		t.Fatalf("tags = %v", got)
+	}
+	if out := e.ok("tag", "list"); !strings.Contains(out, "fresh") || !strings.Contains(out, "ui") {
+		t.Fatalf("tag list = %q", out)
+	}
+}
+
+func TestEditorLabelsAliasWarnsAndBothKeysFail(t *testing.T) {
+	e := newEnv(t)
+	e.ok("add", "task", "t", "--tag", "api")
+	fakeEditor(t, e, `sed -i -e '/^tags:/,/^links:/{/^tags:/d;/^    - /d}' -e 's/^links:/labels: [old]\nlinks:/' "$1"`)
+	_, errOut, code := e.run("", "edit", "KB-1")
+	if code != 0 || !strings.Contains(errOut, "warning: labels is deprecated, use tags") {
+		t.Fatalf("exit %d, stderr %q", code, errOut)
+	}
+	if got := e.jsonOf("show", "KB-1")["tags"].([]any); len(got) != 1 || got[0] != "old" {
+		t.Fatalf("tags = %v", got)
+	}
+	fakeEditor(t, e, `printf 'labels: [x]\n' >> "$1"`)
+	_, errOut = e.fail(1, "edit", "KB-1")
+	if !strings.Contains(errOut, "tags and labels") || !strings.Contains(errOut, "no change applied") {
+		t.Fatalf("stderr = %q", errOut)
+	}
+}
