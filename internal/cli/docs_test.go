@@ -6,6 +6,9 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // codeIn returns the code of a markdown document: fenced blocks and
@@ -210,4 +213,99 @@ func TestNextHelpListsTypesAndDocsDescribeNext(t *testing.T) {
 			}
 		}
 	}
+}
+
+// The plan format of the guide uses tags, never the deprecated labels.
+func TestGuidePlanFormatUsesTags(t *testing.T) {
+	e := newEnv(t)
+	out := e.ok("guide")
+	_, rest, ok := strings.Cut(out, "## Plan format")
+	if !ok {
+		t.Fatal("the guide has no plan format section")
+	}
+	plan, _, _ := strings.Cut(rest, "\n## ")
+	if !regexp.MustCompile(`(?m)^\s+tags: \[`).MatchString(plan) {
+		t.Error("the plan format example does not show the tags field")
+	}
+	for _, want := range []string{"labels", "deprecated"} {
+		if !strings.Contains(plan, want) {
+			t.Errorf("the plan format does not say that %q is a deprecated alias", want)
+		}
+	}
+	if strings.Contains(plan, "labels:") {
+		t.Error("the plan format example still uses labels:")
+	}
+}
+
+// The guide explains kb tag, the --tag filters and the points rule.
+func TestGuideMentionsTagCommandAndPointsRule(t *testing.T) {
+	e := newEnv(t)
+	out := e.ok("guide")
+	for _, want := range []string{
+		"kb tag add", "kb tag list", "kb tag color", "kb tag rename", "kb tag delete",
+		"--tag", "only on tasks and bugs", "derived",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("guide does not mention %q", want)
+		}
+	}
+	if strings.Contains(out, "--label ") {
+		t.Error("guide still lists the --label filter")
+	}
+}
+
+// docs/cli-json.md documents the tags field of the item, the kb tag outputs
+// and the points of stories and epics.
+func TestCLIJSONDocumentsTags(t *testing.T) {
+	raw, err := os.ReadFile("../../docs/cli-json.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := string(raw)
+	e := newEnv(t)
+	e.ok("add", "task", "Tagged", "--tag", "api")
+	item := e.jsonOf("show", "KB-1")
+	if _, ok := item["tags"]; !ok {
+		t.Fatal("the item JSON has no tags field")
+	}
+	if _, ok := item["labels"]; ok {
+		t.Fatal("the item JSON still has labels")
+	}
+	for _, want := range []string{
+		"`tags`", "kb tag list", "kb tag add", "kb tag color", "kb tag rename", "kb tag delete",
+		`"cards"`, `"color"`, "red, orange, yellow, green, cyan, blue, purple, pink",
+		"24 characters", "comma", "deprecated", "derived",
+	} {
+		if !strings.Contains(data, want) {
+			t.Errorf("docs/cli-json.md does not mention %q", want)
+		}
+	}
+	if strings.Contains(data, `"labels": [`) || strings.Contains(data, "[--label") {
+		t.Error("docs/cli-json.md still shows labels as a current field or flag")
+	}
+}
+
+// No help text mentions labels, except the usage of the hidden deprecated
+// --label alias.
+func TestHelpTextsDoNotMentionLabels(t *testing.T) {
+	root := (&cli{app: DefaultApp()}).rootCmd()
+	var walk func(c *cobra.Command)
+	walk = func(c *cobra.Command) {
+		texts := map[string]string{"Short": c.Short, "Long": c.Long, "Use": c.Use, "Example": c.Example}
+		c.Flags().VisitAll(func(f *pflag.Flag) {
+			if f.Name == "label" && f.Hidden {
+				return
+			}
+			texts["flag --"+f.Name] = f.Usage
+		})
+		for where, text := range texts {
+			if strings.Contains(strings.ToLower(text), "label") {
+				t.Errorf("%s: %s mentions labels: %q", c.CommandPath(), where, text)
+			}
+		}
+		for _, sub := range c.Commands() {
+			walk(sub)
+		}
+	}
+	walk(root)
 }
