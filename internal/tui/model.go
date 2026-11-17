@@ -738,7 +738,7 @@ var viewKeys = map[viewKind][]keyHint{
 		{"a", "assign", "claim or release the selected item", false},
 		{"l", "link", "manage relations", false},
 		{"p", "epics & stories", "show or hide epics and stories (saved for your user)", false},
-		{"/", "search", "search by ID, title, tag or assignee; suggests tags, types and cards as you type", false},
+		{"/", "search", "search by ID, title, tag or assignee; suggests tags, types and cards as you type (tag:name, type:name, tag:\"a b\")", false},
 		{"f", "filter", "choose the types shown, or only blocked or stale items", false},
 		{"#", "counters", "switch the lane counters and the total between cards and points (saved for your user)", false},
 	},
@@ -823,6 +823,8 @@ func (m *Model) commandBar() []string {
 		hints = linkAddKeys
 	case m.links != nil:
 		hints = linksKeys
+	case m.form != nil && m.form.picker != nil:
+		hints = tagSelectorKeys
 	case m.form != nil:
 		hints = formKeys
 	case m.sort != nil:
@@ -905,7 +907,7 @@ func (m *Model) helpHints(tab int) (title, opens string, hints []keyHint) {
 	case 2:
 		return "Criteria and tests popup", "c", append(append(append([]keyHint{}, acceptKeys...), acceptInputKeys...), acceptConfirmKeys...)
 	case 3:
-		return "Create and edit form", "n, e", formKeys
+		return "Create and edit form", "n, e", append(append([]keyHint{}, formKeys...), tagSelectorKeys...)
 	}
 	return "Manage tags popup", "ctrl+p › Manage tags", append(append(append([]keyHint{}, tagsKeys...), tagsEditKeys...), tagsConfirmKeys[0])
 }

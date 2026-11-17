@@ -619,13 +619,22 @@ func (m *Model) renderWrappedField(head, value string, capped, focused bool, iw 
 	return lines
 }
 
+// tagSelectorKeys are the keys of the tag selector the tags field opens.
+var tagSelectorKeys = []keyHint{
+	{"type", "filter", "filter the tags by name; a new name offers to create it", false},
+	{"↑ ↓", "move", "choose a tag or the row that creates the typed name", false},
+	{"space", "toggle · create", "add or remove the tag on the item, or create the typed tag", false},
+	{"← →", "color", "on the create row, choose the color of the new tag", false},
+	{"esc", "back", "return to the form (the tags stay chosen)", false},
+}
+
 var formKeys = []keyHint{
 	{"↑ ↓", "field", "move between fields (also tab)", false},
 	{"← →", "choice", "change a choice field", false},
 	{"ctrl+e", "editor", "edit the description in $EDITOR", false},
 	{"ctrl+← ctrl+→", "tab", "switch between the Details, Criteria and Tests tabs (create form)", false},
 	{"ctrl+s", "save", "create or save the item from any field", false},
-	{"enter", "save · $EDITOR · add", "save the item, or open $EDITOR on the description, or add a criterion on acceptance", false},
+	{"enter", "save · $EDITOR · add", "save the item, or open $EDITOR on the description, add a criterion on acceptance, or open the tag selector on tags", false},
 	{"esc", "cancel", "close without saving", false},
 }
 

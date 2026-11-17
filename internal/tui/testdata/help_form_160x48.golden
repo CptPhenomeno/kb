@@ -8,13 +8,13 @@ Create and edit form  (n, e)
   ctrl+e        edit the description in $EDITOR                                                                                                                 
   ctrl+← ctrl+→  switch between the Details, Criteria and Tests tabs (create form)                                                                              
   ctrl+s        create or save the item from any field                                                                                                          
-  enter         save the item, or open $EDITOR on the description, or add a criterion on acceptance                                                             
+  enter         save the item, or open $EDITOR on the description, add a criterion on acceptance, or open the tag selector on tags                              
   esc           close without saving                                                                                                                            
-                                                                                                                                                                
-                                                                                                                                                                
-                                                                                                                                                                
-                                                                                                                                                                
-                                                                                                                                                                
+  type          filter the tags by name; a new name offers to create it                                                                                         
+  ↑ ↓           choose a tag or the row that creates the typed name                                                                                             
+  space         add or remove the tag on the item, or create the typed tag                                                                                      
+  ← →           on the create row, choose the color of the new tag                                                                                              
+  esc           return to the form (the tags stay chosen)                                                                                                       
                                                                                                                                                                 
                                                                                                                                                                 
                                                                                                                                                                 
