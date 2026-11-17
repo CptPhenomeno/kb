@@ -213,7 +213,10 @@ func TestE2EEditStoryWithPointsExits3(t *testing.T) {
 	if !strings.Contains(errOut, "points are not allowed on a story") {
 		t.Errorf("stderr: %s", errOut)
 	}
-	e.fail(3, "add", "epic", "E", "--points", "3")
+	_, errOut = e.fail(3, "add", "epic", "E", "--points", "3")
+	if !strings.Contains(errOut, "points are not allowed on an epic") {
+		t.Errorf("stderr: %s", errOut)
+	}
 	if got := e.jsonOf("show", "KB-1", "--json"); got["points"] != nil {
 		t.Errorf("story points = %v, want null", got["points"])
 	}

@@ -217,3 +217,11 @@ func TestUnmarshalTextRejectsUnknown(t *testing.T) {
 		t.Errorf("Status.UnmarshalText(review) = %v, %v; want review, nil", s, err)
 	}
 }
+
+func TestWithArticleUsesAnBeforeVowels(t *testing.T) {
+	for typ, want := range map[Type]string{TypeEpic: "an epic", TypeStory: "a story", TypeTask: "a task", TypeBug: "a bug", TypeSubtask: "a subtask"} {
+		if got := WithArticle(typ); got != want {
+			t.Errorf("WithArticle(%v) = %q, want %q", typ, got, want)
+		}
+	}
+}

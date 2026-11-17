@@ -27,7 +27,7 @@ func ValidateParent(child Type, parent *Type) error {
 		if rootAllowed[child] {
 			return nil
 		}
-		return NewRuleError(fmt.Sprintf("a %s must have a parent (one of %v)", child, allowedParents[child]))
+		return NewRuleError(fmt.Sprintf("%s must have a parent (one of %v)", WithArticle(child), allowedParents[child]))
 	}
 	for _, p := range allowedParents[child] {
 		if p == *parent {
@@ -35,9 +35,9 @@ func ValidateParent(child Type, parent *Type) error {
 		}
 	}
 	if len(allowedParents[child]) == 0 {
-		return NewRuleError(fmt.Sprintf("a %s cannot have a parent", child))
+		return NewRuleError(fmt.Sprintf("%s cannot have a parent", WithArticle(child)))
 	}
-	return NewRuleError(fmt.Sprintf("a %s cannot be placed under a %s (allowed: %v)", child, *parent, allowedParents[child]))
+	return NewRuleError(fmt.Sprintf("%s cannot be placed under %s (allowed: %v)", WithArticle(child), WithArticle(*parent), allowedParents[child]))
 }
 
 // ValidateReparent checks that item id may move under newParent ("" for

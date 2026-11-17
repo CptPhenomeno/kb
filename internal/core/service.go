@@ -659,7 +659,7 @@ func (s *Service) Next(ctx context.Context, actor string, f NextFilter, claim bo
 func (s *Service) SetPhase(ctx context.Context, actor, id string, phase TDDPhase, ifVersion int) (*Item, error) {
 	return s.update(ctx, actor, id, ifVersion, func(it *Item) (EventKind, map[string]any, error) {
 		if !it.Type.IsLeafType() {
-			return "", nil, NewRuleError(fmt.Sprintf("tdd phase is not allowed on a %s", it.Type))
+			return "", nil, NewRuleError(fmt.Sprintf("tdd phase is not allowed on %s", WithArticle(it.Type)))
 		}
 		from := it.Phase
 		it.Phase = phase

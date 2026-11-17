@@ -104,7 +104,7 @@ func (o *op) importPlan(p *ImportPlan, opts ImportOptions) (*ImportReport, error
 			pl.item = &cp
 			pl.oldParent = ex.Parent
 			if in.Type != nil && *in.Type != ex.Type {
-				problem(in, "type cannot change (%s is a %s)", ex.ID, ex.Type)
+				problem(in, "type cannot change (%s is %s)", ex.ID, WithArticle(ex.Type))
 			}
 			pl.changes = applyPlanFields(pl.item, in)
 		} else {

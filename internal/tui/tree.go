@@ -266,7 +266,7 @@ func (t *treeState) key(m *Model, key string) tea.Cmd {
 	case "n":
 		ct, ok := childType[row.it.Type]
 		if !ok {
-			m.notice = fmt.Sprintf("a %s has no children: select its parent to add a sibling", row.it.Type)
+			m.notice = fmt.Sprintf("%s has no children: select its parent to add a sibling", core.WithArticle(row.it.Type))
 			return nil
 		}
 		m.form = newForm(nil)

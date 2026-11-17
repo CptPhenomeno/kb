@@ -20,15 +20,15 @@ func ValidateItem(it *Item) error {
 			return NewRuleError(fmt.Sprintf("points must be one of %v, got %d", fibonacciPoints, it.Points))
 		}
 		if it.Type != TypeTask && it.Type != TypeBug {
-			return NewRuleError(fmt.Sprintf("points are not allowed on a %s (only tasks and bugs carry points)", it.Type))
+			return NewRuleError(fmt.Sprintf("points are not allowed on %s (only tasks and bugs carry points)", WithArticle(it.Type)))
 		}
 	}
 	if !it.Type.IsLeafType() {
 		if len(it.Tests) > 0 {
-			return NewRuleError(fmt.Sprintf("tests are not allowed on a %s", it.Type))
+			return NewRuleError(fmt.Sprintf("tests are not allowed on %s", WithArticle(it.Type)))
 		}
 		if it.Phase != PhaseNone {
-			return NewRuleError(fmt.Sprintf("tdd phase is not allowed on a %s", it.Type))
+			return NewRuleError(fmt.Sprintf("tdd phase is not allowed on %s", WithArticle(it.Type)))
 		}
 	}
 	seen := map[string]bool{}

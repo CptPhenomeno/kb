@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // ErrInvalidValue is returned when a string does not name a known enum value.
@@ -225,4 +226,13 @@ func (k *RelationKind) UnmarshalText(b []byte) error {
 	v, err := ParseRelationKind(string(b))
 	*k = v
 	return err
+}
+
+// WithArticle returns the type with its indefinite article: "an epic",
+// "a task".
+func WithArticle(t Type) string {
+	if strings.HasPrefix(t.String(), "e") {
+		return "an " + t.String()
+	}
+	return "a " + t.String()
 }

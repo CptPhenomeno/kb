@@ -118,7 +118,7 @@ actor.
 `kb` with no arguments opens three views, switched with `tab`:
 
 - **Board**: five columns (Backlog, To do, In progress, Review, Done) with a
-  detail panel on `enter`. `shift+←/→` moves a card when its requirements
+  detail popup on `enter`. `shift+←/→` moves a card when its requirements
   are met, otherwise an alert lists what is missing; `shift+↑/↓` reorders;
   `s` sorts the columns by date, ID or story points; `#` switches the lane
   counters and the total in the header between cards and points. In points

@@ -130,7 +130,7 @@ func TestHierarchyViolationInPlan(t *testing.T) {
 	h := newHarness(t)
 	src := "items:\n  - ref: e\n    type: epic\n    title: E\n    children:\n      - {ref: t, type: task, title: T}\n"
 	_, err := h.importPlan(src, core.ImportOptions{})
-	assertProblems(t, err, "plan.yaml:6 (t): a task cannot be placed under a epic")
+	assertProblems(t, err, "plan.yaml:6 (t): a task cannot be placed under an epic")
 	_, err = h.importPlan("items:\n  - {ref: x, type: task, title: X, points: 4}\n  - {ref: y, title: Y}\n", core.ImportOptions{})
 	assertProblems(t, err, "(x): points must be one of", "(y): type is required")
 }
@@ -320,7 +320,7 @@ func TestUpdateReparent(t *testing.T) {
 		t.Fatalf("parent = %s, want %s", got, keys.ID)
 	}
 	_, err := h.importPlan("items:\n  - ref: auth\n    children:\n      - {ref: auth-login-refresh}\n", core.ImportOptions{Update: true})
-	assertProblems(t, err, "a task cannot be placed under a epic")
+	assertProblems(t, err, "a task cannot be placed under an epic")
 }
 
 func TestUpdateUnchangedReported(t *testing.T) {

@@ -47,7 +47,7 @@ func ClaimState(item *Item, now time.Time) ClaimStatus {
 // RuleError when the type cannot be claimed or the item cannot enter doing.
 func CanClaim(s *Snapshot, item *Item, actor string, now time.Time) error {
 	if !item.Type.IsClaimable() {
-		return NewRuleError(fmt.Sprintf("cannot claim %s: only tasks and bugs can be claimed, %s is a %s", item.ID, item.ID, item.Type))
+		return NewRuleError(fmt.Sprintf("cannot claim %s: only tasks and bugs can be claimed, %s is %s", item.ID, item.ID, WithArticle(item.Type)))
 	}
 	if ClaimState(item, now) == ClaimActive && item.Claim.Actor != actor {
 		return wrapf(ErrClaimed, "%s is claimed by %s until %s", item.ID, item.Claim.Actor, item.Claim.ExpiresAt.UTC().Format(time.RFC3339))
