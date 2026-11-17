@@ -4,6 +4,67 @@ All notable changes to kb are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-11-17
+
+Tags arrive: colored names shared by the whole board, managed from the CLI
+and the TUI, with a search that suggests them while you type. Stories and
+epics show the points of their tasks instead of their own, and the Board
+counters can switch between cards and points. Read the Changed section
+before upgrading: the item JSON and the database change in ways that older
+tools do not follow.
+
+### Added
+
+- Tags with colors. A tag is stored once and shared by every card; there
+  are eight colors (red, orange, yellow, green, cyan, blue, purple, pink)
+  that every theme paints with enough contrast.
+- `kb tag add`, `list`, `color`, `rename` and `delete` manage the tags of
+  the board; renaming, recoloring or deleting a tag applies to every card.
+  `kb add`, `kb edit`, `kb list` and `kb next` take `--tag`, and the
+  filters ignore case.
+- Cards show their tags as ⟨name⟩ in the tag color, the first one plus `+N`
+  on the Board, and the detail popup lists every tag.
+- The form tags field opens a selector that filters and toggles tags, and
+  creates a new tag with a chosen color; the new tag is saved only with the
+  form.
+- "Manage tags" in the command palette lists every tag and recolors,
+  renames, creates or deletes it.
+- The search suggests tags, types and cards under the search line while
+  you type. It understands `tag:` and `type:` filters, combines words in
+  AND and accepts quoted values such as `tag:"to review"`; `enter` on a
+  suggestion inserts the filter or jumps to the card.
+- The form paints the type field in its board color.
+- Stories and epics show derived points, the sum of the points of their
+  tasks and bugs, in the type color on the Board and in the detail.
+- `#` on the Board switches the lane counters and the total between cards
+  and points; the choice is saved as `board_counter` in `config.toml`.
+- `kb edit` and `kb export` use tags, and `plan.yaml` accepts a `tags` list.
+
+### Changed
+
+- **Breaking:** the item JSON field `tags` replaces `labels` in the output
+  of `kb list`, `kb show`, `kb next` and the other commands. Update any
+  script or tool that reads `labels`.
+- **Warning:** stories lose their own story points when the board is
+  upgraded (migration); their points are now derived from their tasks. Points are
+  refused on epics, stories and subtasks with exit code 3, in `kb add`,
+  `kb edit` and `kb import`; only tasks and bugs carry points.
+- **Warning:** the database schema moves to version 2 on first use. Older
+  kb binaries refuse a board in the new schema, so upgrade everyone who
+  shares the board. Existing labels become tags in the migration (names
+  that differ only by case are merged).
+- The Board header total counts the visible cards, or their points, instead
+  of all items, and follows the active search.
+- Error messages say "an epic" instead of "a epic".
+- The guide, the README, `docs/cli-json.md` and the TUI help describe tags,
+  derived points and the counters.
+
+### Deprecated
+
+- `--label` is hidden and prints a warning on stderr; use `--tag`.
+- `labels` in `plan.yaml` and in the `kb edit` editor file still work as an
+  alias of `tags`, with a warning; using both in one item is an error.
+
 ## [1.2.1] - 2026-11-13
 
 `kb next` picks work in a more useful order and accepts every item type.
