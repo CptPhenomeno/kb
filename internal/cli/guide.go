@@ -54,6 +54,7 @@ and --update matches items by ref.
                 title: Validate token in middleware
                 priority: high
                 points: 3                # 1, 2, 3, 5, 8 or 13
+                tags: [api, security]  # created on import if missing
                 tests:
                   - rejects expired token
                 blocks: [auth-refresh]
@@ -61,6 +62,13 @@ and --update matches items by ref.
                 type: task
                 title: Token refresh
                 points: 2
+
+Points go only on tasks and bugs: on an epic, a story or a subtask they are
+an error (exit 3). A story or an epic shows derived points instead, the sum of
+the points of its tasks and bugs; they are not a field of the item (its
+points stay null in the JSON). Tags are plain names shared by the whole board;
+the old field name labels still imports, as a deprecated alias of tags, with a
+warning on stderr (an item with both is an error).
 
 ## Writing items
 
@@ -98,9 +106,16 @@ neither, and a task in review stays in review.
 Other commands:
 
     kb show <id>                       # the item with its history
-    kb list --json                     # filters: --status --type --label --blocked --stale
+    kb list --json                     # filters: --status --type --tag --blocked --stale
     kb list --stale                    # items in progress whose claim expired
     kb tree                            # the hierarchy with progress and points
+    kb add task "<title>" --tag api    # --tag is repeatable; edit --tag replaces the tags
+    kb next --tag api                  # --tag also filters kb next
+    kb tag list                        # tags with color and card count, by name
+    kb tag add <name> [--color <c>]    # colors: red, orange, yellow, green, cyan, blue, purple, pink
+    kb tag color <name> <color>        # recolor a tag on every card
+    kb tag rename <old> <new>          # rename a tag on every card
+    kb tag delete <name>               # delete a tag and remove it from every card
     kb test <id> edit <n> "<name>"     # rename a test; it is pending again
     kb test <id> rm <n>                # remove a test; later ones shift up
     kb accept <id> edit <n> "<text>"   # replace a criterion's text; it is unchecked again
@@ -109,6 +124,11 @@ Other commands:
     kb release <id>                    # give a task back
     kb add subtask "<title>" --parent <id>
     kb log --follow --json             # stream the events as JSON Lines
+
+Tags are created on first use by --tag and in plans, or with kb tag add. A name
+has at most 24 characters and no comma, and is compared ignoring case. kb tag
+takes --json and -q like every command. --label still works as a deprecated
+alias of --tag, with a warning on stderr.
 
 ## Rules
 

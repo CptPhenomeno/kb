@@ -47,7 +47,8 @@ Printed by `show`, `add`, `edit`, `claim`, `release`, `touch`, `next`,
 | `type` | `epic`, `story`, `task`, `subtask`, `bug` |
 | `status` | `backlog`, `todo`, `doing`, `review`, `done` |
 | `priority` | `high`, `medium`, `low` |
-| `points` | `1 2 3 5 8 13` or `null` |
+| `points` | `1 2 3 5 8 13` or `null`; always `null` for epics, stories and subtasks, which can only show derived points |
+| `tags` | the names of the item's tags, in the order of the card (never `null`); the colors are in `kb tag list --json` |
 | `tdd_phase` | `red`, `green`, `refactor` or `null` |
 | `tests[].state` | `pending`, `failing`, `passing` |
 | `ref`, `parent`, `assignee`, `claim` | `null` when unset |
@@ -56,6 +57,17 @@ Printed by `show`, `add`, `edit`, `claim`, `release`, `touch`, `next`,
 | `history` | only in `show`: the item's events, oldest first |
 
 Timestamps are RFC 3339 in UTC. Lists are never `null`.
+
+Points are an own value of tasks and bugs only; setting them on another type
+exits 3 (`rule`). The points of an epic or a story shown by `kb show`, `kb
+tree`, the TUI and the points sort are derived: the sum of the points of its
+descendant tasks and bugs. They are not a field of the item, so `points`
+stays `null` in the JSON.
+
+Before 1.3 the item had a `labels` field. It is now `tags` and `labels` no
+longer appears in the output. `--label` and the `labels` field of `plan.yaml`
+are still accepted as deprecated aliases of `--tag` and `tags`; the warning
+goes to stderr, so the JSON on stdout stays valid.
 
 ## Move
 
@@ -75,6 +87,30 @@ Timestamps are RFC 3339 in UTC. Lists are never `null`.
 | `link`, `unlink` | `{"ok": true, "from": "KB-3", "kind": "blocks", "to": "KB-4"}` |
 | `rm` | `{"removed": ["KB-7", "KB-6"]}` (deletion order) |
 | `log` | JSON Lines: one event per line |
+
+## Tag
+
+Printed by `kb tag add`, `color`, `rename` and `delete`; `kb tag list` prints
+an array, by name, `[]` when the board has no tags.
+
+```json
+{"name": "api", "color": "red", "cards": 2}
+```
+
+`cards` is the number of cards that carry the tag; after `delete` it is the
+number of cards the tag was removed from. `color` is one of
+red, orange, yellow, green, cyan, blue, purple, pink. A tag name has at most
+24 characters and no comma, and is compared ignoring case.
+
+| Command | Does | Exit codes |
+|---------|------|------------|
+| `kb tag list` | all tags with color and card count | 0 |
+| `kb tag add <name> [--color C]` | creates the tag; without `--color` the color follows the rotation | 3 (`rule`) invalid name or color; 4 (`conflict`) the tag exists |
+| `kb tag color <name> <color>` | changes the color on every card | 2 (`not_found`); 3 (`rule`) unknown color |
+| `kb tag rename <old> <new>` | renames the tag on every card, also only to change the case | 2 (`not_found`); 3 (`rule`) invalid name; 4 (`conflict`) another tag has that name |
+| `kb tag delete <name>` | deletes the tag and removes it from every card | 2 (`not_found`) |
+
+With `-q` the tag commands print only the tag name, one per line.
 
 ## Event
 
@@ -111,7 +147,7 @@ same item, exits 3 (`rule`); a missing `n` exits 2 (`not_found`).
 
 ## Next
 
-`kb next [--type epic,story,task,bug] [--parent ID] [--label L] [--claim]`
+`kb next [--type epic,story,task,bug] [--parent ID] [--tag T] [--claim]`
 prints one item (shape above). Available means in todo, doing or review,
 not blocked, and (for tasks and bugs)
 without a valid claim, even your own. The order is review, then doing, then todo; then priority; then the heaviest chain of
@@ -136,7 +172,7 @@ With `--json`, errors are printed on stdout and the exit code is set:
 | `not_found` | 2 | item, test or relation not found; `next` found nothing |
 | `requirements` | 3 | move or claim refused; `unmet` lists every missing condition |
 | `rule` | 3 | other rule violated (hierarchy, cycle, duplicate ref) |
-| `conflict` | 4 | `--if-version` did not match |
+| `conflict` | 4 | `--if-version` did not match; a tag with that name already exists |
 | `claimed` | 5 | another actor holds a valid claim |
 
 The `unmet` messages are stable and can be matched by agents.

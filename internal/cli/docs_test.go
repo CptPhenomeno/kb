@@ -249,8 +249,8 @@ func TestGuideMentionsTagCommandAndPointsRule(t *testing.T) {
 			t.Errorf("guide does not mention %q", want)
 		}
 	}
-	if strings.Contains(out, "--label ") {
-		t.Error("guide still lists the --label filter")
+	if strings.Contains(out, "--type --label") {
+		t.Error("guide still lists --label among the filters")
 	}
 }
 
